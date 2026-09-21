@@ -1,0 +1,29 @@
+{
+  "name": "vertex",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Vertex - Real-time Event Operations System for Building Pravara 2026",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "keywords": [
+    "vertex",
+    "event-ops",
+    "pravara",
+    "ledger",
+    "pos",
+    "attendance"
+  ],
+  "author": "Building Pravara Engineering Team",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.0"
+  }
+}

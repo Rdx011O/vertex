@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vertex — Event Operations System | Building Pravara 2026</title>
+  <meta name="description" content="Real-time verified ledger for stalls, attendance, sales, and money at Building Pravara 2026, Pravara Rural Engineering College, Loni.">
+
+  <!-- Google Fonts: Inter, Outfit, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pos.css">
+  <link rel="stylesheet" href="css/badge.css">
+</head>
+<body>
+
+  <!-- Top Role Switcher Bar for Pair-Programming, Testing & Auditing -->
+  <div class="role-switcher-bar">
+    <div id="role-switcher-container">
+      <!-- Injected via app.js -->
+    </div>
+
+    <!-- Diagnostics & Offline Simulator Toggle -->
+    <div class="system-status-indicator">
+      <label class="sim-offline-toggle" title="Simulate unreliable Wi-Fi / dead spot to test offline POS queue">
+        <input type="checkbox" id="sim-offline-toggle" />
+        <span>⚡ Simulate Dead Spot (Offline)</span>
+      </label>
+      <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--text-secondary);">
+        <span class="status-dot online" id="ws-status-dot"></span>
+        <span id="ws-status-text">Live Sync</span>
+      </div>
+      <button class="btn btn-outline" id="theme-toggle-btn" style="padding:4px 8px; font-size:12px;" title="Toggle Dark / Light Theme">
+        🌓 Theme
+      </button>
+    </div>
+  </div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <a href="#" class="brand-badge">
+        <div class="brand-logo">V</div>
+        <div class="brand-info">
+          <div class="brand-title">VERTEX</div>
+          <div class="event-tag">Building Pravara '26 • PREC Loni</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-right" id="header-user-info">
+      <!-- Injected via app.js -->
+    </div>
+  </header>
+
+  <!-- Offline Warning Banner (Shown only when offline is simulated/active) -->
+  <div class="offline-banner" id="offline-notice-banner" style="display: none; margin: 16px 24px 0 24px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span>📡</span>
+      <span><strong>Offline Mode Active:</strong> Event Wi-Fi disconnected. POS transactions are being saved in your secure local queue and will auto-sync upon reconnection.</span>
+    </div>
+  </div>
+
+  <!-- Main Dynamic Application Content -->
+  <main class="main-content" id="app-main">
+    <div style="text-align: center; padding: 60px 20px;">
+      <h2>Initializing Vertex Real-time Operations Ledger...</h2>
+    </div>
+  </main>
+
+  <!-- Modal / Badge QR Container -->
+  <div id="qr-modal-container"></div>
+
+  <!-- Toast Alert Toaster -->
+  <div id="toast-container"></div>
+
+  <!-- Core Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
