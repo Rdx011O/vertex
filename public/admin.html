@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vertex Admin — Building Pravara 2026</title>
+  <meta name="description" content="Admin Operations Portal for Vertex — Building Pravara 2026">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- Admin Header -->
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <div class="brand-logo admin-logo">V</div>
+      <div>
+        <div class="admin-brand-title">VERTEX <span class="admin-badge-label">ADMIN</span></div>
+        <div class="admin-brand-sub">Building Pravara 2026 · Operations Dashboard</div>
+      </div>
+    </div>
+    <div class="admin-header-right" id="admin-header-right">
+      <!-- injected by JS -->
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="admin-main" id="admin-main">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:16px;">
+      <div class="spinner"></div>
+      <p style="color:var(--text-secondary);">Initializing Admin Portal…</p>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast-container"></div>
+
+  <!-- Admin App Script -->
+  <script type="module" src="js/admin-app.js"></script>
+</body>
+</html>

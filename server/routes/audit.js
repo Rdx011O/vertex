@@ -1,14 +1,20 @@
 import express from 'express';
 import db from '../db.js';
+import { requireAdminMiddleware } from '../rbac.js';
 import realtime from '../ws.js';
 
 const router = express.Router();
 
-// Get audit logs
+// Get audit logs (admin-only for full log; others get empty)
 router.get('/', (req, res) => {
   const { action, limit = 100 } = req.query;
+
+  // Only admins can read audit logs
+  if (!req.user || req.user.role !== 'admin') {
+    return res.json({ total: 0, logs: [] });
+  }
+
   let logs = db.data.audit_logs;
-  
   if (action) {
     logs = logs.filter(l => l.action.toLowerCase().includes(action.toLowerCase()));
   }
@@ -19,20 +25,11 @@ router.get('/', (req, res) => {
   });
 });
 
-// Reset database to initial seed state (useful for demonstrations)
-router.post('/reset-demo', (req, res) => {
-  const freshData = db.reset();
-  db.logAudit(
-    'usr-admin-01',
-    'System Admin',
-    'DATABASE_RESET',
-    'SYSTEM',
-    'ev-bp-2026',
-    'Demonstration database reset to standard Building Pravara initial seed ledger.'
-  );
-  
-  realtime.broadcast('DATABASE_RESET', { message: 'Database reset to demo seed.' });
-  res.json({ success: true, message: 'Database reset successfully.' });
+// Admin: clear all notifications (housekeeping)
+router.delete('/notifications', requireAdminMiddleware, (req, res) => {
+  db.data.notifications = [];
+  db.save();
+  res.json({ message: 'Notifications cleared.' });
 });
 
 export default router;

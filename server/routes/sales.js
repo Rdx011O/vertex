@@ -1,7 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db.js';
-import { requireAdmin, requireCoordinator } from '../rbac.js';
+import { requireAuth, requireAdminMiddleware } from '../rbac.js';
 import { calculateStallFinancials, calculateEventSummary, formatINR } from '../financials.js';
 import realtime from '../ws.js';
 
@@ -58,11 +58,7 @@ router.get('/history', (req, res) => {
 
 // Coordinator: POS "Finish My Day" / Submit Sales Log
 // Features Idempotency Key to guarantee zero duplicate sales on offline retry
-router.post('/submit', (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-
+router.post('/submit', requireAuth, (req, res) => {
   const {
     stall_id,
     online_total = 0,
@@ -177,7 +173,7 @@ router.post('/submit', (req, res) => {
 });
 
 // Admin: Verify Sales Submission
-router.post('/:submissionId/verify', requireAdmin, (req, res) => {
+router.post('/:submissionId/verify', requireAdminMiddleware, (req, res) => {
   const submission = db.data.sales_submissions.find(s => s.id === req.params.submissionId);
   if (!submission) {
     return res.status(404).json({ error: 'Sales submission not found' });
@@ -241,7 +237,7 @@ router.post('/:submissionId/verify', requireAdmin, (req, res) => {
 });
 
 // Admin: Reject Sales Submission
-router.post('/:submissionId/reject', requireAdmin, (req, res) => {
+router.post('/:submissionId/reject', requireAdminMiddleware, (req, res) => {
   const { reason } = req.body;
   const submission = db.data.sales_submissions.find(s => s.id === req.params.submissionId);
   if (!submission) {

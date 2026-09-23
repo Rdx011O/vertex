@@ -1,17 +1,18 @@
 /**
- * Vertex Application Reactive State Store
+ * Vertex Application Reactive State Store (Firebase-Auth-aware)
  */
 
 import api from './api.js';
 
 class AppState {
   constructor() {
-    this.currentUser = null;
-    this.users = [];
+    this.currentUser = null;       // DB profile (from /api/auth/me)
+    this.firebaseUser = null;      // Firebase Auth user object
+    this.isAuthenticated = false;
     this.stalls = [];
     this.eventSummary = null;
     this.activeStall = null;
-    this.activeTab = 'dashboard';
+    this.activeTab = 'analytics';
     this.notifications = [];
     this.unreadCount = 0;
     this.auditLogs = [];
@@ -38,52 +39,46 @@ class AppState {
 
   emitChange() {
     for (const listener of this.listeners) {
-      try {
-        listener(this);
-      } catch (err) {
-        console.error('State listener error:', err);
-      }
+      try { listener(this); }
+      catch (err) { console.error('State listener error:', err); }
     }
   }
 
-  async loadInitialData() {
+  /** Called by app.js when Firebase Auth state changes */
+  async onFirebaseAuth(firebaseUser) {
+    this.firebaseUser = firebaseUser;
+
+    if (!firebaseUser) {
+      // Logged out
+      this.isAuthenticated = false;
+      this.currentUser = null;
+      this.stalls = [];
+      this.activeStall = null;
+      this.emitChange();
+      return;
+    }
+
+    this.isAuthenticated = true;
+
+    // Set token provider on API client
+    api.setTokenProvider(() => firebaseUser.getIdToken(false));
+
+    // Load profile from DB
     try {
-      this.users = await api.getUsers();
-      
-      // Default to Admin or saved user
-      const savedUserId = localStorage.getItem('vertex_active_user_id');
-      const matchedUser = this.users.find(u => u.id === savedUserId);
-      this.currentUser = matchedUser || this.users.find(u => u.role === 'admin') || this.users[0];
-      
-      if (this.currentUser) {
-        api.setUserId(this.currentUser.id);
-        localStorage.setItem('vertex_active_user_id', this.currentUser.id);
-      }
-
-      await this.refreshAll();
+      this.currentUser = await api.getMe();
     } catch (err) {
-      console.error('Failed to load initial data:', err);
-    }
-  }
-
-  async switchUser(userId) {
-    const user = this.users.find(u => u.id === userId);
-    if (!user) return;
-
-    this.currentUser = user;
-    api.setUserId(user.id);
-    localStorage.setItem('vertex_active_user_id', user.id);
-    
-    // Set default tab for role
-    if (user.role === 'admin') {
-      this.activeTab = 'command-center';
-    } else if (user.role === 'coordinator') {
-      this.activeTab = 'analytics';
-    } else {
-      this.activeTab = 'member-dashboard';
+      // PROFILE_NOT_FOUND → user just signed up, needs register-profile step
+      if (err.message && err.message.includes('Profile not found')) {
+        this.currentUser = null; // triggers registration screen
+      } else {
+        console.error('Failed to fetch user profile:', err);
+      }
     }
 
-    await this.refreshAll();
+    if (this.currentUser) {
+      await this.refreshAll();
+    }
+
     this.emitChange();
   }
 
@@ -96,8 +91,11 @@ class AppState {
     try {
       this.eventSummary = await api.getEventSummary();
       this.stalls = await api.getStalls();
-      this.notifications = await api.getNotifications();
-      this.unreadCount = this.notifications.length;
+
+      try {
+        this.notifications = await api.getNotifications();
+        this.unreadCount = this.notifications.length;
+      } catch (_) { /* non-critical */ }
 
       if (this.currentUser && this.currentUser.stall_id) {
         this.activeStall = await api.getStallDetails(this.currentUser.stall_id);

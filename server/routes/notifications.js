@@ -1,7 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db.js';
-import { requireAdmin } from '../rbac.js';
+import { requireAdminMiddleware } from '../rbac.js';
 import realtime from '../ws.js';
 
 const router = express.Router();
@@ -31,7 +31,7 @@ router.get('/', (req, res) => {
 });
 
 // Admin: Post an event-wide broadcast announcement
-router.post('/broadcast', requireAdmin, (req, res) => {
+router.post('/broadcast', requireAdminMiddleware, (req, res) => {
   const { title, message, target_role } = req.body;
   if (!title || !message) {
     return res.status(400).json({ error: 'Title and message required' });

@@ -596,6 +596,14 @@ function attachCoordinatorEventListeners(container, state, stall) {
     });
   }
 
+  // Add Catalog Item Modal Trigger
+  const addCatBtn = container.querySelector('#btn-add-catalog-item');
+  if (addCatBtn) {
+    addCatBtn.addEventListener('click', () => {
+      showAddCatalogItemModal(stall, state);
+    });
+  }
+
   // QR Scanner Modal Trigger
   const scanQrBtn = container.querySelector('#btn-scan-qr-modal');
   if (scanQrBtn) {
@@ -735,3 +743,79 @@ function showScanQRModal(stall, state) {
     if (code) handleScan(code);
   });
 }
+
+function showAddCatalogItemModal(stall, state) {
+  const modalContainer = document.getElementById('qr-modal-container');
+  if (!modalContainer) return;
+
+  modalContainer.innerHTML = `
+    <div class="modal-backdrop active" id="add-item-backdrop">
+      <div class="modal-card" style="max-width:440px;">
+        <div class="modal-header">
+          <h3 style="font-size:18px;">Add Item to Stall Catalog</h3>
+          <button class="modal-close-btn" id="close-catalog-modal">✕</button>
+        </div>
+
+        <form id="catalog-item-form" style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Item Name <span style="color:var(--status-danger);">*</span></label>
+            <input type="text" id="cat-item-name" class="pos-input" placeholder="e.g. Masala Dosa, VR Experience" required style="width:100%;" />
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Price (₹ INR) <span style="color:var(--status-danger);">*</span></label>
+            <input type="number" id="cat-item-price" class="pos-input" placeholder="50" min="1" required style="width:100%;" />
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Item Category</label>
+            <input type="text" id="cat-item-cat" class="pos-input" placeholder="e.g. Snack, Combo, Pass" value="Standard" style="width:100%;" />
+          </div>
+
+          <div id="catalog-item-error" class="auth-error" style="display:none; color:var(--status-danger); font-size:12px;"></div>
+
+          <button type="submit" class="btn btn-coordinator" id="btn-save-cat-item" style="padding:12px; margin-top:8px;">
+            Save to Catalog
+          </button>
+        </form>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('close-catalog-modal').addEventListener('click', () => {
+    modalContainer.innerHTML = '';
+  });
+
+  document.getElementById('catalog-item-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('cat-item-name').value.trim();
+    const price = Number(document.getElementById('cat-item-price').value);
+    const category = document.getElementById('cat-item-cat').value.trim() || 'Standard';
+    const errEl = document.getElementById('catalog-item-error');
+    const saveBtn = document.getElementById('btn-save-cat-item');
+
+    errEl.style.display = 'none';
+
+    if (!name || isNaN(price) || price <= 0) {
+      errEl.textContent = 'Please enter a valid item name and positive price.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    try {
+      await api.addCatalogItem(stall.id, { name, price, category });
+      window.showToast?.(`✅ "${name}" (₹${price}) added to catalog!`, 'success');
+      modalContainer.innerHTML = '';
+      await state.refreshAll();
+    } catch (err) {
+      errEl.textContent = err.message || 'Failed to add item.';
+      errEl.style.display = 'block';
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save to Catalog';
+    }
+  });
+}
+

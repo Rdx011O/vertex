@@ -1,5 +1,6 @@
 /**
- * Vertex API Client & Real-time Offline-First Sync Engine
+ * Vertex API Client — Bearer Token Auth
+ * All requests send Authorization: Bearer <firebase_id_token>
  */
 
 class ApiService {
@@ -7,7 +8,8 @@ class ApiService {
     this.baseUrl = window.location.origin;
     this.wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
     this.ws = null;
-    this.activeUserId = null;
+    this.idToken = null;           // Firebase ID token
+    this.getTokenFn = null;        // Function that returns fresh token
     this.listeners = new Set();
     this.isSimulatedOffline = false;
     this.offlineQueue = this.loadOfflineQueue();
@@ -16,8 +18,20 @@ class ApiService {
     this.initWebSocket();
   }
 
-  setUserId(userId) {
-    this.activeUserId = userId;
+  /** Called by app.js after Firebase auth — provides a getter for fresh tokens */
+  setTokenProvider(fn) {
+    this.getTokenFn = fn;
+  }
+
+  async getToken() {
+    if (this.getTokenFn) {
+      try {
+        this.idToken = await this.getTokenFn();
+      } catch (e) {
+        console.warn('[Auth] Could not refresh token:', e);
+      }
+    }
+    return this.idToken;
   }
 
   // Offline Queue Storage
@@ -25,57 +39,35 @@ class ApiService {
     try {
       const data = localStorage.getItem('vertex_offline_queue');
       return data ? JSON.parse(data) : [];
-    } catch (e) {
-      return [];
-    }
+    } catch (e) { return []; }
   }
 
   saveOfflineQueue() {
     try {
       localStorage.setItem('vertex_offline_queue', JSON.stringify(this.offlineQueue));
-    } catch (e) {
-      console.error('Failed to save offline queue', e);
-    }
+    } catch (e) { console.error('Failed to save offline queue', e); }
   }
 
   setSimulatedOffline(isOffline) {
     this.isSimulatedOffline = isOffline;
-    console.log(`[Network] Simulated Offline Mode: ${isOffline ? 'ACTIVE (Disconnected)' : 'INACTIVE (Connected)'}`);
     this.notifyListeners({ type: 'NETWORK_STATUS_CHANGED', isOffline: this.isSimulatedOffline });
-
-    if (!isOffline) {
-      this.syncOfflineQueue();
-    }
+    if (!isOffline) this.syncOfflineQueue();
   }
 
   // WebSocket Connection
   initWebSocket() {
     try {
       this.ws = new WebSocket(this.wsUrl);
-
-      this.ws.onopen = () => {
-        console.log('[WebSocket] Connected to Vertex server');
-        this.notifyListeners({ type: 'WS_STATUS', status: 'connected' });
-      };
-
+      this.ws.onopen = () => this.notifyListeners({ type: 'WS_STATUS', status: 'connected' });
       this.ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          this.notifyListeners(data);
-        } catch (err) {
-          console.error('[WebSocket] Message parse error:', err);
-        }
+        try { this.notifyListeners(JSON.parse(event.data)); }
+        catch (err) { console.error('[WebSocket] Message parse error:', err); }
       };
-
       this.ws.onclose = () => {
         this.notifyListeners({ type: 'WS_STATUS', status: 'disconnected' });
-        // Auto-reconnect after 3s
         setTimeout(() => this.initWebSocket(), 3000);
       };
-
-      this.ws.onerror = (err) => {
-        console.warn('[WebSocket] Connection error');
-      };
+      this.ws.onerror = () => console.warn('[WebSocket] Connection error');
     } catch (err) {
       console.error('[WebSocket] Init failed:', err);
     }
@@ -88,20 +80,16 @@ class ApiService {
 
   notifyListeners(data) {
     for (const listener of this.listeners) {
-      try {
-        listener(data);
-      } catch (err) {
-        console.error('Error in API listener:', err);
-      }
+      try { listener(data); }
+      catch (err) { console.error('Error in API listener:', err); }
     }
   }
 
   // HTTP Request Helper
   async request(endpoint, options = {}) {
-    // If simulated offline mode is on, reject write/fetch unless queued
+    // Offline queue for POS sales
     if (this.isSimulatedOffline && options.method && options.method !== 'GET') {
       if (endpoint === '/api/sales/submit') {
-        // Queue offline sales submission
         const payload = JSON.parse(options.body || '{}');
         const queueItem = {
           id: 'q-' + Date.now(),
@@ -112,7 +100,6 @@ class ApiService {
         this.offlineQueue.push(queueItem);
         this.saveOfflineQueue();
         this.notifyListeners({ type: 'OFFLINE_QUEUE_UPDATED', queue: this.offlineQueue });
-
         return {
           submission: {
             id: 'offline-' + Date.now(),
@@ -124,52 +111,39 @@ class ApiService {
           },
           items: payload.items || [],
           offline_queued: true,
-          message: 'Saved locally in offline POS queue. Will automatically submit when online.'
+          message: 'Saved locally. Will auto-submit when back online.'
         };
       }
       throw new Error('Network is offline (Simulated dead spot)');
     }
 
+    const token = await this.getToken();
     const headers = {
       'Content-Type': 'application/json',
-      ...(this.activeUserId ? { 'X-User-Id': this.activeUserId } : {}),
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...(options.headers || {})
     };
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers
-    });
-
+    const response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
     const data = await response.json();
+
     if (!response.ok) {
       throw new Error(data.error || `HTTP error ${response.status}`);
     }
-
     return data;
   }
 
-  // Synchronize Offline Queue
   async syncOfflineQueue() {
     if (this.isSyncing || this.offlineQueue.length === 0 || this.isSimulatedOffline) return;
-
     this.isSyncing = true;
-    console.log(`[Sync] Attempting to sync ${this.offlineQueue.length} offline transactions...`);
-
     const remainingQueue = [];
     for (const item of this.offlineQueue) {
       try {
-        await this.request(item.endpoint, {
-          method: 'POST',
-          body: JSON.stringify(item.payload)
-        });
-        console.log(`[Sync] Successfully synced offline submission (Idempotency Key: ${item.payload.idempotency_key})`);
+        await this.request(item.endpoint, { method: 'POST', body: JSON.stringify(item.payload) });
       } catch (err) {
-        console.error('[Sync] Failed to sync item, retaining in queue:', err);
         remainingQueue.push(item);
       }
     }
-
     this.offlineQueue = remainingQueue;
     this.saveOfflineQueue();
     this.isSyncing = false;
@@ -177,13 +151,23 @@ class ApiService {
   }
 
   // API Methods
-  async getUsers() { return (await this.request('/api/auth/users')).users; }
+  async registerProfile(name, phone, desiredRole) {
+    return await this.request('/api/auth/register-profile', {
+      method: 'POST',
+      body: JSON.stringify({ name, phone, desired_role: desiredRole })
+    });
+  }
+
   async getMe() { return (await this.request('/api/auth/me')).user; }
-  
+
   async getStalls() { return (await this.request('/api/stalls')).stalls; }
   async getEventSummary() { return (await this.request('/api/stalls/summary/event')).summary; }
   async getStallDetails(stallId) { return (await this.request(`/api/stalls/${stallId}`)).stall; }
-  
+
+  async setupStall(stallData) {
+    return await this.request('/api/stalls/setup', { method: 'POST', body: JSON.stringify(stallData) });
+  }
+
   async createStall(stallData) {
     return await this.request('/api/stalls', { method: 'POST', body: JSON.stringify(stallData) });
   }
@@ -194,6 +178,14 @@ class ApiService {
 
   async logExpense(stallId, expenseData) {
     return await this.request(`/api/stalls/${stallId}/expenses`, { method: 'POST', body: JSON.stringify(expenseData) });
+  }
+
+  async addCatalogItem(stallId, item) {
+    return await this.request(`/api/stalls/${stallId}/catalog`, { method: 'POST', body: JSON.stringify(item) });
+  }
+
+  async deleteCatalogItem(stallId, itemId) {
+    return await this.request(`/api/stalls/${stallId}/catalog/${itemId}`, { method: 'DELETE' });
   }
 
   async submitSales(salesData) {
@@ -241,6 +233,19 @@ class ApiService {
 
   async getAuditLogs(limit = 100) {
     return (await this.request(`/api/audit?limit=${limit}`)).logs;
+  }
+
+  async addCatalogItem(stallId, item) {
+    return await this.request(`/api/stalls/${stallId}/catalog`, {
+      method: 'POST',
+      body: JSON.stringify(item)
+    });
+  }
+
+  async deleteCatalogItem(stallId, itemId) {
+    return await this.request(`/api/stalls/${stallId}/catalog/${itemId}`, {
+      method: 'DELETE'
+    });
   }
 
   async resetDemo() {
