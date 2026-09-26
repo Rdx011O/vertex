@@ -9,7 +9,7 @@ const router = express.Router();
 // Get notifications filtered for the current user's role and stall
 router.get('/', (req, res) => {
   const user = req.user;
-  let notifications = db.data.notifications;
+  let notifications = db.data.notifications || [];
 
   if (user) {
     notifications = notifications.filter(n => {
@@ -25,9 +25,55 @@ router.get('/', (req, res) => {
       if (user.role === 'admin') return true;
       return false;
     });
+
+    // Map read status for the requesting user
+    notifications = notifications.map(n => ({
+      ...n,
+      is_read: Array.isArray(n.read_by) ? n.read_by.includes(user.id) : false
+    }));
   }
 
   res.json({ notifications });
+});
+
+// Mark single notification as read (for announcement button or user action)
+router.post('/:id/read', (req, res) => {
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  const notif = (db.data.notifications || []).find(n => n.id === req.params.id);
+  if (!notif) return res.status(404).json({ error: 'Notification not found' });
+
+  if (!Array.isArray(notif.read_by)) {
+    notif.read_by = [];
+  }
+  if (!notif.read_by.includes(user.id)) {
+    notif.read_by.push(user.id);
+    db.save();
+  }
+
+  res.json({ success: true, notification_id: notif.id, is_read: true });
+});
+
+// Mark all non-announcements as seen when opening the drawer / viewing
+router.post('/mark-seen', (req, res) => {
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  let updated = false;
+  (db.data.notifications || []).forEach(n => {
+    // Only auto-mark non-announcement notifications as seen
+    if (n.type !== 'announcement') {
+      if (!Array.isArray(n.read_by)) n.read_by = [];
+      if (!n.read_by.includes(user.id)) {
+        n.read_by.push(user.id);
+        updated = true;
+      }
+    }
+  });
+
+  if (updated) db.save();
+  res.json({ success: true });
 });
 
 // Admin: Post an event-wide broadcast announcement
@@ -45,6 +91,7 @@ router.post('/broadcast', requireAdminMiddleware, (req, res) => {
     message: message.trim(),
     type: 'announcement',
     created_by: req.user.id,
+    read_by: [],
     created_at: new Date().toISOString()
   };
 

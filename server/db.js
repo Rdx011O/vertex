@@ -39,10 +39,15 @@ function getEmptyDatabase() {
      *   id: string           (Firebase UID)
      *   name: string
      *   email: string
-     *   role: 'admin' | 'coordinator' | 'member' | 'pending'
+     *   role: 'admin' | 'coordinator' | 'member' | 'pending' | 'pending_coordinator' | 'pending_member'
      *   stall_id: string | null
      *   phone: string | null
      *   designation: string | null
+     *   username: string | null
+     *   college_name: string | null
+     *   stall_name_desired: string | null      (coordinator-requested stall name)
+     *   stall_category_desired: string | null  (coordinator-requested stall category)
+     *   stall_alloted_number: string | null    (pre-allotted stall number)
      *   badge_code: string
      *   created_at: ISO string
      * }
@@ -69,6 +74,7 @@ function getEmptyDatabase() {
     attendance_records: [],
     notifications: [],
     audit_logs: [],
+    stall_join_requests: [],
     /**
      * POS Catalog item schema:
      * {
@@ -81,6 +87,15 @@ function getEmptyDatabase() {
      */
     pos_catalog: []
   };
+}
+
+export function generateInviteCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
+  let code = '';
+  for (let i = 0; i < 12; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 }
 
 class Database {
@@ -124,6 +139,17 @@ class Database {
         this.data[key] = empty[key];
       }
     }
+    // Ensure all stalls have a 12-char permanent invite_code
+    if (Array.isArray(this.data.stalls)) {
+      let updated = false;
+      for (const stall of this.data.stalls) {
+        if (!stall.invite_code) {
+          stall.invite_code = generateInviteCode();
+          updated = true;
+        }
+      }
+      if (updated) this.save();
+    }
   }
 
   save() {
@@ -142,7 +168,9 @@ class Database {
     return this.data.users.find(u => u.id === firebaseUid) || null;
   }
 
-  createUser({ id, name, email, role = 'pending', phone = null, designation = null }) {
+  createUser({ id, name, email, role = 'pending', phone = null, designation = null,
+               username = null, college_name = null,
+               stall_name_desired = null, stall_category_desired = null, stall_alloted_number = null }) {
     const existingUser = this.getUserByUid(id);
     if (existingUser) return existingUser;
 
@@ -154,6 +182,11 @@ class Database {
       stall_id: null,
       phone,
       designation,
+      username,
+      college_name,
+      stall_name_desired,
+      stall_category_desired,
+      stall_alloted_number,
       badge_code: 'BP-' + Math.random().toString(36).toUpperCase().slice(2, 8),
       created_at: new Date().toISOString()
     };

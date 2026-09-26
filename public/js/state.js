@@ -17,6 +17,7 @@ class AppState {
     this.unreadCount = 0;
     this.auditLogs = [];
     this.pendingSales = [];
+    this.allUsers = [];            // Admin: all registered users
     this.theme = localStorage.getItem('vertex_theme') || 'light';
     this.listeners = new Set();
   }
@@ -89,21 +90,35 @@ class AppState {
 
   async refreshAll() {
     try {
+      if (this.isAuthenticated) {
+        try {
+          this.currentUser = await api.getMe();
+        } catch (_) { /* profile not yet ready */ }
+      }
+
       this.eventSummary = await api.getEventSummary();
       this.stalls = await api.getStalls();
 
       try {
         this.notifications = await api.getNotifications();
-        this.unreadCount = this.notifications.length;
+        this.unreadCount = this.notifications.filter(n => !n.is_read).length;
       } catch (_) { /* non-critical */ }
 
       if (this.currentUser && this.currentUser.stall_id) {
         this.activeStall = await api.getStallDetails(this.currentUser.stall_id);
+      } else {
+        this.activeStall = null;
       }
 
-      if (this.currentUser && this.currentUser.role === 'admin') {
-        this.pendingSales = await api.getPendingSales();
-        this.auditLogs = await api.getAuditLogs(50);
+      if (this.currentUser) {
+        try {
+          this.auditLogs = await api.getAuditLogs(100);
+        } catch (_) { /* non-critical */ }
+
+        if (this.currentUser.role === 'admin') {
+          this.pendingSales = await api.getPendingSales();
+          try { this.allUsers = await api.getAllUsers(); } catch (_) { /* non-critical */ }
+        }
       }
 
       this.emitChange();

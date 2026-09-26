@@ -1,11 +1,6 @@
-/**
- * Stalls Routes
- * Handles stall listing, creation, management, expenses, and catalog.
- */
-
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db.js';
+import db, { generateInviteCode } from '../db.js';
 import { requireAuth, requireAdminMiddleware, requireCoordinatorOrAdmin, requireStallCoordinator } from '../rbac.js';
 import { calculateStallFinancials, calculateEventSummary } from '../financials.js';
 import realtime from '../ws.js';
@@ -45,10 +40,90 @@ router.get('/summary/event', (req, res) => {
   res.json({ summary });
 });
 
+// ── Member: Direct Join Stall using 12-char invite code ───────────────────────
+router.post('/join-request', requireAuth, (req, res) => {
+  const { invite_code, stall_code } = req.body;
+  const rawCode = invite_code || stall_code;
+  if (!rawCode || !rawCode.trim()) {
+    return res.status(400).json({ error: 'Please enter a valid 12-digit stall invite code.' });
+  }
+
+  const cleanCode = rawCode.trim();
+  const stall = db.data.stalls.find(s => s.invite_code === cleanCode);
+  if (!stall) {
+    return res.status(404).json({ error: 'Invalid Stall Invite Code. Please verify the 12-character code with your Stall Coordinator.' });
+  }
+
+  if (stall.status === 'discontinued') {
+    return res.status(400).json({ error: 'This stall is currently inactive/discontinued.' });
+  }
+
+  // Instantly activate member into this stall — direct access, no manual waiting!
+  const updatedUser = db.updateUser(req.user.id, {
+    role: 'member',
+    stall_id: stall.id,
+    stall_name_desired: stall.name,
+    designation: req.user.designation || 'Team Member'
+  });
+
+  // Ensure member has a badge code
+  if (!updatedUser.badge_code) {
+    updatedUser.badge_code = 'M-' + Math.floor(1000 + Math.random() * 9000);
+    db.save();
+  }
+
+  // Notify coordinator in real-time
+  const notif = {
+    id: 'notif-' + uuidv4().slice(0, 8),
+    target_role: 'coordinator',
+    target_scope_id: stall.id,
+    title: 'New Member Joined Stall 🎉',
+    message: `${req.user.name} entered your Stall Invite Code and joined "${stall.name}".`,
+    type: 'member_joined',
+    created_by: req.user.id,
+    created_at: new Date().toISOString()
+  };
+  if (!db.data.notifications) db.data.notifications = [];
+  db.data.notifications.unshift(notif);
+
+  db.logAudit(
+    req.user.id, req.user.name,
+    'MEMBER_JOINED_STALL', 'STALL', stall.id,
+    `${req.user.name} joined stall "${stall.name}" using invite code.`
+  );
+
+  db.save();
+
+  // Real-time broadcast to coordinator and member
+  realtime.broadcast('STALL_UPDATED', { stall_id: stall.id });
+  realtime.broadcast('MEMBER_JOIN_APPROVED', {
+    user_id: req.user.id,
+    stall_id: stall.id,
+    stall_name: stall.name
+  });
+
+  res.json({
+    success: true,
+    message: `🎉 Successfully joined "${stall.name}"! Access granted.`,
+    user: {
+      ...updatedUser,
+      stall_name: stall.name,
+      stall_category: stall.category
+    },
+    stall: { id: stall.id, name: stall.name, category: stall.category }
+  });
+});
+
 // ── Single stall details ──────────────────────────────────────────────────────
 router.get('/:stallId', (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
   if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  // Make sure stall has invite code
+  if (!stall.invite_code) {
+    stall.invite_code = generateInviteCode();
+    db.save();
+  }
 
   const financials = calculateStallFinancials(stall.id, db.data);
   const coordinator = db.data.users.find(u => u.id === stall.coordinator_user_id);
@@ -67,6 +142,9 @@ router.get('/:stallId', (req, res) => {
 
   const catalog = db.data.pos_catalog.filter(c => c.stall_id === stall.id);
   const attendance = db.data.attendance_records.filter(a => a.stall_id === stall.id);
+  const joinRequests = (db.data.stall_join_requests || []).filter(
+    r => r.stall_id === stall.id && r.status === 'pending'
+  );
 
   res.json({
     stall: {
@@ -77,38 +155,52 @@ router.get('/:stallId', (req, res) => {
       expenses,
       submissions: { verified: verifiedSubmissions, pending: pendingSubmissions, rejected: rejectedSubmissions },
       catalog,
-      attendance
+      attendance,
+      join_requests: joinRequests
     }
   });
 });
 
 // ── Admin: Create new stall ───────────────────────────────────────────────────
 router.post('/', requireAdminMiddleware, (req, res) => {
-  const { name, category, coordinator_uid, location, banner_color } = req.body;
+  const { name, category, coordinator_uid, coordinator_name, coordinator_phone, location, banner_color, allotted_number } = req.body;
   if (!name || !category) {
     return res.status(400).json({ error: 'Stall name and category are required' });
   }
 
-  // Find coordinator by UID if provided
+  // Find coordinator by UID if provided, or create/assign if coordinator_name provided
   let coordinatorUser = null;
   if (coordinator_uid) {
     coordinatorUser = db.getUserByUid(coordinator_uid);
-    if (!coordinatorUser) {
-      return res.status(404).json({ error: 'Coordinator user not found' });
-    }
+  } else if (coordinator_name && coordinator_name.trim()) {
+    const cName = coordinator_name.trim();
+    const cPhone = coordinator_phone ? coordinator_phone.trim() : null;
+    // Create new coordinator user profile
+    const coordId = 'usr-coord-' + uuidv4().slice(0, 8);
+    coordinatorUser = db.createUser({
+      id: coordId,
+      name: cName,
+      email: `${cName.toLowerCase().replace(/\s+/g, '.')}.${Math.floor(100 + Math.random() * 900)}@stall.vertex`,
+      role: 'coordinator',
+      phone: cPhone,
+      designation: 'Stall Coordinator'
+    });
   }
 
   const stallId = 'stl-' + uuidv4().slice(0, 8);
+  const inviteCode = generateInviteCode();
 
   const newStall = {
     id: stallId,
-    name,
-    category,
+    name: name.trim(),
+    category: category.trim(),
     event_id: 'ev-bp-2026',
     coordinator_user_id: coordinatorUser?.id || null,
     status: 'active',
     banner_color: banner_color || '#4F46E5',
     location: location || 'Main Courtyard',
+    allotted_number: allotted_number || null,
+    invite_code: inviteCode,
     created_at: new Date().toISOString()
   };
 
@@ -122,7 +214,7 @@ router.post('/', requireAdminMiddleware, (req, res) => {
   db.logAudit(
     req.user.id, req.user.name,
     'STALL_CREATED', 'STALL', stallId,
-    `Admin created stall "${name}" (${category})${coordinatorUser ? ` with coordinator ${coordinatorUser.name}` : ''}.`
+    `Admin created stall "${name}" (${category}) (Invite Code: ${inviteCode})${coordinatorUser ? ` with coordinator ${coordinatorUser.name}` : ''}.`
   );
 
   db.save();
@@ -131,62 +223,176 @@ router.post('/', requireAdminMiddleware, (req, res) => {
   res.status(201).json({ stall: newStall });
 });
 
-// ── Coordinator: Create/setup own stall (self-service after role assignment) ──
-router.post('/setup', requireAuth, (req, res) => {
-  if (!req.user || req.user.role !== 'coordinator') {
-    return res.status(403).json({ error: 'Only coordinators can set up a stall.' });
-  }
-  if (req.user.stall_id) {
-    // Already has a stall — return it
-    const existingStall = db.data.stalls.find(s => s.id === req.user.stall_id);
-    return res.json({ stall: existingStall, message: 'Stall already configured.' });
-  }
+// ── Admin: Update stall details ───────────────────────────────────────────────
+router.put('/:stallId', requireAdminMiddleware, (req, res) => {
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
 
-  const { name, category, location, banner_color, items } = req.body;
-  if (!name) return res.status(400).json({ error: 'Stall name is required.' });
+  const { name, category, location, banner_color, coordinator_uid, allotted_number, status } = req.body;
 
-  const stallId = 'stl-' + uuidv4().slice(0, 8);
-  const newStall = {
-    id: stallId,
-    name: name.trim(),
-    category: category || 'General',
-    event_id: 'ev-bp-2026',
-    coordinator_user_id: req.user.id,
-    status: 'active',
-    banner_color: banner_color || '#4F46E5',
-    location: location || 'Main Courtyard',
-    created_at: new Date().toISOString()
-  };
+  if (name) stall.name = name.trim();
+  if (category) stall.category = category.trim();
+  if (location !== undefined) stall.location = location ? location.trim() : stall.location;
+  if (banner_color !== undefined) stall.banner_color = banner_color;
+  if (allotted_number !== undefined) stall.allotted_number = allotted_number;
+  if (status && ['active', 'discontinued', 'warning'].includes(status)) stall.status = status;
 
-  db.data.stalls.push(newStall);
-  db.updateUser(req.user.id, { stall_id: stallId });
-
-  // Add initial catalog items if provided
-  if (Array.isArray(items)) {
-    for (const item of items) {
-      if (item.name && item.price && Number(item.price) > 0) {
-        db.data.pos_catalog.push({
-          id: 'cat-' + uuidv4().slice(0, 8),
-          stall_id: stallId,
-          name: item.name.trim(),
-          price: Math.round(Number(item.price)),
-          category: item.category || 'Standard'
-        });
+  // Handle coordinator change if provided
+  if (coordinator_uid !== undefined && coordinator_uid !== stall.coordinator_user_id) {
+    // If old coordinator existed, we keep them as coordinator or unbind stall
+    const oldCoord = stall.coordinator_user_id ? db.getUserByUid(stall.coordinator_user_id) : null;
+    
+    if (coordinator_uid) {
+      const newCoord = db.getUserByUid(coordinator_uid);
+      if (newCoord) {
+        stall.coordinator_user_id = newCoord.id;
+        db.updateUser(newCoord.id, { role: 'coordinator', stall_id: stall.id });
       }
+    } else {
+      stall.coordinator_user_id = null;
     }
   }
 
   db.logAudit(
     req.user.id, req.user.name,
-    'STALL_SETUP', 'STALL', stallId,
-    `Coordinator "${req.user.name}" set up stall "${name}" with ${Array.isArray(items) ? items.length : 0} catalog items.`
+    'STALL_UPDATED', 'STALL', stall.id,
+    `Admin updated stall details for "${stall.name}" (${stall.category}).`
   );
 
   db.save();
-  realtime.broadcast('STALL_CREATED', { stall: newStall });
+  realtime.broadcast('STALL_UPDATED', { stall });
 
-  const catalogItems = db.data.pos_catalog.filter(c => c.stall_id === stallId);
-  res.status(201).json({ stall: newStall, catalog: catalogItems });
+  res.json({ stall, message: 'Stall updated successfully.' });
+});
+
+// ── Admin: Delete stall ───────────────────────────────────────────────────────
+router.delete('/:stallId', requireAdminMiddleware, (req, res) => {
+  const stallIndex = db.data.stalls.findIndex(s => s.id === req.params.stallId);
+  if (stallIndex === -1) return res.status(404).json({ error: 'Stall not found' });
+
+  const stall = db.data.stalls[stallIndex];
+
+  // Unlink all members and coordinator associated with this stall
+  (db.data.users || []).forEach(u => {
+    if (u.stall_id === stall.id) {
+      u.stall_id = null;
+      if (u.role === 'member') u.role = 'pending_member';
+      if (u.role === 'coordinator') u.role = 'pending_coordinator';
+    }
+  });
+
+  // Remove the stall
+  db.data.stalls.splice(stallIndex, 1);
+
+  db.logAudit(
+    req.user.id, req.user.name,
+    'STALL_DELETED', 'STALL', stall.id,
+    `Admin permanently deleted stall "${stall.name}".`
+  );
+
+  db.save();
+  realtime.broadcast('STALL_DELETED', { stall_id: stall.id });
+
+  res.json({ success: true, message: `Stall "${stall.name}" has been deleted.` });
+});
+
+
+// ── Coordinator / Admin: Get pending join requests for a stall ────────────────
+router.get('/:stallId/join-requests', requireAuth, (req, res) => {
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  if (req.user.role !== 'admin' && (req.user.role !== 'coordinator' || req.user.stall_id !== stall.id)) {
+    return res.status(403).json({ error: 'Only stall coordinator or admin can view join requests' });
+  }
+
+  const requests = (db.data.stall_join_requests || []).filter(
+    r => r.stall_id === stall.id && r.status === 'pending'
+  );
+  res.json({ requests });
+});
+
+// ── Coordinator / Admin: Approve join request ─────────────────────────────────
+router.post('/:stallId/join-requests/:requestId/approve', requireAuth, (req, res) => {
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  if (req.user.role !== 'admin' && (req.user.role !== 'coordinator' || req.user.stall_id !== stall.id)) {
+    return res.status(403).json({ error: 'Only stall coordinator or admin can approve join requests' });
+  }
+
+  const joinReq = (db.data.stall_join_requests || []).find(r => r.id === req.params.requestId);
+  if (!joinReq) return res.status(404).json({ error: 'Join request not found' });
+
+  joinReq.status = 'approved';
+  joinReq.approved_by = req.user.id;
+  joinReq.approved_at = new Date().toISOString();
+
+  // Assign user to this stall as full active member
+  const memberUser = db.getUserByUid(joinReq.user_id);
+  if (memberUser) {
+    db.updateUser(memberUser.id, {
+      role: 'member',
+      stall_id: stall.id,
+      designation: memberUser.designation || 'Team Member'
+    });
+  }
+
+  db.logAudit(
+    req.user.id, req.user.name,
+    'MEMBER_JOIN_APPROVED', 'STALL', stall.id,
+    `${req.user.name} approved join request for ${joinReq.user_name} to join stall "${stall.name}".`
+  );
+
+  // Send notification to member
+  const notif = {
+    id: 'notif-' + uuidv4().slice(0, 8),
+    target_role: 'member',
+    target_scope_id: joinReq.user_id,
+    title: 'Join Request Approved 🎉',
+    message: `You are now an active member of ${stall.name}!`,
+    type: 'join_approved',
+    created_by: req.user.id,
+    created_at: new Date().toISOString()
+  };
+  db.data.notifications.unshift(notif);
+  db.save();
+
+  realtime.broadcast('MEMBER_JOIN_APPROVED', {
+    request_id: joinReq.id,
+    user_id: joinReq.user_id,
+    stall_id: stall.id,
+    stall_name: stall.name
+  });
+
+  res.json({ message: `Approved ${joinReq.user_name} as member of ${stall.name}.`, request: joinReq });
+});
+
+// ── Coordinator / Admin: Reject join request ──────────────────────────────────
+router.post('/:stallId/join-requests/:requestId/reject', requireAuth, (req, res) => {
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  if (req.user.role !== 'admin' && (req.user.role !== 'coordinator' || req.user.stall_id !== stall.id)) {
+    return res.status(403).json({ error: 'Only stall coordinator or admin can reject join requests' });
+  }
+
+  const joinReq = (db.data.stall_join_requests || []).find(r => r.id === req.params.requestId);
+  if (!joinReq) return res.status(404).json({ error: 'Join request not found' });
+
+  joinReq.status = 'rejected';
+  joinReq.rejected_by = req.user.id;
+  joinReq.rejected_at = new Date().toISOString();
+
+  db.save();
+
+  realtime.broadcast('MEMBER_JOIN_REJECTED', {
+    request_id: joinReq.id,
+    user_id: joinReq.user_id,
+    stall_id: stall.id
+  });
+
+  res.json({ message: `Rejected join request for ${joinReq.user_name}.`, request: joinReq });
 });
 
 // ── Admin: Change stall status ────────────────────────────────────────────────
@@ -227,6 +433,187 @@ router.patch('/:stallId/status', requireAdminMiddleware, (req, res) => {
 
   res.json({ stall });
 });
+
+// ── Admin Manage Action 1: Issue Warning [with context] ────────────────────────
+router.post('/:stallId/manage/warning', requireAdminMiddleware, (req, res) => {
+  const { reason } = req.body;
+  if (!reason || !reason.trim()) {
+    return res.status(400).json({ error: 'Warning context/reason is required' });
+  }
+
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  const cleanReason = reason.trim();
+  stall.last_warning = cleanReason;
+  stall.last_warning_time = new Date().toISOString();
+
+  // Send notification to stall coordinator & members
+  const notif = {
+    id: 'notif-' + uuidv4().slice(0, 8),
+    target_role: 'coordinator',
+    target_scope_id: stall.id,
+    title: `⚠️ Official Warning: ${stall.name}`,
+    message: cleanReason,
+    type: 'warning',
+    created_by: req.user.id,
+    read_by: [],
+    created_at: new Date().toISOString()
+  };
+  if (!db.data.notifications) db.data.notifications = [];
+  db.data.notifications.unshift(notif);
+
+  db.logAudit(
+    req.user.id, req.user.name,
+    'STALL_WARNING_ISSUED', 'STALL', stall.id,
+    `Issued warning to "${stall.name}": ${cleanReason}`
+  );
+
+  db.save();
+  realtime.broadcast('STALL_UPDATED', { stall });
+  realtime.broadcast('NOTIFICATION_CREATED', { notification: notif });
+
+  res.json({ success: true, message: `Warning issued to ${stall.name}.`, stall });
+});
+
+// ── Admin Manage Action 2: Discontinue Them (Coordinator or Member) ────────────
+router.post('/:stallId/manage/discontinue-user', requireAdminMiddleware, (req, res) => {
+  const { user_id, reason } = req.body;
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required to discontinue member' });
+  }
+
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  const targetUser = db.getUserByUid(user_id);
+  if (!targetUser) return res.status(404).json({ error: 'User profile not found' });
+
+  const prevRole = targetUser.role;
+  targetUser.stall_id = null;
+  targetUser.role = prevRole === 'coordinator' ? 'pending_coordinator' : 'pending_member';
+  targetUser.discontinued = true;
+  targetUser.discontinue_reason = (reason || 'Discontinued by Administrator').trim();
+
+  // If coordinator was discontinued, unbind coordinator from stall
+  if (stall.coordinator_user_id === targetUser.id) {
+    stall.coordinator_user_id = null;
+  }
+
+  // Send direct notice
+  const notif = {
+    id: 'notif-' + uuidv4().slice(0, 8),
+    target_role: prevRole,
+    target_scope_id: targetUser.id,
+    title: '⚠️ Role Discontinued Notice',
+    message: `You have been discontinued from "${stall.name}". Reason: ${targetUser.discontinue_reason}`,
+    type: 'warning',
+    created_by: req.user.id,
+    read_by: [],
+    created_at: new Date().toISOString()
+  };
+  if (!db.data.notifications) db.data.notifications = [];
+  db.data.notifications.unshift(notif);
+
+  db.logAudit(
+    req.user.id, req.user.name,
+    'USER_DISCONTINUED_FROM_STALL', 'USER', targetUser.id,
+    `Admin discontinued ${targetUser.name} (${prevRole}) from stall "${stall.name}". Reason: ${targetUser.discontinue_reason}`
+  );
+
+  db.save();
+  realtime.broadcast('STALL_UPDATED', { stall });
+  realtime.broadcast('USER_UPDATED', { user: targetUser });
+
+  res.json({ success: true, message: `Discontinued ${targetUser.name} from ${stall.name}.`, user: targetUser });
+});
+
+// ── Admin Manage Action 3: Flag Them [with context] ───────────────────────────
+router.post('/:stallId/manage/flag', requireAdminMiddleware, (req, res) => {
+  const { target_type, user_id, reason } = req.body;
+  if (!reason || !reason.trim()) {
+    return res.status(400).json({ error: 'Flagging context/reason is required' });
+  }
+
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  const cleanReason = reason.trim();
+
+  if (target_type === 'user' && user_id) {
+    const targetUser = db.getUserByUid(user_id);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    targetUser.is_flagged = true;
+    targetUser.flag_reason = cleanReason;
+    targetUser.flagged_at = new Date().toISOString();
+
+    db.logAudit(
+      req.user.id, req.user.name,
+      'FLAG_ISSUED', 'USER', targetUser.id,
+      `Flagged user ${targetUser.name} (${stall.name}): ${cleanReason}`
+    );
+  } else {
+    // Flag the stall
+    stall.is_flagged = true;
+    stall.flag_reason = cleanReason;
+    stall.flagged_at = new Date().toISOString();
+
+    db.logAudit(
+      req.user.id, req.user.name,
+      'FLAG_ISSUED', 'STALL', stall.id,
+      `Flagged stall "${stall.name}": ${cleanReason}`
+    );
+  }
+
+  db.save();
+  realtime.broadcast('STALL_UPDATED', { stall });
+
+  res.json({ success: true, message: `Flagged successfully with context.`, stall });
+});
+
+// ── Admin Manage Action 4: Stall Discontinue [with context] ───────────────────
+router.post('/:stallId/manage/discontinue', requireAdminMiddleware, (req, res) => {
+  const { reason } = req.body;
+  if (!reason || !reason.trim()) {
+    return res.status(400).json({ error: 'Context/reason for stall discontinuation is required' });
+  }
+
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  const cleanReason = reason.trim();
+  stall.status = 'discontinued';
+  stall.discontinue_reason = cleanReason;
+  stall.discontinued_at = new Date().toISOString();
+
+  // Send high priority notification to coordinator and members
+  const notif = {
+    id: 'notif-' + uuidv4().slice(0, 8),
+    target_role: 'coordinator',
+    target_scope_id: stall.id,
+    title: `🛑 STALL DISCONTINUED: ${stall.name}`,
+    message: `This stall has been formally discontinued by Administrator. Context: ${cleanReason}`,
+    type: 'warning',
+    created_by: req.user.id,
+    read_by: [],
+    created_at: new Date().toISOString()
+  };
+  if (!db.data.notifications) db.data.notifications = [];
+  db.data.notifications.unshift(notif);
+
+  db.logAudit(
+    req.user.id, req.user.name,
+    'STALL_DISCONTINUED', 'STALL', stall.id,
+    `Admin discontinued stall "${stall.name}". Context: ${cleanReason}`
+  );
+
+  db.save();
+  realtime.broadcast('STALL_UPDATED', { stall });
+  realtime.broadcast('NOTIFICATION_CREATED', { notification: notif });
+
+  res.json({ success: true, message: `Stall "${stall.name}" has been discontinued.`, stall });
+});
+
 
 // ── Expense logging ───────────────────────────────────────────────────────────
 router.post('/:stallId/expenses', requireAuth, (req, res) => {
@@ -319,6 +706,80 @@ router.delete('/:stallId/catalog/:itemId', requireAuth, (req, res) => {
   db.save();
 
   res.json({ message: 'Item removed from catalog.' });
+});
+
+// ── Stall Team Members Management ─────────────────────────────────────────────
+// Add a team member to the stall (by Coordinator or Admin)
+router.post('/:stallId/members', requireAuth, (req, res) => {
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  if (req.user.role !== 'admin' && (req.user.role !== 'coordinator' || req.user.stall_id !== stall.id)) {
+    return res.status(403).json({ error: 'Only the stall coordinator or admin can add team members to this stall' });
+  }
+
+  const { name, phone, designation, badge_code, email } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Member full name is required' });
+  }
+
+  // Generate unique badge code and member ID
+  const memberId = 'usr-mbr-' + uuidv4().slice(0, 8);
+  const badge = badge_code && badge_code.trim()
+    ? badge_code.trim().toUpperCase()
+    : `M-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const newMember = {
+    id: memberId,
+    name: name.trim(),
+    email: email ? email.trim() : `${name.trim().toLowerCase().replace(/\s+/g, '.')}.${Math.floor(100 + Math.random() * 900)}@stall.vertex`,
+    role: 'member',
+    stall_id: stall.id,
+    phone: phone ? phone.trim() : null,
+    designation: designation ? designation.trim() : 'Team Member',
+    badge_code: badge,
+    created_at: new Date().toISOString()
+  };
+
+  db.data.users.push(newMember);
+  db.logAudit(
+    req.user.id, req.user.name,
+    'MEMBER_ADDED_TO_STALL', 'STALL', stall.id,
+    `${req.user.name} added member "${newMember.name}" (${newMember.designation}) with badge ${newMember.badge_code} to stall "${stall.name}".`
+  );
+
+  db.save();
+  realtime.broadcast('STALL_UPDATED', { stall_id: stall.id });
+
+  res.status(201).json({ member: newMember, message: 'Member added to stall team successfully.' });
+});
+
+// Remove a team member from the stall (by Coordinator or Admin)
+router.delete('/:stallId/members/:memberId', requireAuth, (req, res) => {
+  const stall = db.data.stalls.find(s => s.id === req.params.stallId);
+  if (!stall) return res.status(404).json({ error: 'Stall not found' });
+
+  if (req.user.role !== 'admin' && (req.user.role !== 'coordinator' || req.user.stall_id !== stall.id)) {
+    return res.status(403).json({ error: 'Only the stall coordinator or admin can remove team members from this stall' });
+  }
+
+  const member = db.data.users.find(u => u.id === req.params.memberId && u.stall_id === stall.id);
+  if (!member) return res.status(404).json({ error: 'Member not found in this stall' });
+
+  // Unlink member from stall
+  member.stall_id = null;
+  member.role = 'pending_member';
+  db.save();
+
+  db.logAudit(
+    req.user.id, req.user.name,
+    'MEMBER_REMOVED_FROM_STALL', 'STALL', stall.id,
+    `${req.user.name} removed member "${member.name}" from stall "${stall.name}".`
+  );
+
+  realtime.broadcast('STALL_UPDATED', { stall_id: stall.id });
+
+  res.json({ message: 'Member removed from stall.' });
 });
 
 export default router;

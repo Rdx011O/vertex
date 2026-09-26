@@ -11,7 +11,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
 let _app = null;
@@ -50,5 +51,6 @@ export {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 };

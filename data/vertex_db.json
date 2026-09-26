@@ -12,36 +12,1218 @@
   ],
   "users": [
     {
-      "id": "R2g9l0DRdmOxpCQRC8lGHRGOdwl2",
-      "name": "aadityabattin7",
-      "email": "aadityabattin7@gmail.com",
-      "role": "admin",
+      "id": "BvbzxmQ3rLhk2wD0wKMkadxyn7K2",
+      "name": "aaditya.battin.ec24",
+      "email": "aaditya.battin.ec24@pravaraengg.org.in",
+      "role": "pending",
       "stall_id": null,
       "phone": null,
+      "designation": null,
+      "username": null,
+      "college_name": null,
+      "stall_name_desired": null,
+      "stall_category_desired": null,
+      "stall_alloted_number": null,
+      "badge_code": "BP-KCCR2X",
+      "created_at": "2026-09-25T13:10:00.649Z"
+    },
+    {
+      "id": "VOlJgrjQVuQTVFPORxzGk0uBfGf2",
+      "name": "aaditya.battin.ec24",
+      "email": "aaditya.battin.ec24@pravaraengg.org.in",
+      "role": "pending",
+      "stall_id": null,
+      "phone": null,
+      "designation": null,
+      "username": null,
+      "college_name": null,
+      "stall_name_desired": null,
+      "stall_category_desired": null,
+      "stall_alloted_number": null,
+      "badge_code": "BP-QO7ZRN",
+      "created_at": "2026-09-25T13:17:22.607Z"
+    },
+    {
+      "id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "name": "aaditya battin",
+      "email": "aaditya.battin.ec24@pravaraengg.org.in",
+      "role": "admin",
+      "stall_id": null,
+      "phone": "+917038676118",
       "designation": "System Administrator",
-      "badge_code": "BP-LNIUR6",
-      "created_at": "2026-09-23T19:11:18.611Z"
+      "username": "admin",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": null,
+      "stall_category_desired": null,
+      "stall_alloted_number": null,
+      "badge_code": "BP-9F3LLK",
+      "created_at": "2026-09-25T18:18:49.581Z",
+      "qr_image_url": "data:image/png;base64,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",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:ytwcBvvVzvSUm4JmFlhjwRzS0Jy1:BP-9F3LLK:admin:none"
+    },
+    {
+      "id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "name": "stall cor",
+      "email": "aadityabattin7@gmail.com",
+      "role": "coordinator",
+      "stall_id": "stl-62f13308",
+      "phone": null,
+      "designation": "Stall Coordinator",
+      "username": "username",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": "fesla",
+      "stall_category_desired": "food",
+      "stall_alloted_number": "7-GB",
+      "badge_code": "COORD-62f13308-1SF5QL",
+      "created_at": "2026-09-25T18:20:07.362Z",
+      "qr_image_url": "data:image/png;base64,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",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:1sF5Ql5FEEgqAq3a90XqGW0HrkI3:COORD-62f13308-1SF5QL:coordinator:stl-62f13308"
+    },
+    {
+      "id": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "name": "memba",
+      "email": "aadiprec@gmail.com",
+      "role": "member",
+      "stall_id": "stl-62f13308",
+      "phone": null,
+      "designation": "Team Member",
+      "username": "userr",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": "fesla",
+      "stall_category_desired": null,
+      "stall_alloted_number": null,
+      "badge_code": "MBR-62f13308-U3QNWX",
+      "created_at": "2026-09-25T18:20:35.547Z",
+      "qr_image_url": "data:image/png;base64,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",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:U3qnwxD6nhOJe8ldfyj65ONlq432:MBR-62f13308-U3QNWX:member:stl-62f13308"
     }
   ],
   "stalls": [
     {
-      "id": "stl-15f5f82f",
-      "name": "dsfsdd",
-      "category": "Robotics",
+      "id": "stl-62f13308",
+      "name": "fesla",
+      "category": "food",
       "event_id": "ev-bp-2026",
-      "coordinator_user_id": null,
+      "coordinator_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
       "status": "active",
       "banner_color": "#4F46E5",
-      "location": "56",
-      "created_at": "2026-09-23T19:34:39.341Z"
+      "location": "Booth 7-GB",
+      "allotted_number": "7-GB",
+      "invite_code": "rNxHRThfX5JS",
+      "created_at": "2026-09-25T18:20:07.361Z"
     }
   ],
-  "stall_expenses": [],
-  "sales_submissions": [],
-  "sale_line_items": [],
-  "attendance_records": [],
-  "notifications": [],
+  "stall_expenses": [
+    {
+      "id": "exp-8ce39aa8",
+      "stall_id": "stl-15f5f82f",
+      "category": "Banners & Marketing",
+      "name": "banner",
+      "amount": 800,
+      "logged_by": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "timestamp": "2026-09-25T17:17:26.515Z"
+    },
+    {
+      "id": "exp-6f62874f",
+      "stall_id": "stl-62f13308",
+      "category": "Hardware & Kits",
+      "name": "test",
+      "amount": 1,
+      "logged_by": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "timestamp": "2026-09-25T18:21:19.428Z"
+    },
+    {
+      "id": "exp-0c907472",
+      "stall_id": "stl-62f13308",
+      "category": "Packaging",
+      "name": "extra",
+      "amount": 600,
+      "logged_by": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "timestamp": "2026-09-26T10:10:10.414Z"
+    }
+  ],
+  "sales_submissions": [
+    {
+      "id": "sub-c059e9a0",
+      "stall_id": "stl-15f5f82f",
+      "submitted_by_user_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "online_total": 300,
+      "offline_total": 0,
+      "total_amount": 300,
+      "status": "verified",
+      "verified_by_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "verified_at": "2026-09-25T17:17:07.971Z",
+      "idempotency_key": "idem-stl-15f5f82f-1790356611982",
+      "notes": "Batch submission with 1 line items",
+      "submitted_at": "2026-09-25T17:16:51.987Z"
+    },
+    {
+      "id": "sub-c7d913a4",
+      "stall_id": "stl-15f5f82f",
+      "submitted_by_user_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "online_total": 675,
+      "offline_total": 0,
+      "total_amount": 675,
+      "status": "verified",
+      "verified_by_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "verified_at": "2026-09-25T17:18:12.521Z",
+      "idempotency_key": "idem-stl-15f5f82f-1790356684541",
+      "notes": "Batch submission with 1 line items",
+      "submitted_at": "2026-09-25T17:18:04.545Z"
+    },
+    {
+      "id": "sub-39e5e517",
+      "stall_id": "stl-62f13308",
+      "submitted_by_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "online_total": 884,
+      "offline_total": 0,
+      "total_amount": 884,
+      "status": "verified",
+      "verified_by_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "verified_at": "2026-09-26T10:05:17.227Z",
+      "idempotency_key": "idem-stl-62f13308-1790360842678",
+      "notes": "Batch submission with 2 line items",
+      "submitted_at": "2026-09-25T18:27:22.684Z"
+    },
+    {
+      "id": "sub-8e7b949e",
+      "stall_id": "stl-62f13308",
+      "submitted_by_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "online_total": 360,
+      "offline_total": 0,
+      "total_amount": 360,
+      "status": "verified",
+      "verified_by_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "verified_at": "2026-09-26T10:07:25.976Z",
+      "idempotency_key": "idem-stl-62f13308-1790417230970",
+      "notes": "Batch submission with 1 line items",
+      "submitted_at": "2026-09-26T10:07:19.958Z"
+    },
+    {
+      "id": "sub-1fbf6d56",
+      "stall_id": "stl-62f13308",
+      "submitted_by_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "online_total": 200,
+      "offline_total": 0,
+      "total_amount": 200,
+      "status": "verified",
+      "verified_by_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "verified_at": "2026-09-26T10:07:27.166Z",
+      "idempotency_key": "idem-stl-62f13308-1790417244155",
+      "notes": "Batch submission with 1 line items",
+      "submitted_at": "2026-09-26T10:07:24.162Z"
+    }
+  ],
+  "sale_line_items": [
+    {
+      "id": "item-b56454d7",
+      "submission_id": "sub-c059e9a0",
+      "item_name": "tatto",
+      "unit_price": 25,
+      "qty": 12,
+      "payment_mode": "online"
+    },
+    {
+      "id": "item-10427b8c",
+      "submission_id": "sub-c7d913a4",
+      "item_name": "tatto",
+      "unit_price": 25,
+      "qty": 27,
+      "payment_mode": "online"
+    },
+    {
+      "id": "item-79a7aff5",
+      "submission_id": "sub-39e5e517",
+      "item_name": "dosa",
+      "unit_price": 40,
+      "qty": 22,
+      "payment_mode": "online"
+    },
+    {
+      "id": "item-da724cff",
+      "submission_id": "sub-39e5e517",
+      "item_name": "dosa",
+      "unit_price": 4,
+      "qty": 1,
+      "payment_mode": "online"
+    },
+    {
+      "id": "item-bec61b1f",
+      "submission_id": "sub-8e7b949e",
+      "item_name": "dosa",
+      "unit_price": 40,
+      "qty": 9,
+      "payment_mode": "online"
+    },
+    {
+      "id": "item-9cf62fa1",
+      "submission_id": "sub-1fbf6d56",
+      "item_name": "dosa",
+      "unit_price": 40,
+      "qty": 5,
+      "payment_mode": "online"
+    }
+  ],
+  "attendance_records": [
+    {
+      "id": "att-53e701b9",
+      "member_user_id": "qL9ks4chuPQKnzIqS2IWtwyFPpA2",
+      "stall_id": "stl-15f5f82f",
+      "status": "pending_coordinator",
+      "confirmed_by_user_id": null,
+      "timestamp": "2026-09-25T17:15:12.569Z",
+      "date": "2026-09-25",
+      "verified_method": "LOCATION_REQUEST"
+    },
+    {
+      "id": "att-db5d0e94",
+      "member_user_id": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "stall_id": "stl-62f13308",
+      "date": "2026-09-25",
+      "status": "confirmed",
+      "confirmed_by_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "timestamp": "2026-09-26T11:58:10.270Z",
+      "verified_method": "QR_SCAN"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-91191ba5",
+      "target_role": "member",
+      "target_scope_id": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "title": "Badge Scanned & Confirmed ✅",
+      "message": "Your badge was scanned by stall cor. Attendance confirmed!",
+      "type": "attendance_confirmed",
+      "created_by": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "read_by": [],
+      "created_at": "2026-09-26T11:58:10.272Z"
+    },
+    {
+      "id": "notif-3be7a9f1",
+      "target_role": "member",
+      "target_scope_id": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "title": "Badge Scanned & Confirmed ✅",
+      "message": "Your badge was scanned by stall cor. Attendance confirmed!",
+      "type": "attendance_confirmed",
+      "created_by": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "read_by": [],
+      "created_at": "2026-09-26T10:24:22.663Z"
+    },
+    {
+      "id": "notif-bfa25c67",
+      "target_role": "all",
+      "target_scope_id": "stl-62f13308",
+      "title": "Sales Log Verified: fesla",
+      "message": "Admin verified ₹200. Gross sales & leaderboard updated live!",
+      "type": "sale_verified",
+      "created_by": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "created_at": "2026-09-26T10:07:27.168Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432"
+      ]
+    },
+    {
+      "id": "notif-85a7f951",
+      "target_role": "all",
+      "target_scope_id": "stl-62f13308",
+      "title": "Sales Log Verified: fesla",
+      "message": "Admin verified ₹360. Gross sales & leaderboard updated live!",
+      "type": "sale_verified",
+      "created_by": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "created_at": "2026-09-26T10:07:25.978Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432"
+      ]
+    },
+    {
+      "id": "notif-78a37f0b",
+      "target_role": "admin",
+      "target_scope_id": null,
+      "title": "New Sales Log: fesla",
+      "message": "stall cor submitted ₹200 (1 items) for verification.",
+      "type": "verification_pending",
+      "created_by": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "created_at": "2026-09-26T10:07:24.165Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432"
+      ]
+    },
+    {
+      "id": "notif-50e0409b",
+      "target_role": "admin",
+      "target_scope_id": null,
+      "title": "New Sales Log: fesla",
+      "message": "stall cor submitted ₹360 (1 items) for verification.",
+      "type": "verification_pending",
+      "created_by": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "created_at": "2026-09-26T10:07:19.960Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432"
+      ]
+    },
+    {
+      "id": "notif-6b190b14",
+      "target_role": "all",
+      "target_scope_id": "stl-62f13308",
+      "title": "Sales Log Verified: fesla",
+      "message": "Admin verified ₹884. Gross sales & leaderboard updated live!",
+      "type": "sale_verified",
+      "created_by": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "created_at": "2026-09-26T10:05:17.231Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432"
+      ]
+    },
+    {
+      "id": "notif-6d45f500",
+      "target_role": "admin",
+      "target_scope_id": null,
+      "title": "New Sales Log: fesla",
+      "message": "stall cor submitted ₹884 (2 items) for verification.",
+      "type": "verification_pending",
+      "created_by": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "created_at": "2026-09-25T18:27:22.685Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-7c9ddd71",
+      "target_role": "all",
+      "target_scope_id": null,
+      "title": "asdsd",
+      "message": "yttut",
+      "type": "announcement",
+      "created_by": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "created_at": "2026-09-25T18:22:58.409Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-1a8e9f46",
+      "target_role": "member",
+      "target_scope_id": null,
+      "title": "asdsd",
+      "message": "retret",
+      "type": "announcement",
+      "created_by": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "created_at": "2026-09-25T18:22:44.872Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-addd2351",
+      "target_role": "coordinator",
+      "target_scope_id": null,
+      "title": "asdsd",
+      "message": "dsfsf",
+      "type": "announcement",
+      "created_by": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "created_at": "2026-09-25T18:22:25.521Z",
+      "read_by": [
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-a7ea273e",
+      "target_role": "coordinator",
+      "target_scope_id": "stl-62f13308",
+      "title": "New Member Joined Stall 🎉",
+      "message": "memba entered your Stall Invite Code and joined \"fesla\".",
+      "type": "member_joined",
+      "created_by": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "created_at": "2026-09-25T18:20:40.441Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-1bad650a",
+      "target_role": "coordinator",
+      "target_scope_id": "stl-67ae3143",
+      "title": "⚠️ Stall Discontinued by Admin",
+      "message": "Stall status updated to discontinued. Please contact Admin.",
+      "type": "warning",
+      "created_by": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "created_at": "2026-09-25T17:49:02.920Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-5d141fe8",
+      "target_role": "all",
+      "target_scope_id": "stl-15f5f82f",
+      "title": "Sales Log Verified: dsfsdd",
+      "message": "Admin verified ₹675. Gross sales & leaderboard updated live!",
+      "type": "sale_verified",
+      "created_by": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "created_at": "2026-09-25T17:18:12.523Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-9be8894e",
+      "target_role": "admin",
+      "target_scope_id": null,
+      "title": "New Sales Log: dsfsdd",
+      "message": "Aaditya Battin submitted ₹675 (1 items) for verification.",
+      "type": "verification_pending",
+      "created_by": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "created_at": "2026-09-25T17:18:04.546Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-ebbf8a15",
+      "target_role": "all",
+      "target_scope_id": "stl-15f5f82f",
+      "title": "Sales Log Verified: dsfsdd",
+      "message": "Admin verified ₹300. Gross sales & leaderboard updated live!",
+      "type": "sale_verified",
+      "created_by": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "created_at": "2026-09-25T17:17:07.972Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-2dcc68f6",
+      "target_role": "admin",
+      "target_scope_id": null,
+      "title": "New Sales Log: dsfsdd",
+      "message": "Aaditya Battin submitted ₹300 (1 items) for verification.",
+      "type": "verification_pending",
+      "created_by": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "created_at": "2026-09-25T17:16:51.988Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-77527b6c",
+      "target_role": "coordinator",
+      "target_scope_id": "stl-15f5f82f",
+      "title": "Arrival Check-in Alert",
+      "message": "testing reported arrival at dsfsdd and is waiting for your confirmation.",
+      "type": "attendance_request",
+      "created_by": "qL9ks4chuPQKnzIqS2IWtwyFPpA2",
+      "created_at": "2026-09-25T17:15:12.569Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    },
+    {
+      "id": "notif-66eef6af",
+      "target_role": "coordinator",
+      "target_scope_id": "stl-15f5f82f",
+      "title": "⚠️ Stall Discontinued by Admin",
+      "message": "Stall status updated to discontinued. Please contact Admin.",
+      "type": "warning",
+      "created_by": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "created_at": "2026-09-25T17:08:25.156Z",
+      "read_by": [
+        "U3qnwxD6nhOJe8ldfyj65ONlq432",
+        "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+        "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1"
+      ]
+    }
+  ],
   "audit_logs": [
+    {
+      "id": "aud-f1197a5a",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-db5d0e94",
+      "details": "Coordinator scanned badge QR and confirmed attendance for Member memba (MBR-62f13308-U3QNWX) at \"fesla\".",
+      "timestamp": "2026-09-26T11:58:10.271Z"
+    },
+    {
+      "id": "aud-c718584c",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-db5d0e94",
+      "details": "Coordinator scanned badge QR and confirmed attendance for Member memba (MBR-62f13308-U3QNWX) at \"fesla\".",
+      "timestamp": "2026-09-26T10:24:22.660Z"
+    },
+    {
+      "id": "aud-fbbd1e61",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "EXPENSE_LOGGED",
+      "target_type": "STALL_EXPENSE",
+      "target_id": "exp-0c907472",
+      "details": "Logged ₹600 under \"Packaging\" for \"fesla\": extra",
+      "timestamp": "2026-09-26T10:10:10.414Z"
+    },
+    {
+      "id": "aud-970fc91d",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "SALES_VERIFIED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-1fbf6d56",
+      "details": "Admin aaditya battin verified sales submission for \"fesla\": Total ₹200 (Online: ₹200, Offline: ₹0).",
+      "timestamp": "2026-09-26T10:07:27.167Z"
+    },
+    {
+      "id": "aud-50f5db58",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "SALES_VERIFIED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-8e7b949e",
+      "details": "Admin aaditya battin verified sales submission for \"fesla\": Total ₹360 (Online: ₹360, Offline: ₹0).",
+      "timestamp": "2026-09-26T10:07:25.977Z"
+    },
+    {
+      "id": "aud-427264c1",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "SALES_SUBMITTED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-1fbf6d56",
+      "details": "Submitted sales log for \"fesla\": ₹200 (Online: ₹200, Offline: ₹0) with 1 line items. Status: PENDING Admin verification.",
+      "timestamp": "2026-09-26T10:07:24.162Z"
+    },
+    {
+      "id": "aud-ae644dab",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "SALES_SUBMITTED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-8e7b949e",
+      "details": "Submitted sales log for \"fesla\": ₹360 (Online: ₹360, Offline: ₹0) with 1 line items. Status: PENDING Admin verification.",
+      "timestamp": "2026-09-26T10:07:19.958Z"
+    },
+    {
+      "id": "aud-79790e67",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "STALL_DELETED",
+      "target_type": "STALL",
+      "target_id": "stl-4d49e9ac",
+      "details": "Admin permanently deleted stall \"fesla\".",
+      "timestamp": "2026-09-26T10:05:37.710Z"
+    },
+    {
+      "id": "aud-53bd1848",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "STALL_DELETED",
+      "target_type": "STALL",
+      "target_id": "stl-c04f186c",
+      "details": "Admin permanently deleted stall \"robo arena\".",
+      "timestamp": "2026-09-26T10:05:29.317Z"
+    },
+    {
+      "id": "aud-2250c6e7",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "STALL_DELETED",
+      "target_type": "STALL",
+      "target_id": "stl-67ae3143",
+      "details": "Admin permanently deleted stall \"drones\".",
+      "timestamp": "2026-09-26T10:05:26.492Z"
+    },
+    {
+      "id": "aud-42c89bc8",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "STALL_DELETED",
+      "target_type": "STALL",
+      "target_id": "stl-15f5f82f",
+      "details": "Admin permanently deleted stall \"dsfsdd\".",
+      "timestamp": "2026-09-26T10:05:24.800Z"
+    },
+    {
+      "id": "aud-bcfed2f1",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "SALES_VERIFIED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-39e5e517",
+      "details": "Admin aaditya battin verified sales submission for \"fesla\": Total ₹884 (Online: ₹884, Offline: ₹0).",
+      "timestamp": "2026-09-26T10:05:17.229Z"
+    },
+    {
+      "id": "aud-3ab1e308",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "SALES_SUBMITTED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-39e5e517",
+      "details": "Submitted sales log for \"fesla\": ₹884 (Online: ₹884, Offline: ₹0) with 2 line items. Status: PENDING Admin verification.",
+      "timestamp": "2026-09-25T18:27:22.684Z"
+    },
+    {
+      "id": "aud-2ba143b7",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "ANNOUNCEMENT_BROADCAST",
+      "target_type": "NOTIFICATION",
+      "target_id": "notif-7c9ddd71",
+      "details": "Admin broadcasted: \"asdsd\" to target audience: all.",
+      "timestamp": "2026-09-25T18:22:58.409Z"
+    },
+    {
+      "id": "aud-2a5ea7f5",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "ANNOUNCEMENT_BROADCAST",
+      "target_type": "NOTIFICATION",
+      "target_id": "notif-1a8e9f46",
+      "details": "Admin broadcasted: \"asdsd\" to target audience: member.",
+      "timestamp": "2026-09-25T18:22:44.872Z"
+    },
+    {
+      "id": "aud-5a908874",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "ANNOUNCEMENT_BROADCAST",
+      "target_type": "NOTIFICATION",
+      "target_id": "notif-addd2351",
+      "details": "Admin broadcasted: \"asdsd\" to target audience: coordinator.",
+      "timestamp": "2026-09-25T18:22:25.521Z"
+    },
+    {
+      "id": "aud-214a6380",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "EXPENSE_LOGGED",
+      "target_type": "STALL_EXPENSE",
+      "target_id": "exp-6f62874f",
+      "details": "Logged ₹1 under \"Hardware & Kits\" for \"fesla\": test",
+      "timestamp": "2026-09-25T18:21:19.428Z"
+    },
+    {
+      "id": "aud-0460177a",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-db5d0e94",
+      "details": "Coordinator scanned badge QR and verified attendance for memba (BP-9LXCZ1) at \"fesla\".",
+      "timestamp": "2026-09-25T18:20:59.890Z"
+    },
+    {
+      "id": "aud-14baa550",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-db5d0e94",
+      "details": "Coordinator scanned badge QR and verified attendance for memba (BP-9LXCZ1) at \"fesla\".",
+      "timestamp": "2026-09-25T18:20:52.455Z"
+    },
+    {
+      "id": "aud-f3891fde",
+      "actor_user_id": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "actor_name": "memba",
+      "action": "MEMBER_JOINED_STALL",
+      "target_type": "STALL",
+      "target_id": "stl-62f13308",
+      "details": "memba joined stall \"fesla\" using invite code.",
+      "timestamp": "2026-09-25T18:20:40.441Z"
+    },
+    {
+      "id": "aud-2efb6715",
+      "actor_user_id": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "actor_name": "memba",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "U3qnwxD6nhOJe8ldfyj65ONlq432",
+      "details": "New user registered: aadiprec@gmail.com (member) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-25T18:20:35.548Z"
+    },
+    {
+      "id": "aud-52086557",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "details": "New user registered: aadityabattin7@gmail.com (coordinator) from Pravara Rural Engineering College, Loni, stall #7-GB",
+      "timestamp": "2026-09-25T18:20:07.365Z"
+    },
+    {
+      "id": "aud-e722e8a6",
+      "actor_user_id": "1sF5Ql5FEEgqAq3a90XqGW0HrkI3",
+      "actor_name": "stall cor",
+      "action": "STALL_CREATED",
+      "target_type": "STALL",
+      "target_id": "stl-62f13308",
+      "details": "Stall \"fesla\" created by coordinator stall cor (Invite Code: rNxHRThfX5JS).",
+      "timestamp": "2026-09-25T18:20:07.361Z"
+    },
+    {
+      "id": "aud-40fd849b",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "0LCSRNGX0WbpvlhL2nqPfQc51Nw2",
+      "details": "Removed user profile: aadiprec@gmail.com",
+      "timestamp": "2026-09-25T18:19:37.252Z"
+    },
+    {
+      "id": "aud-12b79746",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "nHj15rZSQOWuTGOgRiQekskX45o1",
+      "details": "Removed user profile: aaditya.battin.ec24@pravaraengg.org.in",
+      "timestamp": "2026-09-25T18:19:35.308Z"
+    },
+    {
+      "id": "aud-d4ef67a4",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "QOiCeOSMHLORTxA7ZzLsWZMsBdA2",
+      "details": "Removed user profile: aadiprec@gmail.com",
+      "timestamp": "2026-09-25T18:19:33.932Z"
+    },
+    {
+      "id": "aud-208a4e3b",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "NeL2VAD8KLUlE2Sro6DUrC1KWXC2",
+      "details": "Removed user profile: aadityabattin7@gmail.com",
+      "timestamp": "2026-09-25T18:19:32.595Z"
+    },
+    {
+      "id": "aud-4eb1d1eb",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "details": "Removed user profile: aaditya.battin.ec24@pravaraengg.org.in",
+      "timestamp": "2026-09-25T18:19:31.197Z"
+    },
+    {
+      "id": "aud-4c5b2b1e",
+      "actor_user_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "actor_name": "aaditya battin",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "ytwcBvvVzvSUm4JmFlhjwRzS0Jy1",
+      "details": "New user registered: aaditya.battin.ec24@pravaraengg.org.in (admin) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-25T18:18:49.583Z"
+    },
+    {
+      "id": "aud-19e43159",
+      "actor_user_id": "0LCSRNGX0WbpvlhL2nqPfQc51Nw2",
+      "actor_name": "memba",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "0LCSRNGX0WbpvlhL2nqPfQc51Nw2",
+      "details": "New user registered: aadiprec@gmail.com (coordinator) from Pravara Rural Engineering College, Loni, stall #r-12",
+      "timestamp": "2026-09-25T18:15:28.275Z"
+    },
+    {
+      "id": "aud-26a92280",
+      "actor_user_id": "0LCSRNGX0WbpvlhL2nqPfQc51Nw2",
+      "actor_name": "memba",
+      "action": "STALL_CREATED",
+      "target_type": "STALL",
+      "target_id": "stl-c04f186c",
+      "details": "Stall \"robo arena\" created by coordinator memba (Invite Code: e6Nh8kEDpvrb).",
+      "timestamp": "2026-09-25T18:15:28.273Z"
+    },
+    {
+      "id": "aud-64b3b486",
+      "actor_user_id": "nHj15rZSQOWuTGOgRiQekskX45o1",
+      "actor_name": "aaditya battin",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "nHj15rZSQOWuTGOgRiQekskX45o1",
+      "details": "New user registered: aaditya.battin.ec24@pravaraengg.org.in (admin) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-25T18:14:03.788Z"
+    },
+    {
+      "id": "aud-ddbad4b5",
+      "actor_user_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "actor_name": "aaddmmiinn",
+      "action": "USER_ROLE_ASSIGNED",
+      "target_type": "USER",
+      "target_id": "QOiCeOSMHLORTxA7ZzLsWZMsBdA2",
+      "details": "Assigned role 'member' to aadiprec@gmail.com at stall stl-4d49e9ac.",
+      "timestamp": "2026-09-25T17:52:50.494Z"
+    },
+    {
+      "id": "aud-8bd93838",
+      "actor_user_id": "QOiCeOSMHLORTxA7ZzLsWZMsBdA2",
+      "actor_name": "memba",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "QOiCeOSMHLORTxA7ZzLsWZMsBdA2",
+      "details": "New user registered: aadiprec@gmail.com (pending_member) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-25T17:51:57.810Z"
+    },
+    {
+      "id": "aud-fc8894e7",
+      "actor_user_id": "NeL2VAD8KLUlE2Sro6DUrC1KWXC2",
+      "actor_name": "stall cor",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "NeL2VAD8KLUlE2Sro6DUrC1KWXC2",
+      "details": "New user registered: aadityabattin7@gmail.com (coordinator) from Pravara Rural Engineering College, Loni, stall #7-GB",
+      "timestamp": "2026-09-25T17:51:08.149Z"
+    },
+    {
+      "id": "aud-396ef49b",
+      "actor_user_id": "NeL2VAD8KLUlE2Sro6DUrC1KWXC2",
+      "actor_name": "stall cor",
+      "action": "STALL_CREATED",
+      "target_type": "STALL",
+      "target_id": "stl-4d49e9ac",
+      "details": "Stall \"fesla\" created by coordinator stall cor (Invite Code: zaJgJVd87t@$).",
+      "timestamp": "2026-09-25T17:51:08.146Z"
+    },
+    {
+      "id": "aud-e6e7d9dc",
+      "actor_user_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "actor_name": "aaddmmiinn",
+      "action": "STALL_STATUS_CHANGED",
+      "target_type": "STALL",
+      "target_id": "stl-67ae3143",
+      "details": "Changed status of \"drones\" from active to discontinued.",
+      "timestamp": "2026-09-25T17:49:02.919Z"
+    },
+    {
+      "id": "aud-c1d8a7d4",
+      "actor_user_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "actor_name": "aaddmmiinn",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "qL9ks4chuPQKnzIqS2IWtwyFPpA2",
+      "details": "Removed user profile: aadiprec@gmail.com",
+      "timestamp": "2026-09-25T17:48:55.227Z"
+    },
+    {
+      "id": "aud-4ba55397",
+      "actor_user_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "actor_name": "aaddmmiinn",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "details": "Removed user profile: aaditya.battin.ec24@pravaraengg.org.in",
+      "timestamp": "2026-09-25T17:48:53.052Z"
+    },
+    {
+      "id": "aud-f62dda72",
+      "actor_user_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "actor_name": "aaddmmiinn",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "details": "Removed user profile: aadityabattin7@gmail.com",
+      "timestamp": "2026-09-25T17:48:51.137Z"
+    },
+    {
+      "id": "aud-68a49337",
+      "actor_user_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "actor_name": "aaddmmiinn",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "3fBs15Vh5iNtKSjMpR9PH9TiDyp1",
+      "details": "New user registered: aaditya.battin.ec24@pravaraengg.org.in (admin) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-25T17:48:34.881Z"
+    },
+    {
+      "id": "aud-71edbaed",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "SALES_VERIFIED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-c7d913a4",
+      "details": "Admin aabbcc verified sales submission for \"dsfsdd\": Total ₹675 (Online: ₹675, Offline: ₹0).",
+      "timestamp": "2026-09-25T17:18:12.522Z"
+    },
+    {
+      "id": "aud-f3e12a43",
+      "actor_user_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "actor_name": "Aaditya Battin",
+      "action": "SALES_SUBMITTED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-c7d913a4",
+      "details": "Submitted sales log for \"dsfsdd\": ₹675 (Online: ₹675, Offline: ₹0) with 1 line items. Status: PENDING Admin verification.",
+      "timestamp": "2026-09-25T17:18:04.545Z"
+    },
+    {
+      "id": "aud-13262a5a",
+      "actor_user_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "actor_name": "Aaditya Battin",
+      "action": "EXPENSE_LOGGED",
+      "target_type": "STALL_EXPENSE",
+      "target_id": "exp-8ce39aa8",
+      "details": "Logged ₹800 under \"Banners & Marketing\" for \"dsfsdd\": banner",
+      "timestamp": "2026-09-25T17:17:26.515Z"
+    },
+    {
+      "id": "aud-f60b034e",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "SALES_VERIFIED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-c059e9a0",
+      "details": "Admin aabbcc verified sales submission for \"dsfsdd\": Total ₹300 (Online: ₹300, Offline: ₹0).",
+      "timestamp": "2026-09-25T17:17:07.971Z"
+    },
+    {
+      "id": "aud-b04902d6",
+      "actor_user_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "actor_name": "Aaditya Battin",
+      "action": "SALES_SUBMITTED",
+      "target_type": "SALES_SUBMISSION",
+      "target_id": "sub-c059e9a0",
+      "details": "Submitted sales log for \"dsfsdd\": ₹300 (Online: ₹300, Offline: ₹0) with 1 line items. Status: PENDING Admin verification.",
+      "timestamp": "2026-09-25T17:16:51.987Z"
+    },
+    {
+      "id": "aud-4a6d6150",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_ROLE_ASSIGNED",
+      "target_type": "USER",
+      "target_id": "qL9ks4chuPQKnzIqS2IWtwyFPpA2",
+      "details": "Assigned role 'member' to aadiprec@gmail.com at stall stl-15f5f82f.",
+      "timestamp": "2026-09-25T17:14:23.907Z"
+    },
+    {
+      "id": "aud-38763a2c",
+      "actor_user_id": "qL9ks4chuPQKnzIqS2IWtwyFPpA2",
+      "actor_name": "testing",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "qL9ks4chuPQKnzIqS2IWtwyFPpA2",
+      "details": "New user registered: aadiprec@gmail.com (pending_member) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-25T17:14:07.946Z"
+    },
+    {
+      "id": "aud-11383d7d",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "STALL_CREATED",
+      "target_type": "STALL",
+      "target_id": "stl-67ae3143",
+      "details": "Admin created stall \"drones\" (Tech & Gaming).",
+      "timestamp": "2026-09-25T17:11:28.147Z"
+    },
+    {
+      "id": "aud-1a250303",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_ROLE_ASSIGNED",
+      "target_type": "USER",
+      "target_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "details": "Assigned role 'coordinator' to aadityabattin7@gmail.com at stall stl-15f5f82f.",
+      "timestamp": "2026-09-25T17:10:08.276Z"
+    },
+    {
+      "id": "aud-7b86b85f",
+      "actor_user_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "actor_name": "Aaditya Battin",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "CPcFyRC5w8SjspeblQIMKteXixM2",
+      "details": "New user registered: aadityabattin7@gmail.com (pending_coordinator) from Pravara Rural Engineering College, Loni, stall #r-12",
+      "timestamp": "2026-09-25T17:09:50.974Z"
+    },
+    {
+      "id": "aud-60314360",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "STALL_STATUS_CHANGED",
+      "target_type": "STALL",
+      "target_id": "stl-15f5f82f",
+      "details": "Changed status of \"dsfsdd\" from active to discontinued.",
+      "timestamp": "2026-09-25T17:08:25.155Z"
+    },
+    {
+      "id": "aud-6be749c9",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "R2g9l0DRdmOxpCQRC8lGHRGOdwl2",
+      "details": "Removed user profile: aadityabattin7@gmail.com",
+      "timestamp": "2026-09-25T17:08:00.630Z"
+    },
+    {
+      "id": "aud-690e9908",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "Nm4gyjiapBZrSSQjBciwbH331Ll1",
+      "details": "Removed user profile: aadiprec@gmail.com",
+      "timestamp": "2026-09-25T17:07:58.213Z"
+    },
+    {
+      "id": "aud-5e237d7d",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "z3vBIzkWiBTWaGx2B1NLtDXQNYB2",
+      "details": "Removed user profile: aadityabattin7@gmail.com",
+      "timestamp": "2026-09-25T17:07:54.092Z"
+    },
+    {
+      "id": "aud-4d7e82c4",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "62xOOfyyQTTnFNigjB2wuRiGQGB3",
+      "details": "Removed user profile: aadityabattin7@gmail.com",
+      "timestamp": "2026-09-25T17:07:52.347Z"
+    },
+    {
+      "id": "aud-63a2c84a",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "3Z3O1i5T5bbOgpZz5sRNOHKxOJ12",
+      "details": "Removed user profile: aadityabattin7@gmail.com",
+      "timestamp": "2026-09-25T17:07:50.830Z"
+    },
+    {
+      "id": "aud-f23e2564",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_REMOVED",
+      "target_type": "USER",
+      "target_id": "iktdL0ICJTfPCMj6TaS2bQAdXz23",
+      "details": "Removed user profile: aadityabattin7@gmail.com",
+      "timestamp": "2026-09-25T17:07:49.155Z"
+    },
+    {
+      "id": "aud-9df4aded",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_ROLE_ASSIGNED",
+      "target_type": "USER",
+      "target_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "details": "Promoted aaditya.battin.ec24@pravaraengg.org.in to admin.",
+      "timestamp": "2026-09-25T17:07:24.335Z"
+    },
+    {
+      "id": "aud-dd5de0ad",
+      "actor_user_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "actor_name": "aabbcc",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "QC0IIUpKZUhw17gTIpV2cOMJdQu1",
+      "details": "New user registered: aaditya.battin.ec24@pravaraengg.org.in (pending_admin) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-25T17:02:29.791Z"
+    },
+    {
+      "id": "aud-e2997371",
+      "actor_user_id": "z3vBIzkWiBTWaGx2B1NLtDXQNYB2",
+      "actor_name": "Aaditya Battin",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "z3vBIzkWiBTWaGx2B1NLtDXQNYB2",
+      "details": "New user registered: aadityabattin7@gmail.com (pending_coordinator) from Pravara Rural Engineering College, Loni, stall #r-12",
+      "timestamp": "2026-09-25T17:01:29.464Z"
+    },
+    {
+      "id": "aud-d9ad5000",
+      "actor_user_id": "62xOOfyyQTTnFNigjB2wuRiGQGB3",
+      "actor_name": "Aaditya Battin",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "62xOOfyyQTTnFNigjB2wuRiGQGB3",
+      "details": "New user registered: aadityabattin7@gmail.com (pending_coordinator) from Pravara Rural Engineering College, Loni, stall #aadiprec@gmail.com",
+      "timestamp": "2026-09-25T16:49:27.907Z"
+    },
+    {
+      "id": "aud-0fb069b3",
+      "actor_user_id": "VOlJgrjQVuQTVFPORxzGk0uBfGf2",
+      "actor_name": "aaditya.battin.ec24",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "VOlJgrjQVuQTVFPORxzGk0uBfGf2",
+      "details": "New user registered: aaditya.battin.ec24@pravaraengg.org.in (pending)",
+      "timestamp": "2026-09-25T13:17:22.608Z"
+    },
+    {
+      "id": "aud-9bf308c0",
+      "actor_user_id": "3Z3O1i5T5bbOgpZz5sRNOHKxOJ12",
+      "actor_name": "Aaditya Battin",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "3Z3O1i5T5bbOgpZz5sRNOHKxOJ12",
+      "details": "New user registered: aadityabattin7@gmail.com (pending_coordinator) from Pravara Rural Engineering College, Loni, stall #r-12",
+      "timestamp": "2026-09-25T13:11:39.474Z"
+    },
+    {
+      "id": "aud-0cda206d",
+      "actor_user_id": "BvbzxmQ3rLhk2wD0wKMkadxyn7K2",
+      "actor_name": "aaditya.battin.ec24",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "BvbzxmQ3rLhk2wD0wKMkadxyn7K2",
+      "details": "New user registered: aaditya.battin.ec24@pravaraengg.org.in (pending)",
+      "timestamp": "2026-09-25T13:10:00.650Z"
+    },
+    {
+      "id": "aud-ae31170e",
+      "actor_user_id": "iktdL0ICJTfPCMj6TaS2bQAdXz23",
+      "actor_name": "aaditya battin",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "iktdL0ICJTfPCMj6TaS2bQAdXz23",
+      "details": "New user registered: aadityabattin7@gmail.com (pending_coordinator) from Pravara Rural Engineering College, Loni, stall #R-12",
+      "timestamp": "2026-09-25T13:06:12.218Z"
+    },
+    {
+      "id": "aud-9948a7fd",
+      "actor_user_id": "Nm4gyjiapBZrSSQjBciwbH331Ll1",
+      "actor_name": "aadii",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "Nm4gyjiapBZrSSQjBciwbH331Ll1",
+      "details": "New user registered: aadiprec@gmail.com (pending_member)",
+      "timestamp": "2026-09-25T12:22:52.268Z"
+    },
     {
       "id": "aud-9dd97830",
       "actor_user_id": "R2g9l0DRdmOxpCQRC8lGHRGOdwl2",
@@ -73,5 +1255,21 @@
       "timestamp": "2026-09-23T19:11:18.613Z"
     }
   ],
-  "pos_catalog": []
+  "pos_catalog": [
+    {
+      "id": "cat-d3f2d095",
+      "stall_id": "stl-15f5f82f",
+      "name": "tatto",
+      "price": 25,
+      "category": "Standard"
+    },
+    {
+      "id": "cat-6f9a7223",
+      "stall_id": "stl-62f13308",
+      "name": "dosa",
+      "price": 40,
+      "category": "Standard"
+    }
+  ],
+  "stall_join_requests": []
 }

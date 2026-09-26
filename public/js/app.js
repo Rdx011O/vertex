@@ -7,7 +7,6 @@ import api from './api.js';
 import state from './state.js';
 import { initFirebase, onAuthStateChanged, signOut } from './firebase.js';
 import { renderLoginView, renderPendingApprovalView } from './components/login-view.js';
-import { renderStallSetupView } from './components/stall-setup-view.js';
 import { renderAdminView } from './components/admin-view.js';
 import { renderCoordinatorView } from './components/coordinator-view.js';
 import { renderMemberView } from './components/member-view.js';
@@ -74,8 +73,19 @@ class VertexApp {
       const { auth } = await initFirebase();
       this.firebaseAuth = auth;
 
-      // Listen to Firebase Auth state
+      // Listen to Firebase Auth state (also fires when another tab signs in/up on same origin)
       onAuthStateChanged(auth, async (firebaseUser) => {
+        // Cross-tab session guard: if a DIFFERENT user's UID shows up (e.g. someone
+        // signs up in another browser tab), warn the admin instead of silently failing.
+        const prevUid = state.firebaseUser?.uid;
+        if (prevUid && firebaseUser && firebaseUser.uid !== prevUid) {
+          window.showToast(
+            '⚠️ Another account signed in from a different tab. Your admin session was replaced. ' +
+            'Please sign in as admin again, or use an Incognito window for student testing.',
+            'warning'
+          );
+        }
+
         await state.onFirebaseAuth(firebaseUser);
         this.render();
       });
@@ -120,6 +130,21 @@ class VertexApp {
     } else if (event.type === 'SALE_SUBMITTED') {
       if (state.currentUser?.role === 'admin') {
         window.showToast(`📥 ${event.payload?.stall_name} submitted sales for verification.`, 'info');
+      }
+      state.refreshAll();
+    } else if (event.type === 'MEMBER_JOIN_REQUESTED') {
+      if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
+        window.showToast(`🔔 New join request: ${event.payload?.request?.user_name} wants to join your stall!`, 'warning');
+      }
+      state.refreshAll();
+    } else if (event.type === 'MEMBER_JOIN_APPROVED') {
+      if (state.currentUser?.id === event.payload?.user_id) {
+        window.showToast(`🎉 Your join request for "${event.payload?.stall_name}" was approved!`, 'success');
+      }
+      state.refreshAll();
+    } else if (event.type === 'MEMBER_JOIN_REJECTED') {
+      if (state.currentUser?.id === event.payload?.user_id) {
+        window.showToast('Your stall join request was declined.', 'error');
       }
       state.refreshAll();
     } else if (['ANNOUNCEMENT_CREATED', 'EXPENSE_ADDED', 'STALL_UPDATED', 'STALL_CREATED', 'DATABASE_RESET'].includes(event.type)) {
@@ -232,42 +257,26 @@ class VertexApp {
     const user = state.currentUser;
     const role = user.role;
 
-    // Pending users (signed up but not yet assigned by admin)
-    if (role === 'pending' || role === 'pending_coordinator' || role === 'pending_member') {
-      renderPendingApprovalView(this.mainContainer, state.firebaseUser, () => this.signOut());
-      return;
-    }
-
-    // Coordinator with no stall yet → stall setup
-    if (role === 'coordinator' && !user.stall_id) {
-      renderStallSetupView(this.mainContainer, user, state, async () => {
-        // Refresh profile after stall setup
-        try {
-          state.currentUser = await api.getMe();
-          await state.refreshAll();
-          this.render();
-        } catch (e) { console.error(e); }
-      });
-      return;
-    }
-
-    // Role-specific main content
+    // 1. Admin: Instant Direct Access to Command Center
     if (role === 'admin') {
       renderAdminView(this.mainContainer, state);
-    } else if (role === 'coordinator') {
-      renderCoordinatorView(this.mainContainer, state);
-    } else if (role === 'member') {
-      renderMemberView(this.mainContainer, state);
-    } else {
-      this.mainContainer.innerHTML = `
-        <div style="text-align:center;padding:60px 20px;">
-          <h2>Unknown Role</h2>
-          <p style="color:var(--text-secondary);">Contact the event admin to get your role assigned.</p>
-          <button class="btn btn-outline" id="unknown-signout">Sign Out</button>
-        </div>
-      `;
-      document.getElementById('unknown-signout')?.addEventListener('click', () => this.signOut());
+      return;
     }
+
+    // 2. Stall Coordinator: Instant Direct Access to Coordinator Panel
+    if (role === 'coordinator') {
+      renderCoordinatorView(this.mainContainer, state);
+      return;
+    }
+
+    // 3. Active Stall Member: Instant Direct Access to Member Dashboard
+    if (role === 'member' && user.stall_id) {
+      renderMemberView(this.mainContainer, state);
+      return;
+    }
+
+    // 4. Code Mode: EXCLUSIVELY for Stall Members who need to join their stall
+    renderPendingApprovalView(this.mainContainer, state.currentUser || state.firebaseUser, () => this.signOut());
   }
 }
 

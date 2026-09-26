@@ -60,20 +60,18 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Admin portal route — serve admin.html for /admin/*
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
-});
-app.get('/admin/*', (req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
-});
+// All routes (including /admin) redirect to the unified portal at /
+// There is ONE portal for all roles — admin, coordinator, member.
+// After sign-in, the app routes the user to their role-specific dashboard.
+app.get('/admin', (req, res) => res.redirect('/'));
+app.get('/admin/*', (req, res) => res.redirect('/'));
 
 // Serve Static Web Frontend
 app.use(express.static(PUBLIC_DIR));
 
-// Fallback to index.html for main portal SPA routing
+// Fallback to index.html for SPA routing (all non-API GET requests)
 app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/admin')) {
+  if (req.method === 'GET' && !req.path.startsWith('/api')) {
     return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
   }
   next();
@@ -87,8 +85,8 @@ server.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(`⚡ VERTEX Event Operations System is live`);
   console.log(`📍 Event: Building Pravara 2026 (Oct 1–4, 2026)`);
-  console.log(`🌐 Student Portal: http://localhost:${PORT}`);
-  console.log(`🔐 Admin Portal:   http://localhost:${PORT}/admin`);
-  console.log(`📡 WebSocket:      ws://localhost:${PORT}/ws`);
+  console.log(`🌐 Unified Portal:  http://localhost:${PORT}`);
+  console.log(`   (Admin, Coordinator & Member — all sign in here)`);
+  console.log(`📡 WebSocket:       ws://localhost:${PORT}/ws`);
   console.log(`====================================================`);
 });

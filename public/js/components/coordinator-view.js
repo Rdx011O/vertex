@@ -4,6 +4,7 @@
 
 import api from '../api.js';
 import state from '../state.js';
+import { showQRModal, showQRScannerModal } from './qr-modal.js';
 
 // In-memory cart for the POS session
 let posCart = [];
@@ -12,7 +13,9 @@ let selectedPaymentMode = 'online';
 export function renderCoordinatorView(container, state) {
   const stall = state.activeStall || {};
   const fin = stall.financials || {};
-  const activeTab = state.activeTab || 'analytics';
+  // Guard: reset to default if stored tab belongs to another role (e.g. admin)
+  const COORD_TABS = ['analytics','pos','attendance','expenses','leaderboard','audit-log'];
+  const activeTab = COORD_TABS.includes(state.activeTab) ? state.activeTab : 'analytics';
   const offlineQueueCount = api.offlineQueue.length;
 
   container.innerHTML = `
@@ -38,6 +41,9 @@ export function renderCoordinatorView(container, state) {
       </button>
       <button class="tab-btn coordinator ${activeTab === 'leaderboard' ? 'active' : ''}" data-tab="leaderboard">
         <span>🏆 Leaderboard</span>
+      </button>
+      <button class="tab-btn coordinator ${activeTab === 'audit-log' ? 'active' : ''}" data-tab="audit-log">
+        <span>📜 Stall Audit</span>
       </button>
     </div>
 
@@ -271,16 +277,97 @@ function renderCoordinatorTab(tab, stall, fin, state) {
     const members = (stall.members || []);
     const attendanceRecords = (stall.attendance || []);
     const pendingRequests = attendanceRecords.filter(a => a.status === 'pending_coordinator');
+    const joinRequests = (stall.join_requests || []);
+    const inviteCode = stall.invite_code || 'N/A';
+    const myCoordAttendance = attendanceRecords.find(a => a.member_user_id === state.currentUser?.id && a.role === 'coordinator');
+    const isCoordConfirmed = myCoordAttendance && myCoordAttendance.status === 'confirmed';
 
     return `
+      <!-- Coordinator Self Attendance Status Card -->
+      <div style="background:var(--bg-surface); border:1px solid ${isCoordConfirmed ? 'var(--status-success)' : 'var(--border-medium)'}; border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:28px;">⭐</span>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-weight:800; font-size:15px; color:var(--text-primary);">Stall Coordinator Attendance Status:</span>
+              <span class="badge ${isCoordConfirmed ? 'badge-verified' : 'badge-pending'}">
+                ${isCoordConfirmed ? '✓ CONFIRMED PRESENT' : '⏳ NOT YET MARKED'}
+              </span>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:3px;">
+              ${isCoordConfirmed ? `Verified via ${myCoordAttendance.verified_method || 'QR Scanner'} at ${new Date(myCoordAttendance.timestamp).toLocaleTimeString()}` : 'Mark your official coordinator presence for today using your QR badge or button.'}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${!isCoordConfirmed ? `
+            <button class="btn btn-coordinator" id="btn-mark-coord-att" style="font-size:12px; padding:7px 14px;">
+              ✓ Mark My Coordinator Attendance
+            </button>
+          ` : ''}
+          <button class="btn btn-outline" id="btn-view-coord-qr" style="font-size:12px; padding:7px 14px;">
+            🪪 View My Coordinator QR Badge
+          </button>
+        </div>
+      </div>
+
       <div class="section-card">
-        <div class="section-header">
+        <div class="section-header" style="flex-wrap:wrap; gap:12px;">
           <div>
             <div class="section-title">Stall Team Attendance Desk</div>
-            <div class="section-desc">You are the single accountable signature for your stall's attendance. Only your confirmation marks a member present.</div>
+            <div class="section-desc">You are the single accountable signature for your stall's attendance. Scan member QR badges or approve check-in requests.</div>
           </div>
-          <button class="btn btn-coordinator" id="btn-scan-qr-modal">📷 Scan Member Badge QR</button>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-coordinator" id="btn-add-member-modal">➕ Add Stall Member</button>
+            <button class="btn btn-admin" id="btn-scan-qr-modal" style="font-size:13px; font-weight:700;">📷 Scan Member Badge QR</button>
+          </div>
         </div>
+
+        <!-- Stall Invite Code Sharing Banner -->
+        <div style="background:var(--role-coordinator-light); border:1px solid var(--role-coordinator-border); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="font-size:12px; font-weight:700; color:var(--role-coordinator-text); text-transform:uppercase; letter-spacing:0.5px;">🔑 Stall Member Invite Code</div>
+            <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+              <span class="mono-num" style="font-size:20px; font-weight:800; color:var(--text-primary); letter-spacing:2px; background:var(--bg-surface); padding:4px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-medium);">${inviteCode}</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:6px;">
+              Share this permanent 12-digit code with your members. When they paste it, their join request appears below for your approval.
+            </div>
+          </div>
+          <button class="btn btn-coordinator btn-copy-invite-code" data-code="${inviteCode}">
+            📋 Copy Invite Code
+          </button>
+        </div>
+
+        <!-- Pending Member Join Requests -->
+        ${joinRequests.length > 0 ? `
+          <div style="background:rgba(99,102,241,0.08); border:1px solid var(--accent-primary); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
+            <div style="font-weight:700; color:var(--accent-primary); margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+              <span>🔔</span>
+              <span>${joinRequests.length} Member Join Request${joinRequests.length > 1 ? 's' : ''} Pending Your Approval</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              ${joinRequests.map(req => `
+                <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface); padding:12px 16px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); flex-wrap:wrap; gap:10px;">
+                  <div>
+                    <div style="font-weight:700; font-size:15px;">${req.user_name} ${req.user_username ? `<span style="font-size:12px; font-weight:400; color:var(--text-secondary);">@${req.user_username}</span>` : ''}</div>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                      📧 ${req.user_email || '—'} • 📱 ${req.user_phone || '—'} ${req.user_college ? `• 🏫 ${req.user_college}` : ''}
+                    </div>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-coordinator btn-approve-join" data-request-id="${req.id}" data-user-name="${req.user_name}">
+                      ✓ Approve Join
+                    </button>
+                    <button class="btn btn-outline btn-reject-join" data-request-id="${req.id}" data-user-name="${req.user_name}" style="color:var(--status-danger);">
+                      ✕ Decline
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
 
         <!-- Pending Check-in Requests Alert -->
         ${pendingRequests.length > 0 ? `
@@ -317,10 +404,18 @@ function renderCoordinatorTab(tab, stall, fin, state) {
                 <th>Badge Code</th>
                 <th>Attendance Status</th>
                 <th>Confirmation Timestamp</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              ${members.map(m => {
+              ${members.length === 0 ? `
+                <tr>
+                  <td colspan="6" style="text-align:center; padding:32px; color:var(--text-tertiary);">
+                    No team members added to your stall yet.<br>
+                    Click <strong style="color:var(--text-primary);">"➕ Add Stall Member"</strong> above to add members to your stall.
+                  </td>
+                </tr>
+              ` : members.map(m => {
                 const record = attendanceRecords.find(a => a.member_user_id === m.id);
                 const isConfirmed = record && record.status === 'confirmed';
                 const isPending = record && record.status === 'pending_coordinator';
@@ -331,8 +426,8 @@ function renderCoordinatorTab(tab, stall, fin, state) {
                       <div style="font-weight:700;">${m.name}</div>
                       <div style="font-size:11px; color:var(--text-tertiary);">${m.designation || 'Team Member'}</div>
                     </td>
-                    <td>${m.phone}</td>
-                    <td class="mono-num">${m.badge_code}</td>
+                    <td>${m.phone || '—'}</td>
+                    <td class="mono-num" style="font-weight:700; color:var(--primary);">${m.badge_code || '—'}</td>
                     <td>
                       ${isConfirmed ? `
                         <span class="badge badge-verified">✓ CONFIRMED PRESENT</span>
@@ -344,6 +439,15 @@ function renderCoordinatorTab(tab, stall, fin, state) {
                     </td>
                     <td class="mono-num" style="font-size:12px;">
                       ${isConfirmed ? `${new Date(record.timestamp).toLocaleTimeString()} (${record.verified_method})` : '—'}
+                    </td>
+                    <td>
+                      <div style="display:flex; gap:6px; align-items:center;">
+                        ${!isConfirmed ? `
+                          <button class="btn btn-outline btn-scan-member-row" data-badge="${m.badge_code}" data-name="${m.name}" style="font-size:11px; padding:3px 8px; color:var(--status-success); border-color:var(--status-success);" title="Verify member attendance">📷 Scan</button>
+                        ` : ''}
+                        <button class="btn btn-outline btn-view-member-badge" data-uid="${m.id}" style="font-size:11px; padding:3px 8px;" title="View Member QR Badge">🪪 Badge</button>
+                        <button class="btn btn-outline btn-remove-stall-member" data-member-id="${m.id}" data-member-name="${m.name}" style="font-size:11px; padding:3px 8px; color:var(--status-danger);" title="Remove member from stall">✕</button>
+                      </div>
                     </td>
                   </tr>
                 `;
@@ -431,6 +535,47 @@ function renderCoordinatorTab(tab, stall, fin, state) {
                   </td>
                 </tr>
               `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  if (tab === 'audit-log') {
+    const logs = (state.auditLogs || []);
+    return `
+      <div class="section-card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Stall & Team Operations Ledger</div>
+            <div class="section-desc">Level-2 verified record of all sales verifications, attendance check-ins, and team updates for ${stall.name}.</div>
+          </div>
+          <span class="badge badge-verified">${logs.length} Recorded Events</span>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Category</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.map(log => `
+                <tr>
+                  <td class="mono-num" style="font-size:11px; white-space:nowrap;">${new Date(log.timestamp).toLocaleTimeString()}</td>
+                  <td><span class="badge badge-pending" style="font-size:10px;">${log.category || 'Operations'}</span></td>
+                  <td style="font-weight:600;">${log.actor_name}</td>
+                  <td><span class="badge ${log.action.includes('VERIFIED') || log.action.includes('CONFIRMED') ? 'badge-verified' : 'badge-active'}">${log.action}</span></td>
+                  <td style="font-size:12px;">${log.details}</td>
+                </tr>
+              `).join('')}
+              ${logs.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-tertiary);">No audit activity recorded for this stall yet.</td></tr>' : ''}
             </tbody>
           </table>
         </div>
@@ -604,13 +749,155 @@ function attachCoordinatorEventListeners(container, state, stall) {
     });
   }
 
-  // QR Scanner Modal Trigger
+  // Add Member Modal Trigger
+  const addMemberBtn = container.querySelector('#btn-add-member-modal');
+  if (addMemberBtn) {
+    addMemberBtn.addEventListener('click', () => {
+      showAddStallMemberModal(stall, state);
+    });
+  }
+
+  // Remove Stall Member Trigger
+  container.querySelectorAll('.btn-remove-stall-member').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const memberId = btn.getAttribute('data-member-id');
+      const memberName = btn.getAttribute('data-member-name') || 'this member';
+      if (!confirm(`Remove "${memberName}" from your stall team?`)) return;
+      try {
+        await api.removeStallMember(stall.id, memberId);
+        window.showToast?.(`Removed "${memberName}" from stall.`, 'info');
+        await state.refreshAll();
+      } catch (err) {
+        window.showToast?.(err.message || 'Failed to remove member.', 'error');
+      }
+    });
+  });
+
+  // Copy Stall Invite Code
+  container.querySelectorAll('.btn-copy-invite-code').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.getAttribute('data-code');
+      if (code) {
+        try {
+          await navigator.clipboard.writeText(code);
+          window.showToast?.('✅ Stall Invite Code copied to clipboard!', 'success');
+        } catch (e) {
+          const temp = document.createElement('input');
+          temp.value = code;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          document.body.removeChild(temp);
+          window.showToast?.('✅ Stall Invite Code copied to clipboard!', 'success');
+        }
+      }
+    });
+  });
+
+  // Approve Member Join Request
+  container.querySelectorAll('.btn-approve-join').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reqId = btn.getAttribute('data-request-id');
+      const userName = btn.getAttribute('data-user-name') || 'Member';
+      btn.disabled = true;
+      btn.textContent = 'Approving…';
+      try {
+        await api.approveJoinRequest(stall.id, reqId);
+        window.showToast?.(`✅ Approved ${userName} to join your stall team!`, 'success');
+        await state.refreshAll();
+      } catch (err) {
+        window.showToast?.(err.message || 'Failed to approve request.', 'error');
+        btn.disabled = false;
+        btn.textContent = '✓ Approve Join';
+      }
+    });
+  });
+
+  // Reject Member Join Request
+  container.querySelectorAll('.btn-reject-join').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reqId = btn.getAttribute('data-request-id');
+      const userName = btn.getAttribute('data-user-name') || 'this member';
+      if (!confirm(`Decline join request for ${userName}?`)) return;
+      btn.disabled = true;
+      try {
+        await api.rejectJoinRequest(stall.id, reqId);
+        window.showToast?.(`Declined request for ${userName}.`, 'info');
+        await state.refreshAll();
+      } catch (err) {
+        window.showToast?.(err.message || 'Failed to reject request.', 'error');
+        btn.disabled = false;
+      }
+    });
+  });
+
+  // ── QR Attendance Actions ──────────────────────────────────────────────────
+  // Scan Member Badge QR Button
   const scanQrBtn = container.querySelector('#btn-scan-qr-modal');
   if (scanQrBtn) {
     scanQrBtn.addEventListener('click', () => {
-      showScanQRModal(stall, state);
+      showQRScannerModal({
+        title: '📷 Scan Member Badge QR',
+        hint: `Point camera at member badge QR to verify and confirm their attendance for ${stall.name}.`,
+        onScanSuccess: async () => {
+          await state.refreshAll();
+        }
+      });
     });
   }
+
+  // Mark Coordinator Self-Attendance
+  const markCoordAttBtn = container.querySelector('#btn-mark-coord-att');
+  if (markCoordAttBtn) {
+    markCoordAttBtn.addEventListener('click', async () => {
+      markCoordAttBtn.disabled = true;
+      markCoordAttBtn.textContent = 'Verifying...';
+      try {
+        const myBadge = state.currentUser?.badge_code || state.currentUser?.id;
+        const res = await api.scanConfirmAttendance(myBadge);
+        window.showToast(res.message || 'Coordinator attendance confirmed!', 'success');
+        await state.refreshAll();
+      } catch (err) {
+        window.showToast(err.message, 'error');
+        markCoordAttBtn.disabled = false;
+        markCoordAttBtn.textContent = '✓ Mark My Coordinator Attendance';
+      }
+    });
+  }
+
+  // View My Coordinator QR Badge
+  const viewCoordQrBtn = container.querySelector('#btn-view-coord-qr');
+  if (viewCoordQrBtn) {
+    viewCoordQrBtn.addEventListener('click', () => {
+      showQRModal(state.currentUser);
+    });
+  }
+
+  // Row Scan Button
+  container.querySelectorAll('.btn-scan-member-row').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const badge = btn.getAttribute('data-badge');
+      const name = btn.getAttribute('data-name');
+      try {
+        const res = await api.scanConfirmAttendance(badge);
+        window.showToast(res.message || `Attendance confirmed for ${name}!`, 'success');
+        await state.refreshAll();
+      } catch (err) {
+        window.showToast(err.message, 'error');
+      }
+    });
+  });
+
+  // Row View Badge Button
+  container.querySelectorAll('.btn-view-member-badge').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const uid = btn.getAttribute('data-uid');
+      const member = (stall.members || []).find(m => m.id === uid);
+      if (member) {
+        showQRModal({ ...member, stall_name: stall.name });
+      }
+    });
+  });
 }
 
 function showLogExpenseModal(stall, state) {
@@ -815,6 +1102,94 @@ function showAddCatalogItemModal(stall, state) {
       errEl.style.display = 'block';
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save to Catalog';
+    }
+  });
+}
+
+function showAddStallMemberModal(stall, state) {
+  const modalContainer = document.getElementById('qr-modal-container');
+  if (!modalContainer) return;
+
+  modalContainer.innerHTML = `
+    <div class="modal-backdrop active" id="add-member-backdrop">
+      <div class="modal-card" style="max-width:460px;">
+        <div class="modal-header">
+          <h3 style="font-size:18px;">➕ Add Stall Team Member</h3>
+          <button class="modal-close-btn" id="close-member-modal">✕</button>
+        </div>
+
+        <form id="stall-member-form" style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Member Full Name <span style="color:var(--status-danger);">*</span></label>
+            <input type="text" id="new-member-name" class="pos-input" placeholder="e.g. Rohan Sharma" required style="width:100%;" />
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Phone / WhatsApp</label>
+            <input type="tel" id="new-member-phone" class="pos-input" placeholder="+91 98000 00000" style="width:100%;" />
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Stall Role / Designation <span style="color:var(--status-danger);">*</span></label>
+            <select id="new-member-desig" class="pos-input" style="width:100%;">
+              <option value="Billing & Cashier">Billing & Cashier</option>
+              <option value="Order & Food Prep">Order & Food Prep</option>
+              <option value="Display & Sales">Display & Sales</option>
+              <option value="Hospitality & Service">Hospitality & Service</option>
+              <option value="Technical Support">Technical Support</option>
+              <option value="Team Member" selected>General Team Member</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Custom Badge Code <span style="color:var(--text-tertiary); font-weight:400;">(optional)</span></label>
+            <input type="text" id="new-member-badge" class="pos-input" placeholder="e.g. M-1042 (leave empty for auto-generate)" style="width:100%;" />
+          </div>
+
+          <div id="stall-member-error" class="auth-error" style="display:none; color:var(--status-danger); font-size:12px;"></div>
+
+          <button type="submit" class="btn btn-coordinator" id="btn-save-stall-member" style="padding:12px; margin-top:8px;">
+            Add to Stall Team
+          </button>
+        </form>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('close-member-modal').addEventListener('click', () => {
+    modalContainer.innerHTML = '';
+  });
+
+  document.getElementById('stall-member-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('new-member-name').value.trim();
+    const phone = document.getElementById('new-member-phone').value.trim();
+    const designation = document.getElementById('new-member-desig').value;
+    const badge_code = document.getElementById('new-member-badge').value.trim();
+    const errEl = document.getElementById('stall-member-error');
+    const saveBtn = document.getElementById('btn-save-stall-member');
+
+    errEl.style.display = 'none';
+
+    if (!name) {
+      errEl.textContent = 'Please enter member full name.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Adding…';
+
+    try {
+      await api.addStallMember(stall.id, { name, phone, designation, badge_code });
+      window.showToast?.(`✅ "${name}" added to your stall team!`, 'success');
+      modalContainer.innerHTML = '';
+      await state.refreshAll();
+    } catch (err) {
+      errEl.textContent = err.message || 'Failed to add member.';
+      errEl.style.display = 'block';
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Add to Stall Team';
     }
   });
 }

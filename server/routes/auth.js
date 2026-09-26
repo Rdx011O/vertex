@@ -1,11 +1,8 @@
-/**
- * Auth Routes
- * Handles profile creation, self-profile fetch, and admin role assignment.
- */
-
 import express from 'express';
-import db from '../db.js';
+import { v4 as uuidv4 } from 'uuid';
+import db, { generateInviteCode } from '../db.js';
 import { requireAuth, requireAdminMiddleware } from '../rbac.js';
+import realtime from '../ws.js';
 
 const router = express.Router();
 
@@ -15,40 +12,99 @@ const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL || '';
  * POST /api/auth/register-profile
  * Called by the frontend immediately after Firebase signup.
  * Creates a user profile in the DB, linked to their Firebase UID.
- * If the email matches BOOTSTRAP_ADMIN_EMAIL, they get 'admin' role instantly.
+ * If the email matches BOOTSTRAP_ADMIN_EMAIL or Admin role is selected, they get 'admin' role instantly.
+ * If Coordinator role is selected, their stall is automatically created with a permanent 12-digit invite code!
  */
 router.post('/register-profile', async (req, res) => {
   if (!req.firebaseUser) {
     return res.status(401).json({ error: 'Authentication required.' });
   }
 
-  const { name, phone, desired_role } = req.body;
+  const {
+    name, phone, desired_role,
+    username,
+    college_name,
+    stall_name_desired,
+    stall_category_desired,
+    stall_alloted_number
+  } = req.body;
   const { uid, email } = req.firebaseUser;
 
   if (!name) {
     return res.status(400).json({ error: 'Name is required.' });
   }
 
-  // Determine initial role
+  // Determine initial role and handle automatic stall creation for coordinator
   let role = 'pending';
+  let assignedStallId = null;
   const hasExistingAdmin = db.data.users.some(u => u.role === 'admin');
   const isBootstrapAdmin = BOOTSTRAP_ADMIN_EMAIL && email && email.trim().toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase();
 
-  if (isBootstrapAdmin || (!hasExistingAdmin && desired_role === 'admin')) {
+  // Admin gets direct instant access with no waiting list
+  if (desired_role === 'admin' || isBootstrapAdmin || !hasExistingAdmin) {
     role = 'admin';
   } else if (desired_role === 'coordinator') {
-    role = 'pending_coordinator'; // needs admin to confirm + assign stall
+    role = 'coordinator'; // Coordinator gets direct access to their new stall
+    
+    // Auto-create stall for coordinator with permanent 12-char invite code
+    const stallId = 'stl-' + uuidv4().slice(0, 8);
+    const inviteCode = generateInviteCode();
+    const newStall = {
+      id: stallId,
+      name: (stall_name_desired || `${name.trim()}'s Stall`).trim(),
+      category: stall_category_desired || 'Tech & Gaming',
+      event_id: 'ev-bp-2026',
+      coordinator_user_id: uid,
+      status: 'active',
+      banner_color: '#4F46E5',
+      location: stall_alloted_number ? `Booth ${stall_alloted_number}` : 'Main Courtyard',
+      allotted_number: stall_alloted_number || null,
+      invite_code: inviteCode,
+      created_at: new Date().toISOString()
+    };
+    db.data.stalls.push(newStall);
+    assignedStallId = stallId;
+
+    db.logAudit(
+      uid, name.trim(),
+      'STALL_CREATED', 'STALL', stallId,
+      `Stall "${newStall.name}" created by coordinator ${name.trim()} (Invite Code: ${inviteCode}).`
+    );
+
+    realtime.broadcast('STALL_CREATED', { stall: newStall });
   } else if (desired_role === 'member') {
-    role = 'pending_member'; // needs admin to assign to a stall
+    const rawInviteCode = (req.body.invite_code || req.body.stall_code || '').trim();
+    if (rawInviteCode) {
+      const targetStall = db.data.stalls.find(s => s.invite_code === rawInviteCode);
+      if (targetStall) {
+        role = 'member';
+        assignedStallId = targetStall.id;
+      } else {
+        role = 'pending_member';
+      }
+    } else {
+      role = 'pending_member'; // member will enter stall invite code in join screen
+    }
   }
 
   // Create or return existing profile
   let user = db.getUserByUid(uid);
   if (user) {
-    // If user exists and matches bootstrap email or needs admin role and no admin exists, upgrade them
-    if (user.role !== 'admin' && (isBootstrapAdmin || (!hasExistingAdmin && desired_role === 'admin'))) {
-      user = db.updateUser(uid, { role: 'admin' });
-      db.logAudit(uid, user.name, 'USER_ROLE_ASSIGNED', 'USER', uid, `Auto-promoted ${email} to admin.`);
+    const updates = {};
+    if (desired_role === 'admin' || isBootstrapAdmin || user.role === 'pending_admin' || (!hasExistingAdmin && user.role === 'pending')) {
+      updates.role = 'admin';
+      updates.designation = user.designation || 'System Administrator';
+    } else if (desired_role === 'coordinator' && assignedStallId) {
+      updates.role = 'coordinator';
+      updates.stall_id = assignedStallId;
+      updates.designation = 'Stall Coordinator';
+    } else if (desired_role === 'member' && assignedStallId) {
+      updates.role = 'member';
+      updates.stall_id = assignedStallId;
+      updates.designation = user.designation || 'Team Member';
+    }
+    if (Object.keys(updates).length > 0) {
+      user = db.updateUser(uid, updates);
     }
     const stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
     return res.json({
@@ -62,10 +118,19 @@ router.post('/register-profile', async (req, res) => {
     email,
     role,
     phone: phone || null,
-    designation: role === 'admin' ? 'System Administrator' : null
+    designation: role === 'admin' ? 'System Administrator' : (role === 'coordinator' ? 'Stall Coordinator' : null),
+    username: username ? username.trim() : null,
+    college_name: college_name || null,
+    stall_name_desired: stall_name_desired || null,
+    stall_category_desired: stall_category_desired || null,
+    stall_alloted_number: stall_alloted_number || null
   });
 
-  db.logAudit(uid, name, 'USER_REGISTERED', 'USER', uid, `New user registered: ${email} (${role})`);
+  if (assignedStallId) {
+    user = db.updateUser(uid, { stall_id: assignedStallId });
+  }
+
+  db.logAudit(uid, name, 'USER_REGISTERED', 'USER', uid, `New user registered: ${email} (${role})${college_name ? ` from ${college_name}` : ''}${stall_alloted_number ? `, stall #${stall_alloted_number}` : ''}`);
 
   const stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
   res.status(201).json({
@@ -82,9 +147,38 @@ router.get('/me', requireAuth, (req, res) => {
   const hasExistingAdmin = db.data.users.some(u => u.role === 'admin' && u.id !== user.id);
   const isBootstrapAdmin = BOOTSTRAP_ADMIN_EMAIL && user.email && user.email.trim().toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase();
 
-  if (user.role !== 'admin' && (isBootstrapAdmin || !hasExistingAdmin)) {
+  // If user was pending admin or matches bootstrap email, promote directly to admin
+  if (user.role === 'pending_admin' || isBootstrapAdmin || (!hasExistingAdmin && user.role === 'pending')) {
     user = db.updateUser(user.id, { role: 'admin', designation: user.designation || 'System Administrator' });
-    db.logAudit(user.id, user.name, 'USER_ROLE_ASSIGNED', 'USER', user.id, `Auto-promoted ${user.email} to admin.`);
+    db.logAudit(user.id, user.name, 'USER_ROLE_ASSIGNED', 'USER', user.id, `Promoted ${user.email} to admin.`);
+  }
+
+  // Ensure coordinator is linked to their stall or has a stall created
+  if (user.role === 'coordinator') {
+    let stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
+    if (!stall) {
+      stall = db.data.stalls.find(s => s.coordinator_user_id === user.id);
+      if (!stall) {
+        const stallId = 'stl-' + uuidv4().slice(0, 8);
+        const inviteCode = generateInviteCode();
+        stall = {
+          id: stallId,
+          name: (user.stall_name_desired || `${user.name}'s Stall`).trim(),
+          category: user.stall_category_desired || 'Tech & Gaming',
+          event_id: 'ev-bp-2026',
+          coordinator_user_id: user.id,
+          status: 'active',
+          banner_color: '#4F46E5',
+          location: user.stall_alloted_number ? `Booth ${user.stall_alloted_number}` : 'Main Courtyard',
+          allotted_number: user.stall_alloted_number || null,
+          invite_code: inviteCode,
+          created_at: new Date().toISOString()
+        };
+        db.data.stalls.push(stall);
+      }
+      user = db.updateUser(user.id, { stall_id: stall.id });
+      db.save();
+    }
   }
 
   const stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;

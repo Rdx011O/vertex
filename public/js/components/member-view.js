@@ -4,13 +4,15 @@
 
 import api from '../api.js';
 import state from '../state.js';
-import { showQRModal } from './qr-modal.js';
+import { generateVertexBadgeHTML, initBadgeInteractivity, showQRModal } from './qr-modal.js';
 
 export function renderMemberView(container, state) {
   const stall = state.activeStall || {};
   const fin = stall.financials || {};
   const user = state.currentUser || {};
-  const activeTab = state.activeTab || 'member-dashboard';
+  // Guard: reset to default if stored tab belongs to another role
+  const MEMBER_TABS = ['member-dashboard','member-badge','member-leaderboard','member-audit'];
+  const activeTab = MEMBER_TABS.includes(state.activeTab) ? state.activeTab : 'member-dashboard';
 
   // Check current member's attendance record
   const myAttendance = stall.attendance
@@ -29,6 +31,9 @@ export function renderMemberView(container, state) {
       </button>
       <button class="tab-btn member ${activeTab === 'member-leaderboard' ? 'active' : ''}" data-tab="member-leaderboard">
         <span>🏆 Event Leaderboard</span>
+      </button>
+      <button class="tab-btn member ${activeTab === 'member-audit' ? 'active' : ''}" data-tab="member-audit">
+        <span>📜 My Activity Log</span>
       </button>
     </div>
 
@@ -160,87 +165,95 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
   if (tab === 'member-badge') {
     const isConfirmed = myAttendance && myAttendance.status === 'confirmed';
     const isPending = myAttendance && myAttendance.status === 'pending_coordinator';
+    const activeTheme = localStorage.getItem('vertex_badge_theme') || 'theme-cobalt';
+
+    const dynamicBadgeHTML = generateVertexBadgeHTML(user, {
+      badge_code: user.badge_code,
+      qr_image_url: user.qr_image_url,
+      stall: stall
+    }, { isModal: false, showLanyard: true });
 
     return `
-      <div style="display:grid; grid-template-columns:360px 1fr; gap:24px; align-items:start;">
-        <!-- Left: Realistic Event Badge -->
-        <div class="badge-credential-card" style="margin:0;">
-          <div class="badge-lanyard-hole"></div>
-          
-          <div class="badge-header-strip member">
-            <div class="badge-event-title">Building Pravara '26</div>
-            <div class="badge-event-subtitle">Pravara Rural Engineering College, Loni</div>
-          </div>
-
-          <div class="badge-body">
-            <div class="badge-qr-box" id="member-inline-qr" style="cursor:pointer;" title="Click to enlarge">
-              <!-- Inline QR rendered via JS -->
-              <div style="width:160px; height:160px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--text-tertiary);">
-                Loading QR Code...
-              </div>
-            </div>
-
-            <div class="badge-user-name">${user.name}</div>
-            <div class="badge-user-role-tag member">TEAM MEMBER</div>
-            
-            <div class="badge-stall-name">
-              📍 ${user.stall_name || stall.name || 'Assigned Stall'}
-            </div>
-
-            <div class="badge-code-display">${user.badge_code || user.id}</div>
-          </div>
-
-          <div class="badge-footer-security">
-            <span>🔒 VERIFIED STUDENT CREDENTIAL</span>
-          </div>
-        </div>
-
-        <!-- Right: Arrival Check-In Workflow -->
-        <div class="section-card" style="margin-bottom:0;">
-          <div class="section-header">
+      <!-- Top Dynamic Badge Hero Grid -->
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        
+        <!-- Attendance Status Alert Card -->
+        <div class="section-card" style="margin-bottom:0; background:var(--bg-surface);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
             <div>
-              <div class="section-title">Attendance Check-In</div>
-              <div class="section-desc">Workflow A: Report your arrival at your assigned booth for Coordinator confirmation</div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:800; font-size:16px; color:var(--text-primary);">Arrival Check-In Status:</span>
+                <span class="badge ${isConfirmed ? 'badge-verified' : (isPending ? 'badge-pending' : 'badge-pending')}" style="font-size:12px; padding:4px 10px;">
+                  ${isConfirmed ? '✓ CONFIRMED PRESENT' : (isPending ? '⏳ APPROVAL PENDING' : '📍 NOT CHECKED IN')}
+                </span>
+              </div>
+              <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">
+                ${isConfirmed 
+                  ? `Confirmed present at <strong>${new Date(myAttendance.timestamp).toLocaleTimeString()}</strong> (${myAttendance.verified_method || 'QR Scanner'}).` 
+                  : (isPending 
+                    ? 'Check-in request sent to your Stall Coordinator. Awaiting confirmation.' 
+                    : 'Report your arrival at your assigned booth or present your QR badge to your Coordinator.')}
+              </div>
             </div>
-          </div>
 
-          <div style="padding:16px 0;">
-            ${isConfirmed ? `
-              <div style="background:var(--status-success-bg); border:1px solid var(--status-success); border-radius:var(--radius-md); padding:20px; text-align:center;">
-                <div style="font-size:40px; margin-bottom:8px;">✅</div>
-                <div style="font-size:18px; font-weight:700; color:var(--status-success-text);">
-                  Attendance Confirmed Present
-                </div>
-                <div style="font-size:13px; color:var(--text-secondary); margin-top:6px;">
-                  Confirmed at <strong>${new Date(myAttendance.timestamp).toLocaleTimeString()}</strong> (${myAttendance.verified_method || 'Verified'}).
-                </div>
-              </div>
-            ` : isPending ? `
-              <div style="background:var(--status-warning-bg); border:1px solid var(--status-warning); border-radius:var(--radius-md); padding:20px; text-align:center;">
-                <div style="font-size:40px; margin-bottom:8px;">⏳</div>
-                <div style="font-size:18px; font-weight:700; color:var(--status-warning-text);">
-                  Check-in Request Sent!
-                </div>
-                <div style="font-size:13px; color:var(--text-secondary); margin-top:6px;">
-                  Your Stall Coordinator has been notified and will approve your arrival on their dashboard.
-                </div>
-              </div>
-            ` : `
-              <div style="background:var(--bg-surface-subtle); border:1px solid var(--border-medium); border-radius:var(--radius-md); padding:24px; text-align:center;">
-                <div style="font-size:40px; margin-bottom:12px;">📍</div>
-                <div style="font-size:18px; font-weight:700; margin-bottom:6px;">
-                  Have you arrived at ${stall.name || 'your stall'}?
-                </div>
-                <div style="font-size:13px; color:var(--text-secondary); max-width:400px; margin:0 auto 20px auto;">
-                  Tap below to raise a live check-in request or present your QR badge to your Stall Coordinator for scanning.
-                </div>
-                <button class="btn btn-member" id="btn-tap-checkin" style="padding:14px 28px; font-size:16px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              ${!isConfirmed && !isPending ? `
+                <button class="btn btn-member" id="btn-tap-checkin" style="font-size:13px; padding:8px 18px; font-weight:700;">
                   📍 I'm At My Stall — Check In
                 </button>
-              </div>
-            `}
+              ` : ''}
+              <button class="btn btn-outline" id="btn-enlarge-badge-modal" style="font-size:13px; padding:8px 18px;">
+                🪪 Open Fullscreen Pass
+              </button>
+            </div>
           </div>
         </div>
+
+        <!-- 3D Dynamic E-Badge Showcase -->
+        <div style="background:radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.05) 70%, transparent 100%); padding:32px 16px; border-radius:var(--radius-xl); border:1px solid var(--border-subtle); display:flex; flex-direction:column; align-items:center;">
+          
+          <!-- Badge Subheader Instructions -->
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:780px; margin-bottom:16px; padding:0 8px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="badge" style="background:#4f46e5; color:white; font-size:11px; font-weight:800; padding:4px 10px;">
+                ⚡ DYNAMIC PASS
+              </span>
+              <span style="font-size:12px; color:var(--text-secondary); font-weight:600;">
+                Move cursor to 3D tilt • Tap QR to zoom • Flip for back
+              </span>
+            </div>
+            <div class="ebadge-theme-selector" style="margin:0;">
+              <span style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-right:4px;">THEME:</span>
+              <button class="theme-swatch-btn cyber ${activeTheme === 'theme-cyber' ? 'active' : ''}" data-theme="theme-cyber" title="Cyber Dark VIP"></button>
+              <button class="theme-swatch-btn holo ${activeTheme === 'theme-holo' ? 'active' : ''}" data-theme="theme-holo" title="Prism Holo"></button>
+              <button class="theme-swatch-btn gold ${activeTheme === 'theme-gold' ? 'active' : ''}" data-theme="theme-gold" title="Solar Gold"></button>
+              <button class="theme-swatch-btn cobalt ${activeTheme === 'theme-cobalt' ? 'active' : ''}" data-theme="theme-cobalt" title="PREC Cobalt"></button>
+            </div>
+          </div>
+
+          <!-- Dynamic Vertex E-Badge Render -->
+          <div id="member-dynamic-badge-holder" style="width:100%; max-width:780px;">
+            ${dynamicBadgeHTML}
+          </div>
+
+          <!-- Interactive Control Toolbar -->
+          <div style="display:flex; justify-content:center; gap:10px; margin-top:20px; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="btn-flip-badge" style="font-size:13px; font-weight:700; padding:8px 18px; border-radius:10px; background:var(--bg-surface);">
+              🔄 Flip Badge (Back View)
+            </button>
+            <button class="btn btn-outline" id="btn-toggle-lanyard" style="font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; background:var(--bg-surface);">
+              🎗️ Toggle Lanyard Strap
+            </button>
+            <button class="btn btn-outline" id="btn-print-badge" style="font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; background:var(--bg-surface);">
+              🖨️ Print VIP Pass
+            </button>
+            <button class="btn btn-outline" id="btn-copy-badge-id" style="font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; background:var(--bg-surface);">
+              📋 Copy Pass ID
+            </button>
+          </div>
+
+        </div>
+
       </div>
     `;
   }
@@ -289,6 +302,47 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
     `;
   }
 
+  if (tab === 'member-audit') {
+    const logs = (state.auditLogs || []);
+    return `
+      <div class="section-card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">My Personal Event Activity Log</div>
+            <div class="section-desc">Level-1 verified log of your arrival check-ins, badge verifications, and stall contributions.</div>
+          </div>
+          <span class="badge badge-verified">${logs.length} Actions</span>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Activity Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.map(log => `
+                <tr>
+                  <td class="mono-num" style="font-size:11px; white-space:nowrap;">${new Date(log.timestamp).toLocaleTimeString()}</td>
+                  <td>
+                    <span class="badge ${log.action.includes('CONFIRMED') || log.action.includes('JOINED') ? 'badge-verified' : 'badge-pending'}">
+                      ${log.action}
+                    </span>
+                  </td>
+                  <td style="font-size:13px;">${log.details}</td>
+                </tr>
+              `).join('')}
+              ${logs.length === 0 ? '<tr><td colspan="3" style="text-align:center; padding:32px; color:var(--text-tertiary);">No personal activity recorded yet. Check in or contribute to see logs here!</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
   return '';
 }
 
@@ -319,35 +373,29 @@ function attachMemberEventListeners(container, state, user) {
     });
   }
 
-  // Render inline badge QR
-  const inlineQr = container.querySelector('#member-inline-qr');
-  if (inlineQr) {
-    inlineQr.addEventListener('click', () => {
+  // Fullscreen pass modal trigger
+  const enlargeBtn = container.querySelector('#btn-enlarge-badge-modal');
+  if (enlargeBtn) {
+    enlargeBtn.addEventListener('click', () => {
       showQRModal(user);
     });
-    // Populate simple SVG
-    inlineQr.innerHTML = `
-      <svg width="150" height="150" viewBox="0 0 150 150" style="background:#fff;">
-        <rect width="150" height="150" fill="#ffffff" />
-        <rect x="10" y="10" width="40" height="40" fill="#0f172a" />
-        <rect x="18" y="18" width="24" height="24" fill="#ffffff" />
-        <rect x="24" y="24" width="12" height="12" fill="#0f172a" />
+  }
 
-        <rect x="100" y="10" width="40" height="40" fill="#0f172a" />
-        <rect x="108" y="18" width="24" height="24" fill="#ffffff" />
-        <rect x="114" y="24" width="12" height="12" fill="#0f172a" />
+  // Bind Dynamic 3D Badge Interactivity
+  const badgeHolder = container.querySelector('#member-dynamic-badge-holder');
+  if (badgeHolder) {
+    initBadgeInteractivity(container, user, {
+      badge_code: user.badge_code,
+      qr_image_url: user.qr_image_url,
+      stall: state.activeStall
+    });
 
-        <rect x="10" y="100" width="40" height="40" fill="#0f172a" />
-        <rect x="18" y="108" width="24" height="24" fill="#ffffff" />
-        <rect x="24" y="114" width="12" height="12" fill="#0f172a" />
-
-        <rect x="60" y="20" width="10" height="20" fill="#0f172a" />
-        <rect x="75" y="15" width="15" height="15" fill="#0f172a" />
-        <rect x="60" y="60" width="30" height="30" fill="#0f172a" />
-        <rect x="100" y="70" width="30" height="15" fill="#0f172a" />
-        <rect x="60" y="110" width="25" height="25" fill="#0f172a" />
-        <rect x="100" y="100" width="40" height="40" fill="#0f172a" />
-      </svg>
-    `;
+    // Ensure latest QR code from server is displayed
+    api.getQRBadge(user.id).then(badge => {
+      if (badge && badge.qr_image_url) {
+        const qrImg = container.querySelector('#ebadge-qr-image-elem');
+        if (qrImg) qrImg.src = badge.qr_image_url;
+      }
+    }).catch(err => console.warn('Badge fetch error:', err));
   }
 }

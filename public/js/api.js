@@ -151,10 +151,10 @@ class ApiService {
   }
 
   // API Methods
-  async registerProfile(name, phone, desiredRole) {
+  async registerProfile(name, phone, desiredRole, extra = {}) {
     return await this.request('/api/auth/register-profile', {
       method: 'POST',
-      body: JSON.stringify({ name, phone, desired_role: desiredRole })
+      body: JSON.stringify({ name, phone, desired_role: desiredRole, ...extra })
     });
   }
 
@@ -170,6 +170,30 @@ class ApiService {
 
   async createStall(stallData) {
     return await this.request('/api/stalls', { method: 'POST', body: JSON.stringify(stallData) });
+  }
+
+  async updateStall(stallId, stallData) {
+    return await this.request(`/api/stalls/${stallId}`, { method: 'PUT', body: JSON.stringify(stallData) });
+  }
+
+  async deleteStall(stallId) {
+    return await this.request(`/api/stalls/${stallId}`, { method: 'DELETE' });
+  }
+
+  async issueStallWarning(stallId, reason) {
+    return await this.request(`/api/stalls/${stallId}/manage/warning`, { method: 'POST', body: JSON.stringify({ reason }) });
+  }
+
+  async discontinueUserFromStall(stallId, { userId, reason }) {
+    return await this.request(`/api/stalls/${stallId}/manage/discontinue-user`, { method: 'POST', body: JSON.stringify({ user_id: userId, reason }) });
+  }
+
+  async flagStallOrUser(stallId, { targetType, userId, reason }) {
+    return await this.request(`/api/stalls/${stallId}/manage/flag`, { method: 'POST', body: JSON.stringify({ target_type: targetType, user_id: userId, reason }) });
+  }
+
+  async discontinueStall(stallId, reason) {
+    return await this.request(`/api/stalls/${stallId}/manage/discontinue`, { method: 'POST', body: JSON.stringify({ reason }) });
   }
 
   async updateStallStatus(stallId, statusData) {
@@ -216,12 +240,25 @@ class ApiService {
     return await this.request(`/api/attendance/${attendanceId}/confirm`, { method: 'POST', body: JSON.stringify({ method }) });
   }
 
-  async scanConfirmAttendance(badgeCode) {
-    return await this.request('/api/attendance/scan-confirm', { method: 'POST', body: JSON.stringify({ badge_code: badgeCode }) });
+  async getQRBadge(userId = '') {
+    return (await this.request(userId ? `/api/attendance/qr-badge/${userId}` : '/api/attendance/qr-badge')).badge;
+  }
+
+  async scanConfirmAttendance(data) {
+    const body = typeof data === 'string' ? { raw_scan: data } : data;
+    return await this.request('/api/attendance/scan-confirm', { method: 'POST', body: JSON.stringify(body) });
   }
 
   async getNotifications() {
     return (await this.request('/api/notifications')).notifications;
+  }
+
+  async markNotificationRead(notifId) {
+    return await this.request(`/api/notifications/${notifId}/read`, { method: 'POST' });
+  }
+
+  async markNotificationsSeen() {
+    return await this.request('/api/notifications/mark-seen', { method: 'POST' });
   }
 
   async broadcastAnnouncement(title, message, targetRole = 'all') {
@@ -231,20 +268,62 @@ class ApiService {
     });
   }
 
-  async getAuditLogs(limit = 100) {
-    return (await this.request(`/api/audit?limit=${limit}`)).logs;
+  async getAuditLogs(limit = 100, action = '', category = '') {
+    const params = new URLSearchParams();
+    if (limit) params.set('limit', limit);
+    if (action) params.set('action', action);
+    if (category) params.set('category', category);
+    return (await this.request(`/api/audit?${params.toString()}`)).logs;
   }
 
-  async addCatalogItem(stallId, item) {
-    return await this.request(`/api/stalls/${stallId}/catalog`, {
-      method: 'POST',
-      body: JSON.stringify(item)
+  async getAllUsers() {
+    return (await this.request('/api/auth/users')).users;
+  }
+
+  async assignUserRole(uid, role, stallId = null) {
+    return await this.request(`/api/auth/users/${uid}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role, stall_id: stallId })
     });
   }
 
-  async deleteCatalogItem(stallId, itemId) {
-    return await this.request(`/api/stalls/${stallId}/catalog/${itemId}`, {
+  async removeUser(uid) {
+    return await this.request(`/api/auth/users/${uid}`, { method: 'DELETE' });
+  }
+
+  async addStallMember(stallId, memberData) {
+    return await this.request(`/api/stalls/${stallId}/members`, {
+      method: 'POST',
+      body: JSON.stringify(memberData)
+    });
+  }
+
+  async removeStallMember(stallId, memberId) {
+    return await this.request(`/api/stalls/${stallId}/members/${memberId}`, {
       method: 'DELETE'
+    });
+  }
+
+  async submitStallJoinRequest(inviteCode) {
+    return await this.request('/api/stalls/join-request', {
+      method: 'POST',
+      body: JSON.stringify({ invite_code: inviteCode })
+    });
+  }
+
+  async getStallJoinRequests(stallId) {
+    return (await this.request(`/api/stalls/${stallId}/join-requests`)).requests;
+  }
+
+  async approveJoinRequest(stallId, requestId) {
+    return await this.request(`/api/stalls/${stallId}/join-requests/${requestId}/approve`, {
+      method: 'POST'
+    });
+  }
+
+  async rejectJoinRequest(stallId, requestId) {
+    return await this.request(`/api/stalls/${stallId}/join-requests/${requestId}/reject`, {
+      method: 'POST'
     });
   }
 
