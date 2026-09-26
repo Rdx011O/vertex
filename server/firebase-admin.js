@@ -15,19 +15,32 @@ let firestoreInstance = null;
 
 try {
   if (!getApps().length) {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    if (privateKey) {
+      privateKey = privateKey.trim();
+      if ((privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+          (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
     const projectId = process.env.FIREBASE_PROJECT_ID || 'aadix001';
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 
     if (projectId && clientEmail && privateKey && !privateKey.includes('PASTE_YOUR_FULL_PRIVATE_KEY_HERE')) {
-      initializeApp({
-        credential: cert({
-          projectId,
-          clientEmail,
-          privateKey
-        })
-      });
-      console.log(`🔥 Firebase Admin SDK initialized (Project: ${projectId})`);
+      try {
+        initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey
+          })
+        });
+        console.log(`🔥 Firebase Admin SDK initialized (Project: ${projectId})`);
+      } catch (certErr) {
+        console.warn('⚠️ Service account cert error, falling back to basic init:', certErr.message);
+        initializeApp({ projectId });
+      }
     } else {
       // Fallback initialization without service account for basic token decoding
       initializeApp({ projectId });
@@ -35,8 +48,17 @@ try {
     }
   }
 
-  adminAuthInstance = getAuth();
-  firestoreInstance = getFirestore();
+  try {
+    adminAuthInstance = getAuth();
+  } catch (_) {
+    adminAuthInstance = null;
+  }
+
+  try {
+    firestoreInstance = getFirestore();
+  } catch (_) {
+    firestoreInstance = null;
+  }
 } catch (err) {
   console.warn('⚠️ Firebase Admin SDK initialization notice:', err.message);
 }

@@ -82,6 +82,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Explicit 404 for unhandled API routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
+});
+
 // Global JSON error handler - prevents HTML 500 pages that break client JSON.parse()
 app.use((err, req, res, next) => {
   console.error('[Server Error]', err.message, err.stack);
