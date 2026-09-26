@@ -125,10 +125,19 @@ class ApiService {
     };
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (_) {
+      if (!response.ok) {
+        throw new Error(text || `Server error (${response.status})`);
+      }
+      throw new Error(`Unexpected server response: ${text.slice(0, 150)}`);
+    }
 
     if (!response.ok) {
-      throw new Error(data.error || `HTTP error ${response.status}`);
+      throw new Error(data.error || data.message || `HTTP error ${response.status}`);
     }
     return data;
   }

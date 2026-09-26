@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Vertex Database - Firestore-backed (with JSON file fallback for local dev)
  * Primary store: Firebase Firestore (persists across Vercel serverless cold starts)
  * Fallback:      Flat JSON file (for local dev without Firebase service account)
@@ -13,7 +13,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Local JSON file paths
-let DATA_DIR = path.join(__dirname, '..', 'data');
+const isVercel = Boolean(process.env.VERCEL);
+let DATA_DIR = isVercel ? path.join('/tmp', 'vertex_data') : path.join(__dirname, '..', 'data');
 let DB_FILE  = path.join(DATA_DIR, 'vertex_db.json');
 
 try {
@@ -103,9 +104,12 @@ async function fsWrite(data) {
   const fsDb = await getFirestoreDb();
   if (!fsDb) return false;
   try {
-    // Exclude large log collections to stay under Firestore 1MB doc limit
-    const { audit_logs, sales_submissions, attendance_records, ...essentialData } = data;
-    await fsDb.collection(FS_COLLECTION).doc(FS_META_DOC).set(essentialData, { merge: false });
+    // Only cap audit_logs to 100 entries so document never exceeds Firestore doc size limits
+    const safeData = {
+      ...data,
+      audit_logs: Array.isArray(data.audit_logs) ? data.audit_logs.slice(0, 100) : []
+    };
+    await fsDb.collection(FS_COLLECTION).doc(FS_META_DOC).set(safeData, { merge: false });
     return true;
   } catch (err) {
     console.warn('[DB] Firestore write error:', err.message);
@@ -158,25 +162,34 @@ class Database {
   }
 
   async _initFirestore() {
-    const fsDb = await getFirestoreDb();
-    if (!fsDb) {
-      console.log('[DB] Firestore not available - using local JSON storage.');
-      return;
-    }
+    try {
+      const fsDb = await getFirestoreDb();
+      if (!fsDb) {
+        console.log('[DB] Firestore not available - using local JSON storage.');
+        return;
+      }
 
-    const remote = await fsRead();
-    if (remote && remote.users) {
-      // Firestore has data - use it as source of truth
-      this.data = remote;
-      this._ensureCollections();
-      localWrite(this.data);
-      console.log('[DB] Loaded from Firestore: ' + this.data.users.length + ' users, ' + this.data.stalls.length + ' stalls.');
-    } else {
-      // Firestore is empty - push local data to it
-      await fsWrite(this.data);
-      console.log('[DB] Initialized Firestore with local data.');
+      const remote = await fsRead();
+      if (remote && remote.users) {
+        // Firestore has data - use it as source of truth
+        this.data = remote;
+        this._ensureCollections();
+        localWrite(this.data);
+        console.log('[DB] Loaded from Firestore: ' + (this.data.users?.length || 0) + ' users, ' + (this.data.stalls?.length || 0) + ' stalls.');
+        this._useFirestore = true;
+      } else {
+        // Firestore is empty or first run - push initial data to it
+        const writeOk = await fsWrite(this.data);
+        if (writeOk) {
+          console.log('[DB] Initialized Firestore with initial data.');
+          this._useFirestore = true;
+        } else {
+          console.warn('[DB] Could not write to Firestore; continuing in local mode.');
+        }
+      }
+    } catch (err) {
+      console.warn('[DB] Firestore init error:', err.message);
     }
-    this._useFirestore = true;
   }
 
   _ensureCollections() {
@@ -199,20 +212,26 @@ class Database {
     }
   }
 
-  save() {
+  async save() {
     localWrite(this.data);
     if (this._useFirestore) {
-      fsWrite(this.data).catch(err => console.warn('[DB] Async Firestore save error:', err.message));
+      try {
+        await fsWrite(this.data);
+      } catch (err) {
+        console.warn('[DB] Async Firestore save error:', err.message);
+      }
     }
   }
 
   getUserByUid(firebaseUid) {
+    if (!firebaseUid || !Array.isArray(this.data?.users)) return null;
     return this.data.users.find(u => u.id === firebaseUid) || null;
   }
 
   getUserByEmail(email) {
-    const e = (email || '').toLowerCase();
-    return this.data.users.find(u => (u.email || '').toLowerCase() === e) || null;
+    if (!email || !Array.isArray(this.data?.users)) return null;
+    const e = email.trim().toLowerCase();
+    return this.data.users.find(u => (u.email || '').trim().toLowerCase() === e) || null;
   }
 
   createUser({ id, name, email, role = 'pending', phone = null, designation = null,

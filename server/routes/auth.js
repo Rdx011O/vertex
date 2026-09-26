@@ -1,12 +1,10 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db, { generateInviteCode } from '../db.js';
-import { requireAuth, requireAdminMiddleware } from '../rbac.js';
+import { requireAuth, requireAdminMiddleware, isAdminEmail } from '../rbac.js';
 import realtime from '../ws.js';
 
 const router = express.Router();
-
-const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL ? process.env.BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase() : null;
 
 /**
  * POST /api/auth/register-profile
@@ -15,246 +13,310 @@ const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL ? process.env.BO
  * Supports instant role assignment: Admin, Coordinator (with new stall), or Member.
  */
 router.post('/register-profile', async (req, res) => {
-  // Wait for Firestore to finish loading (important on Vercel cold starts)
-  await db.ready();
+  try {
+    // Wait for Firestore to finish loading (important on Vercel cold starts)
+    await db.ready();
 
-  if (!req.firebaseUser) {
-    return res.status(401).json({ error: 'Authentication required.' });
-  }
+    if (!req.firebaseUser) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    }
 
-  const {
-    name, phone, desired_role,
-    username,
-    college_name,
-    stall_name_desired,
-    stall_category_desired,
-    stall_alloted_number
-  } = req.body;
-  const { uid, email } = req.firebaseUser;
+    const {
+      name, phone, desired_role,
+      username,
+      college_name,
+      stall_name_desired,
+      stall_category_desired,
+      stall_alloted_number
+    } = req.body;
+    const { uid, email } = req.firebaseUser;
 
-  if (!name) {
-    return res.status(400).json({ error: 'Name is required.' });
-  }
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required.' });
+    }
 
-  // Determine initial role and handle automatic stall creation for coordinator
-  let role = 'pending_member';
-  let assignedStallId = null;
-  const userEmail = (email || '').trim().toLowerCase();
-  const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && userEmail === BOOTSTRAP_ADMIN_EMAIL);
+    // Determine initial role and handle automatic stall creation for coordinator
+    let role = 'pending_member';
+    let assignedStallId = null;
+    const userEmail = (email || '').trim().toLowerCase();
+    const isBootstrapAdmin = isAdminEmail(userEmail);
 
-  if (desired_role === 'admin' || isBootstrapAdmin) {
-    role = 'admin';
-  } else if (desired_role === 'coordinator') {
-    role = 'coordinator';
-    
-    // Auto-create stall for coordinator with permanent 12-char invite code
-    const stallId = 'stl-' + uuidv4().slice(0, 8);
-    const inviteCode = generateInviteCode();
-    const newStall = {
-      id: stallId,
-      name: (stall_name_desired || `${name.trim()}'s Stall`).trim(),
-      category: stall_category_desired || 'Tech & Gaming',
-      event_id: 'ev-bp-2026',
-      coordinator_user_id: uid,
-      status: 'active',
-      banner_color: '#4F46E5',
-      location: stall_alloted_number ? `Booth ${stall_alloted_number}` : 'Main Courtyard',
-      allotted_number: stall_alloted_number || null,
-      invite_code: inviteCode,
-      created_at: new Date().toISOString()
-    };
-    db.data.stalls.push(newStall);
-    assignedStallId = stallId;
+    if (desired_role === 'admin' || isBootstrapAdmin) {
+      role = 'admin';
+    } else if (desired_role === 'coordinator') {
+      role = 'coordinator';
+      
+      // Auto-create stall for coordinator with permanent 12-char invite code
+      const stallId = 'stl-' + uuidv4().slice(0, 8);
+      const inviteCode = generateInviteCode();
+      const newStall = {
+        id: stallId,
+        name: (stall_name_desired || `${name.trim()}'s Stall`).trim(),
+        category: stall_category_desired || 'Tech & Gaming',
+        event_id: 'ev-bp-2026',
+        coordinator_user_id: uid,
+        status: 'active',
+        banner_color: '#4F46E5',
+        location: stall_alloted_number ? `Booth ${stall_alloted_number}` : 'Main Courtyard',
+        allotted_number: stall_alloted_number || null,
+        invite_code: inviteCode,
+        created_at: new Date().toISOString()
+      };
+      if (!Array.isArray(db.data.stalls)) db.data.stalls = [];
+      db.data.stalls.push(newStall);
+      assignedStallId = stallId;
 
-    db.logAudit(
-      uid, name.trim(),
-      'STALL_CREATED', 'STALL', stallId,
-      `Stall "${newStall.name}" created by coordinator ${name.trim()} (Invite Code: ${inviteCode}).`
-    );
+      db.logAudit(
+        uid, name.trim(),
+        'STALL_CREATED', 'STALL', stallId,
+        `Stall "${newStall.name}" created by coordinator ${name.trim()} (Invite Code: ${inviteCode}).`
+      );
 
-    realtime.broadcast('STALL_CREATED', { stall: newStall });
-  } else if (desired_role === 'member') {
-    const rawInviteCode = (req.body.invite_code || req.body.stall_code || '').trim();
-    if (rawInviteCode) {
-      const targetStall = db.data.stalls.find(s => s.invite_code === rawInviteCode);
-      if (targetStall) {
-        role = 'member';
-        assignedStallId = targetStall.id;
+      realtime.broadcast('STALL_CREATED', { stall: newStall });
+    } else if (desired_role === 'member') {
+      const rawInviteCode = (req.body.invite_code || req.body.stall_code || '').trim();
+      if (rawInviteCode) {
+        const targetStall = (db.data.stalls || []).find(s => s.invite_code === rawInviteCode);
+        if (targetStall) {
+          role = 'member';
+          assignedStallId = targetStall.id;
+        } else {
+          role = 'pending_member';
+        }
       } else {
         role = 'pending_member';
       }
-    } else {
-      role = 'pending_member';
     }
-  }
 
-  // Create or update profile
-  let user = db.getUserByUid(uid);
-  if (user) {
-    const updates = {
-      name: name.trim(),
-      role,
-      phone: phone || user.phone,
-      college_name: college_name || user.college_name,
-      username: username ? username.trim() : user.username
-    };
-    if (role === 'admin') {
-      updates.designation = 'System Administrator';
-    } else if (role === 'coordinator') {
-      updates.designation = 'Stall Coordinator';
-      if (assignedStallId) updates.stall_id = assignedStallId;
-    } else if (role === 'member' && assignedStallId) {
-      updates.designation = 'Team Member';
-      updates.stall_id = assignedStallId;
+    // Create or update profile
+    let user = db.getUserByUid(uid) || (email ? db.getUserByEmail(email) : null);
+    if (user) {
+      const updates = {
+        id: uid,
+        name: name.trim(),
+        role,
+        phone: phone || user.phone,
+        college_name: college_name || user.college_name,
+        username: username ? username.trim() : user.username
+      };
+      if (role === 'admin') {
+        updates.designation = 'System Administrator';
+      } else if (role === 'coordinator') {
+        updates.designation = 'Stall Coordinator';
+        if (assignedStallId) updates.stall_id = assignedStallId;
+      } else if (role === 'member' && assignedStallId) {
+        updates.designation = 'Team Member';
+        updates.stall_id = assignedStallId;
+      }
+      user = db.updateUser(uid, updates);
+      await db.save();
+      const stall = user.stall_id ? (db.data.stalls || []).find(s => s.id === user.stall_id) : null;
+      return res.json({
+        user: { ...user, stall_name: stall?.name || null }
+      });
     }
-    user = db.updateUser(uid, updates);
-    const stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
-    return res.json({
+
+    user = db.createUser({
+      id: uid,
+      name: name.trim(),
+      email,
+      role,
+      phone: phone || null,
+      designation: role === 'admin' ? 'System Administrator' : (role === 'coordinator' ? 'Stall Coordinator' : 'Participant'),
+      username: username ? username.trim() : null,
+      college_name: college_name || 'Pravara Rural Engineering College, Loni',
+      stall_name_desired: stall_name_desired || null,
+      stall_category_desired: stall_category_desired || null,
+      stall_alloted_number: stall_alloted_number || null,
+      badge_code: `BP-${role === 'admin' ? 'ADM' : (role === 'coordinator' ? 'CRD' : 'MBR')}-${uid.slice(0, 4).toUpperCase()}`
+    });
+
+    if (assignedStallId) {
+      user = db.updateUser(uid, { stall_id: assignedStallId });
+    }
+
+    await db.save();
+
+    db.logAudit(uid, name, 'USER_REGISTERED', 'USER', uid, `New user registered: ${email} (${role})${college_name ? ` from ${college_name}` : ''}${stall_alloted_number ? `, stall #${stall_alloted_number}` : ''}`);
+
+    const stall = user.stall_id ? (db.data.stalls || []).find(s => s.id === user.stall_id) : null;
+    res.status(201).json({
       user: { ...user, stall_name: stall?.name || null }
     });
+  } catch (err) {
+    console.error('[Auth Error] /register-profile:', err);
+    res.status(500).json({ error: err.message || 'Registration failed.' });
   }
-
-  user = db.createUser({
-    id: uid,
-    name: name.trim(),
-    email,
-    role,
-    phone: phone || null,
-    designation: role === 'admin' ? 'System Administrator' : (role === 'coordinator' ? 'Stall Coordinator' : 'Participant'),
-    username: username ? username.trim() : null,
-    college_name: college_name || 'Pravara Rural Engineering College, Loni',
-    stall_name_desired: stall_name_desired || null,
-    stall_category_desired: stall_category_desired || null,
-    stall_alloted_number: stall_alloted_number || null,
-    badge_code: `BP-${role === 'admin' ? 'ADM' : (role === 'coordinator' ? 'CRD' : 'MBR')}-${uid.slice(0, 4).toUpperCase()}`
-  });
-
-  if (assignedStallId) {
-    user = db.updateUser(uid, { stall_id: assignedStallId });
-  }
-
-  db.logAudit(uid, name, 'USER_REGISTERED', 'USER', uid, `New user registered: ${email} (${role})${college_name ? ` from ${college_name}` : ''}${stall_alloted_number ? `, stall #${stall_alloted_number}` : ''}`);
-
-  const stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
-  res.status(201).json({
-    user: { ...user, stall_name: stall?.name || null }
-  });
 });
 
 /**
  * GET /api/auth/me
  * Returns the currently authenticated user's profile + stall info.
- * NOTE: Does NOT use requireAuth middleware so we can await db.ready() first.
  */
 router.get('/me', async (req, res) => {
-  // Must have a valid Firebase token
-  if (!req.firebaseUser) {
-    return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+  try {
+    // Must have a valid Firebase token
+    if (!req.firebaseUser) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    }
+
+    // Wait for Firestore to finish loading (critical on Vercel cold starts)
+    await db.ready();
+
+    const uid = req.firebaseUser?.uid;
+    const email = (req.firebaseUser?.email || '').trim().toLowerCase();
+    if (!uid) return res.status(401).json({ error: 'Authentication required.' });
+
+    let user = db.getUserByUid(uid);
+
+    // If not found by UID, check by email
+    if (!user && email) {
+      user = db.getUserByEmail(email);
+      if (user) {
+        user.id = uid;
+        await db.save();
+      }
+    }
+
+    // Auto-provision admin if email matches admin list
+    const isBootstrapAdmin = isAdminEmail(email);
+    if (!user && isBootstrapAdmin) {
+      user = db.createUser({
+        id: uid,
+        name: req.firebaseUser.name || 'System Administrator',
+        email,
+        role: 'admin',
+        designation: 'System Administrator'
+      });
+      await db.save();
+    } else if (user && isBootstrapAdmin && user.role !== 'admin') {
+      user = db.updateUser(user.id, { role: 'admin', designation: 'System Administrator' });
+      await db.save();
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'Profile not found. Please register.' });
+    }
+
+    // Ensure coordinator is linked to their stall or has a stall created
+    if (user.role === 'coordinator') {
+      let stall = user.stall_id ? (db.data.stalls || []).find(s => s.id === user.stall_id) : null;
+      if (!stall) {
+        stall = (db.data.stalls || []).find(s => s.coordinator_user_id === user.id);
+        if (!stall) {
+          const stallId = 'stl-' + uuidv4().slice(0, 8);
+          const inviteCode = generateInviteCode();
+          stall = {
+            id: stallId,
+            name: (user.stall_name_desired || `${user.name}'s Stall`).trim(),
+            category: user.stall_category_desired || 'Tech & Gaming',
+            event_id: 'ev-bp-2026',
+            coordinator_user_id: user.id,
+            status: 'active',
+            banner_color: '#4F46E5',
+            location: user.stall_alloted_number ? `Booth ${user.stall_alloted_number}` : 'Main Courtyard',
+            allotted_number: user.stall_alloted_number || null,
+            invite_code: inviteCode,
+            created_at: new Date().toISOString()
+          };
+          if (!Array.isArray(db.data.stalls)) db.data.stalls = [];
+          db.data.stalls.push(stall);
+        }
+        user = db.updateUser(user.id, { stall_id: stall.id });
+        await db.save();
+      }
+    }
+
+    const stall = user.stall_id ? (db.data.stalls || []).find(s => s.id === user.stall_id) : null;
+    res.json({
+      user: {
+        ...user,
+        stall_name: stall?.name || null,
+        stall_category: stall?.category || null
+      }
+    });
+  } catch (err) {
+    console.error('[Auth Error] /me:', err);
+    res.status(500).json({ error: err.message || 'Failed to retrieve profile.' });
   }
+});
 
-  // Wait for Firestore to finish loading (critical on Vercel cold starts)
-  await db.ready();
+/**
+ * POST /api/auth/claim-role
+ * Allows an authenticated Firebase user to directly claim Admin or create their Coordinator stall
+ */
+router.post('/claim-role', async (req, res) => {
+  try {
+    await db.ready();
+    if (!req.firebaseUser) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    }
 
-  // Re-fetch user from DB after Firestore is loaded (middleware ran before Firestore init)
-  const uid = req.firebaseUser?.uid;
-  if (!uid) return res.status(401).json({ error: 'Authentication required.' });
+    const { role, stall_name, stall_category, booth_number } = req.body;
+    const uid = req.firebaseUser.uid;
+    const email = (req.firebaseUser.email || '').trim().toLowerCase();
+    const displayName = req.firebaseUser.name || req.body.name || email.split('@')[0] || 'User';
 
-  let user = db.getUserByUid(uid);
-  if (!user) {
-    return res.status(404).json({ error: 'Profile not found. Please register.' });
-  }
+    let user = db.getUserByUid(uid) || (email ? db.getUserByEmail(email) : null);
 
-  const userEmail = (user.email || '').trim().toLowerCase();
-  const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && userEmail === BOOTSTRAP_ADMIN_EMAIL);
+    if (role === 'admin') {
+      if (!user) {
+        user = db.createUser({
+          id: uid,
+          name: displayName,
+          email,
+          role: 'admin',
+          designation: 'System Administrator'
+        });
+      } else {
+        user = db.updateUser(user.id, { role: 'admin', designation: 'System Administrator' });
+      }
+      await db.save();
+      return res.json({ user });
+    }
 
-  if (isBootstrapAdmin && user.role !== 'admin') {
-    user = db.updateUser(user.id, { role: 'admin', designation: 'System Administrator' });
-  }
+    if (role === 'coordinator') {
+      if (!user) {
+        user = db.createUser({
+          id: uid,
+          name: displayName,
+          email,
+          role: 'coordinator',
+          designation: 'Stall Coordinator'
+        });
+      }
 
-  // Ensure coordinator is linked to their stall or has a stall created
-  if (user.role === 'coordinator') {
-    let stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
-    if (!stall) {
-      stall = db.data.stalls.find(s => s.coordinator_user_id === user.id);
+      let stall = user.stall_id ? (db.data.stalls || []).find(s => s.id === user.stall_id) : null;
       if (!stall) {
         const stallId = 'stl-' + uuidv4().slice(0, 8);
         const inviteCode = generateInviteCode();
         stall = {
           id: stallId,
-          name: (user.stall_name_desired || `${user.name}'s Stall`).trim(),
-          category: user.stall_category_desired || 'Tech & Gaming',
+          name: (stall_name || `${user.name}'s Stall`).trim(),
+          category: stall_category || 'Tech & Gaming',
           event_id: 'ev-bp-2026',
           coordinator_user_id: user.id,
           status: 'active',
           banner_color: '#4F46E5',
-          location: user.stall_alloted_number ? `Booth ${user.stall_alloted_number}` : 'Main Courtyard',
-          allotted_number: user.stall_alloted_number || null,
+          location: booth_number ? `Booth ${booth_number}` : 'Main Courtyard',
+          allotted_number: booth_number || null,
           invite_code: inviteCode,
           created_at: new Date().toISOString()
         };
+        if (!Array.isArray(db.data.stalls)) db.data.stalls = [];
         db.data.stalls.push(stall);
       }
-      user = db.updateUser(user.id, { stall_id: stall.id });
-      db.save();
+
+      user = db.updateUser(user.id, { role: 'coordinator', stall_id: stall.id, designation: 'Stall Coordinator' });
+      await db.save();
+      return res.json({ user: { ...user, stall_name: stall.name, invite_code: stall.invite_code } });
     }
+
+    res.status(400).json({ error: 'Invalid role requested.' });
+  } catch (err) {
+    console.error('[Auth Error] /claim-role:', err);
+    res.status(500).json({ error: err.message || 'Failed to claim role.' });
   }
-
-  const stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
-  res.json({
-    user: {
-      ...user,
-      stall_name: stall?.name || null,
-      stall_category: stall?.category || null
-    }
-  });
-});
-
-/**
- * POST /api/auth/claim-role
- * Allows an authenticated user to directly claim Admin or create their Coordinator stall
- */
-router.post('/claim-role', requireAuth, (req, res) => {
-  const { role, stall_name, stall_category, booth_number } = req.body;
-  const user = req.user;
-
-  if (role === 'admin') {
-    const updated = db.updateUser(user.id, { role: 'admin', designation: 'System Administrator' });
-    db.save();
-    return res.json({ user: updated });
-  }
-
-  if (role === 'coordinator') {
-    let stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
-    if (!stall) {
-      const stallId = 'stl-' + uuidv4().slice(0, 8);
-      const inviteCode = generateInviteCode();
-      stall = {
-        id: stallId,
-        name: (stall_name || `${user.name}'s Stall`).trim(),
-        category: stall_category || 'Tech & Gaming',
-        event_id: 'ev-bp-2026',
-        coordinator_user_id: user.id,
-        status: 'active',
-        banner_color: '#4F46E5',
-        location: booth_number ? `Booth ${booth_number}` : 'Main Courtyard',
-        allotted_number: booth_number || null,
-        invite_code: inviteCode,
-        created_at: new Date().toISOString()
-      };
-      db.data.stalls.push(stall);
-    }
-    const updated = db.updateUser(user.id, {
-      role: 'coordinator',
-      stall_id: stall.id,
-      designation: 'Stall Coordinator'
-    });
-    db.save();
-    return res.json({
-      user: { ...updated, stall_name: stall.name, stall_category: stall.category }
-    });
-  }
-
-  res.status(400).json({ error: 'Invalid role requested.' });
 });
 
 /**

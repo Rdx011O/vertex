@@ -25,14 +25,18 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Async Firebase token verification middleware
-app.use(authenticateUser);
-
-// Wait for Firestore DB init on every API request (no-op after first request)
+// Wait for DB ready on API requests with error handling
 app.use('/api', async (req, res, next) => {
-  await db.ready();
+  try {
+    await db.ready();
+  } catch (err) {
+    console.error('[DB Ready Error]', err);
+  }
   next();
 });
+
+// Async Firebase token verification middleware
+app.use(authenticateUser);
 
 // Inject Firebase Web Config for the client (with fallbacks)
 app.get('/api/firebase-config', (req, res) => {

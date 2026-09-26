@@ -562,6 +562,18 @@ export function renderPendingApprovalView(container, user, onSignOut) {
           </form>
         </div>
 
+        <!-- Panel 2: Enter as Admin -->
+        <div id="panel-admin" class="pending-panel" style="display:none;">
+          <div style="text-align:center; padding:12px 0;">
+            <p style="color:var(--text-secondary); margin-bottom:16px; font-size:13.5px; line-height:1.5;">
+              Authorized event organizers & faculty administrators can launch the full <strong>Building Pravara '26 Command Center</strong> directly.
+            </p>
+            <button type="button" class="btn btn-admin btn-full auth-submit-btn" id="btn-claim-admin">
+              👑 Enter as Event Admin →
+            </button>
+          </div>
+        </div>
+
         <!-- Panel 3: Paste Member Stall Invite Code -->
         <div id="panel-member" class="pending-panel" style="display:none;">
           <form id="pending-join-form" class="pending-form">

@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db, { generateInviteCode } from '../db.js';
 import { requireAuth, requireAdminMiddleware, requireCoordinatorOrAdmin, requireStallCoordinator } from '../rbac.js';
@@ -9,35 +9,49 @@ const router = express.Router();
 
 // â”€â”€ List all stalls with live financial metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/', (req, res) => {
-  const stallsWithMetrics = db.data.stalls.map(s => {
-    const fin = calculateStallFinancials(s.id, db.data);
-    const coordinator = db.data.users.find(u => u.id === s.coordinator_user_id);
-    const members = db.data.users.filter(u => u.stall_id === s.id && u.role === 'member');
+  try {
+    const stalls = Array.isArray(db.data?.stalls) ? db.data.stalls : [];
+    const users = Array.isArray(db.data?.users) ? db.data.users : [];
+    const attendanceRecords = Array.isArray(db.data?.attendance_records) ? db.data.attendance_records : [];
 
-    const stallAttendance = (db.data.attendance_records || []).filter(
-      a => a.stall_id === s.id && a.status === 'confirmed'
-    );
-    const attendancePercent = members.length > 0
-      ? Math.round((stallAttendance.length / members.length) * 100)
-      : 100;
+    const stallsWithMetrics = stalls.map(s => {
+      const fin = calculateStallFinancials(s.id, db.data);
+      const coordinator = users.find(u => u.id === s.coordinator_user_id);
+      const members = users.filter(u => u.stall_id === s.id && u.role === 'member');
 
-    return {
-      ...s,
-      financials: fin,
-      coordinator: coordinator ? { id: coordinator.id, name: coordinator.name, phone: coordinator.phone } : null,
-      members_count: members.length,
-      attendance_confirmed_count: stallAttendance.length,
-      attendance_rate: attendancePercent
-    };
-  });
+      const stallAttendance = attendanceRecords.filter(
+        a => a.stall_id === s.id && a.status === 'confirmed'
+      );
+      const attendancePercent = members.length > 0
+        ? Math.round((stallAttendance.length / members.length) * 100)
+        : 100;
 
-  res.json({ stalls: stallsWithMetrics });
+      return {
+        ...s,
+        financials: fin,
+        coordinator: coordinator ? { id: coordinator.id, name: coordinator.name, phone: coordinator.phone } : null,
+        members_count: members.length,
+        attendance_confirmed_count: stallAttendance.length,
+        attendance_rate: attendancePercent
+      };
+    });
+
+    res.json({ stalls: stallsWithMetrics });
+  } catch (err) {
+    console.error('[Stalls Error] GET /:', err);
+    res.status(500).json({ error: err.message || 'Failed to list stalls.' });
+  }
 });
 
-// â”€â”€ Event summary (command center metrics) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Event summary (command center metrics) ──────────────────────────────────
 router.get('/summary/event', (req, res) => {
-  const summary = calculateEventSummary(db.data);
-  res.json({ summary });
+  try {
+    const summary = calculateEventSummary(db.data);
+    res.json({ summary });
+  } catch (err) {
+    console.error('[Stalls Error] GET /summary/event:', err);
+    res.status(500).json({ error: err.message || 'Failed to calculate event summary.' });
+  }
 });
 
 // â”€â”€ Member: Direct Join Stall using 12-char invite code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

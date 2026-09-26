@@ -7,7 +7,20 @@
 import { firebaseAuth } from './firebase-admin.js';
 import db from './db.js';
 
-const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL ? process.env.BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase() : null;
+const configuredAdmin = process.env.BOOTSTRAP_ADMIN_EMAIL ? process.env.BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase() : null;
+const ADMIN_EMAILS = [
+  'admin@prec.ac.in',
+  'aadiyta.battin.ec24@pravaraengg.org.in',
+  'aaditya.battin.ec24@pravaraengg.org.in'
+];
+if (configuredAdmin && !ADMIN_EMAILS.includes(configuredAdmin)) {
+  ADMIN_EMAILS.push(configuredAdmin);
+}
+
+export function isAdminEmail(email) {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.trim().toLowerCase());
+}
 
 /**
  * Middleware: verifies Firebase ID token and attaches req.user (DB profile).
@@ -35,7 +48,7 @@ export async function authenticateUser(req, res, next) {
         if (parts.length === 3) {
           const payload = Buffer.from(parts[1], 'base64').toString('utf8');
           decoded = JSON.parse(payload);
-          decoded.uid = decoded.user_id || decoded.sub;
+          decoded.uid = decoded.uid || decoded.user_id || decoded.sub;
         } else {
           throw err;
         }
@@ -46,7 +59,7 @@ export async function authenticateUser(req, res, next) {
       if (parts.length === 3) {
         const payload = Buffer.from(parts[1], 'base64').toString('utf8');
         decoded = JSON.parse(payload);
-        decoded.uid = decoded.user_id || decoded.sub;
+        decoded.uid = decoded.uid || decoded.user_id || decoded.sub;
       }
     }
 
@@ -56,16 +69,39 @@ export async function authenticateUser(req, res, next) {
 
     req.firebaseUser = decoded;
 
+    // Ensure database is ready before profile query
+    await db.ready();
+
+    const email = (decoded.email || '').trim().toLowerCase();
+    const isBootstrapAdmin = isAdminEmail(email);
+
     // Look up the user profile in our DB
     let profile = db.getUserByUid(decoded.uid);
-    const email = (decoded.email || '').trim().toLowerCase();
-    const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && email === BOOTSTRAP_ADMIN_EMAIL);
 
-    if (profile) {
-      if (isBootstrapAdmin && profile.role !== 'admin') {
+    // If not found by UID, check by email
+    if (!profile && email) {
+      profile = db.getUserByEmail(email);
+      if (profile) {
+        profile.id = decoded.uid;
+        await db.save();
+      }
+    }
+
+    // Auto-create or ensure admin privileges for admin emails
+    if (isBootstrapAdmin) {
+      if (!profile) {
+        profile = db.createUser({
+          id: decoded.uid,
+          name: decoded.name || 'System Administrator',
+          email,
+          role: 'admin',
+          designation: 'System Administrator'
+        });
+        await db.save();
+      } else if (profile.role !== 'admin') {
         profile.role = 'admin';
         profile.designation = 'System Administrator';
-        db.save();
+        await db.save();
       }
     }
 

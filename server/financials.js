@@ -1,9 +1,9 @@
-﻿/**
+/**
  * Financial Calculation Engine adhering strictly to 04-FINANCIAL_LOGIC.md
  */
 
 export function formatINR(amount) {
-  if (amount === null || amount === undefined || isNaN(amount)) return 'â‚¹0';
+  if (amount === null || amount === undefined || isNaN(amount)) return '₹0';
   const isNegative = amount < 0;
   const absVal = Math.abs(Math.round(amount));
   
@@ -12,23 +12,27 @@ export function formatINR(amount) {
     maximumFractionDigits: 0
   }).format(absVal);
 
-  return isNegative ? `-â‚¹${formatted}` : `â‚¹${formatted}`;
+  return isNegative ? `-₹${formatted}` : `₹${formatted}`;
 }
 
-export function calculateStallFinancials(stallId, dbData) {
-  const stall = dbData.stalls.find(s => s.id === stallId);
+export function calculateStallFinancials(stallId, dbData = {}) {
+  const stalls = Array.isArray(dbData.stalls) ? dbData.stalls : [];
+  const stall = stalls.find(s => s.id === stallId);
   if (!stall) return null;
 
+  const salesSubmissions = Array.isArray(dbData.sales_submissions) ? dbData.sales_submissions : [];
+  const stallExpenses = Array.isArray(dbData.stall_expenses) ? dbData.stall_expenses : [];
+
   // 1. Calculate Gross Sales from VERIFIED submissions ONLY
-  const verifiedSubmissions = dbData.sales_submissions.filter(
+  const verifiedSubmissions = salesSubmissions.filter(
     sub => sub.stall_id === stallId && sub.status === 'verified'
   );
 
-  const pendingSubmissions = dbData.sales_submissions.filter(
+  const pendingSubmissions = salesSubmissions.filter(
     sub => sub.stall_id === stallId && sub.status === 'pending'
   );
 
-  const rejectedSubmissions = dbData.sales_submissions.filter(
+  const rejectedSubmissions = salesSubmissions.filter(
     sub => sub.stall_id === stallId && sub.status === 'rejected'
   );
 
@@ -42,12 +46,14 @@ export function calculateStallFinancials(stallId, dbData) {
   const pendingTotal = pendingOnline + pendingOffline;
 
   // 2. Calculate Total Expenses
-  const expenses = dbData.stall_expenses.filter(exp => exp.stall_id === stallId);
+  const expenses = stallExpenses.filter(exp => exp.stall_id === stallId);
   const totalExpenses = expenses.reduce((acc, exp) => acc + (exp.amount || 0), 0);
 
   // Categorize expenses
   const expensesByCategory = expenses.reduce((acc, exp) => {
-    acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+    if (exp.category) {
+      acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+    }
     return acc;
   }, {});
 
@@ -57,8 +63,7 @@ export function calculateStallFinancials(stallId, dbData) {
   // 4. Break-even check
   const isBreakEven = grossSales >= totalExpenses && totalExpenses > 0;
 
-  // 5. % of Expenses Recovered: min(100, round(Gross Sales Ã· Total Expenses Ã— 100))
-  // Edge case: Total Expenses = 0
+  // 5. % of Expenses Recovered: min(100, round(Gross Sales ÷ Total Expenses × 100))
   let recoveredPercent = null;
   let recoveredPercentDisplay = 'N/A';
   if (totalExpenses > 0) {
@@ -103,20 +108,27 @@ export function calculateStallFinancials(stallId, dbData) {
   };
 }
 
-export function calculateEventSummary(dbData) {
-  const stallSummaries = dbData.stalls.map(s => calculateStallFinancials(s.id, dbData));
+export function calculateEventSummary(dbData = {}) {
+  const stalls = Array.isArray(dbData.stalls) ? dbData.stalls : [];
+  const users = Array.isArray(dbData.users) ? dbData.users : [];
+  const attendanceRecords = Array.isArray(dbData.attendance_records) ? dbData.attendance_records : [];
+  const salesSubmissions = Array.isArray(dbData.sales_submissions) ? dbData.sales_submissions : [];
 
-  const totalGrossSales = stallSummaries.reduce((sum, s) => sum + s.gross_sales, 0);
-  const totalOnlineSales = stallSummaries.reduce((sum, s) => sum + s.online_sales, 0);
-  const totalOfflineSales = stallSummaries.reduce((sum, s) => sum + s.offline_sales, 0);
-  const totalExpenses = stallSummaries.reduce((sum, s) => sum + s.total_expenses, 0);
+  const stallSummaries = stalls
+    .map(s => calculateStallFinancials(s.id, dbData))
+    .filter(Boolean);
+
+  const totalGrossSales = stallSummaries.reduce((sum, s) => sum + (s.gross_sales || 0), 0);
+  const totalOnlineSales = stallSummaries.reduce((sum, s) => sum + (s.online_sales || 0), 0);
+  const totalOfflineSales = stallSummaries.reduce((sum, s) => sum + (s.offline_sales || 0), 0);
+  const totalExpenses = stallSummaries.reduce((sum, s) => sum + (s.total_expenses || 0), 0);
   const totalNetProfit = totalGrossSales - totalExpenses;
   
   const profitableStallsCount = stallSummaries.filter(s => s.is_profitable).length;
   const breakEvenStallsCount = stallSummaries.filter(s => s.is_break_even).length;
   const totalStallsCount = stallSummaries.length;
 
-  const pendingSubmissions = dbData.sales_submissions.filter(s => s.status === 'pending');
+  const pendingSubmissions = salesSubmissions.filter(s => s.status === 'pending');
   const pendingTotal = pendingSubmissions.reduce((sum, s) => sum + (s.total_amount || 0), 0);
 
   // Leaderboard ranking sorted by verified Gross Sales descending
@@ -125,13 +137,13 @@ export function calculateEventSummary(dbData) {
     .map((s, index) => ({
       ...s,
       rank: index + 1,
-      medal: index === 0 ? 'ðŸ¥‡' : index === 1 ? 'ðŸ¥ˆ' : index === 2 ? 'ðŸ¥‰' : null
+      medal: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : null
     }));
 
   // Attendance stats
-  const totalMembers = dbData.users.filter(u => u.role === 'member').length;
-  const confirmedAttendance = (dbData.attendance_records || []).filter(a => a.status === 'confirmed').length;
-  const pendingAttendance = (dbData.attendance_records || []).filter(a => a.status === 'pending_coordinator').length;
+  const totalMembers = users.filter(u => u.role === 'member').length;
+  const confirmedAttendance = attendanceRecords.filter(a => a.status === 'confirmed').length;
+  const pendingAttendance = attendanceRecords.filter(a => a.status === 'pending_coordinator').length;
   const attendanceRate = totalMembers > 0 ? Math.round((confirmedAttendance / totalMembers) * 100) : 0;
 
   return {
@@ -162,4 +174,3 @@ export function calculateEventSummary(dbData) {
     leaderboard
   };
 }
-
