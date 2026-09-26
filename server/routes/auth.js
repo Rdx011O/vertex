@@ -6,14 +6,13 @@ import realtime from '../ws.js';
 
 const router = express.Router();
 
-const BOOTSTRAP_ADMIN_EMAIL = (process.env.BOOTSTRAP_ADMIN_EMAIL || 'aadiyta.battin.ec24@pravaraengg.org.in').trim().toLowerCase();
+const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL ? process.env.BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase() : null;
 
 /**
  * POST /api/auth/register-profile
  * Called by the frontend immediately after Firebase signup.
  * Creates a user profile in the DB, linked to their Firebase UID.
- * If the email matches BOOTSTRAP_ADMIN_EMAIL or Admin role is selected, they get 'admin' role instantly.
- * If Coordinator role is selected, their stall is automatically created with a permanent 12-digit invite code!
+ * Supports instant role assignment: Admin, Coordinator (with new stall), or Member.
  */
 router.post('/register-profile', async (req, res) => {
   if (!req.firebaseUser) {
@@ -35,17 +34,15 @@ router.post('/register-profile', async (req, res) => {
   }
 
   // Determine initial role and handle automatic stall creation for coordinator
-  let role = 'pending';
+  let role = 'pending_member';
   let assignedStallId = null;
-  const hasExistingAdmin = db.data.users.some(u => u.role === 'admin');
   const userEmail = (email || '').trim().toLowerCase();
-  const isBootstrapAdmin = userEmail && (userEmail === BOOTSTRAP_ADMIN_EMAIL || userEmail.includes('battin.ec24@pravaraengg'));
+  const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && userEmail === BOOTSTRAP_ADMIN_EMAIL);
 
-  // Admin gets direct instant access with no waiting list
-  if (desired_role === 'admin' || isBootstrapAdmin || !hasExistingAdmin) {
+  if (desired_role === 'admin' || isBootstrapAdmin) {
     role = 'admin';
   } else if (desired_role === 'coordinator') {
-    role = 'coordinator'; // Coordinator gets direct access to their new stall
+    role = 'coordinator';
     
     // Auto-create stall for coordinator with permanent 12-char invite code
     const stallId = 'stl-' + uuidv4().slice(0, 8);
@@ -84,29 +81,30 @@ router.post('/register-profile', async (req, res) => {
         role = 'pending_member';
       }
     } else {
-      role = 'pending_member'; // member will enter stall invite code in join screen
+      role = 'pending_member';
     }
   }
 
-  // Create or return existing profile
+  // Create or update profile
   let user = db.getUserByUid(uid);
   if (user) {
-    const updates = {};
-    if (desired_role === 'admin' || isBootstrapAdmin || user.role === 'pending_admin' || (!hasExistingAdmin && user.role === 'pending')) {
-      updates.role = 'admin';
-      updates.designation = user.designation || 'System Administrator';
-    } else if (desired_role === 'coordinator' && assignedStallId) {
-      updates.role = 'coordinator';
-      updates.stall_id = assignedStallId;
+    const updates = {
+      name: name.trim(),
+      role,
+      phone: phone || user.phone,
+      college_name: college_name || user.college_name,
+      username: username ? username.trim() : user.username
+    };
+    if (role === 'admin') {
+      updates.designation = 'System Administrator';
+    } else if (role === 'coordinator') {
       updates.designation = 'Stall Coordinator';
-    } else if (desired_role === 'member' && assignedStallId) {
-      updates.role = 'member';
+      if (assignedStallId) updates.stall_id = assignedStallId;
+    } else if (role === 'member' && assignedStallId) {
+      updates.designation = 'Team Member';
       updates.stall_id = assignedStallId;
-      updates.designation = user.designation || 'Team Member';
     }
-    if (Object.keys(updates).length > 0) {
-      user = db.updateUser(uid, updates);
-    }
+    user = db.updateUser(uid, updates);
     const stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
     return res.json({
       user: { ...user, stall_name: stall?.name || null }
@@ -119,12 +117,13 @@ router.post('/register-profile', async (req, res) => {
     email,
     role,
     phone: phone || null,
-    designation: role === 'admin' ? 'System Administrator' : (role === 'coordinator' ? 'Stall Coordinator' : null),
+    designation: role === 'admin' ? 'System Administrator' : (role === 'coordinator' ? 'Stall Coordinator' : 'Participant'),
     username: username ? username.trim() : null,
-    college_name: college_name || null,
+    college_name: college_name || 'Pravara Rural Engineering College, Loni',
     stall_name_desired: stall_name_desired || null,
     stall_category_desired: stall_category_desired || null,
-    stall_alloted_number: stall_alloted_number || null
+    stall_alloted_number: stall_alloted_number || null,
+    badge_code: `BP-${role === 'admin' ? 'ADM' : (role === 'coordinator' ? 'CRD' : 'MBR')}-${uid.slice(0, 4).toUpperCase()}`
   });
 
   if (assignedStallId) {
@@ -145,14 +144,11 @@ router.post('/register-profile', async (req, res) => {
  */
 router.get('/me', requireAuth, (req, res) => {
   let user = req.user;
-  const hasExistingAdmin = db.data.users.some(u => u.role === 'admin' && u.id !== user.id);
   const userEmail = (user.email || '').trim().toLowerCase();
-  const isBootstrapAdmin = userEmail && (userEmail === BOOTSTRAP_ADMIN_EMAIL || userEmail.includes('battin.ec24@pravaraengg'));
+  const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && userEmail === BOOTSTRAP_ADMIN_EMAIL);
 
-  // If user was pending admin or matches bootstrap email, promote directly to admin
-  if (user.role === 'pending_admin' || isBootstrapAdmin || (!hasExistingAdmin && user.role === 'pending')) {
-    user = db.updateUser(user.id, { role: 'admin', designation: user.designation || 'System Administrator' });
-    db.logAudit(user.id, user.name, 'USER_ROLE_ASSIGNED', 'USER', user.id, `Promoted ${user.email} to admin.`);
+  if (isBootstrapAdmin && user.role !== 'admin') {
+    user = db.updateUser(user.id, { role: 'admin', designation: 'System Administrator' });
   }
 
   // Ensure coordinator is linked to their stall or has a stall created
@@ -195,7 +191,7 @@ router.get('/me', requireAuth, (req, res) => {
 
 /**
  * POST /api/auth/claim-role
- * Allows an authenticated user to directly claim Admin (if eligible) or create their Coordinator stall
+ * Allows an authenticated user to directly claim Admin or create their Coordinator stall
  */
 router.post('/claim-role', requireAuth, (req, res) => {
   const { role, stall_name, stall_category, booth_number } = req.body;

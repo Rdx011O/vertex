@@ -168,11 +168,11 @@ function renderLoginPage() {
         <form id="admin-signup-form" class="auth-form" style="display:none;">
           <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label" style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">Admin Full Name</label>
-            <input type="text" id="admin-signup-name" class="form-input" placeholder="Aaditya Battin" required style="width:100%;" />
+            <input type="text" id="admin-signup-name" class="form-input" placeholder="e.g. Operations Lead" required style="width:100%;" />
           </div>
           <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label" style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">Admin Email</label>
-            <input type="email" id="admin-signup-email" class="form-input" placeholder="aadiyta.battin.ec24@pravaraengg.org.in" required style="width:100%;" />
+            <input type="email" id="admin-signup-email" class="form-input" placeholder="admin@prec.ac.in" required style="width:100%;" />
           </div>
           <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label" style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">Password (min 6 characters)</label>

@@ -1,13 +1,13 @@
 /**
  * RBAC and Authentication Middleware
  * Verifies Firebase ID tokens from Authorization: Bearer <token> header.
- * Automatically provisions admin and coordinator profiles for authorized users.
+ * Attaches verified req.user (DB profile) to requests.
  */
 
 import { firebaseAuth } from './firebase-admin.js';
 import db from './db.js';
 
-const BOOTSTRAP_ADMIN_EMAIL = (process.env.BOOTSTRAP_ADMIN_EMAIL || 'aadiyta.battin.ec24@pravaraengg.org.in').trim().toLowerCase();
+const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL ? process.env.BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase() : null;
 
 /**
  * Middleware: verifies Firebase ID token and attaches req.user (DB profile).
@@ -59,34 +59,17 @@ export async function authenticateUser(req, res, next) {
     // Look up the user profile in our DB
     let profile = db.getUserByUid(decoded.uid);
     const email = (decoded.email || '').trim().toLowerCase();
-    const isBootstrapAdmin = email && (email === BOOTSTRAP_ADMIN_EMAIL || email.includes('battin.ec24@pravaraengg'));
-    const hasExistingAdmin = db.data.users.some(u => u.role === 'admin');
+    const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && email === BOOTSTRAP_ADMIN_EMAIL);
 
-    // Auto-provision or upgrade Admin profile immediately
-    if (!profile) {
-      if (isBootstrapAdmin || !hasExistingAdmin) {
-        profile = {
-          id: decoded.uid,
-          name: decoded.name || 'Aaditya Battin',
-          email: decoded.email || BOOTSTRAP_ADMIN_EMAIL,
-          role: 'admin',
-          designation: 'System Administrator',
-          stall_id: null,
-          phone: null,
-          college_name: 'Pravara Rural Engineering College, Loni',
-          badge_code: `BP-ADMIN-${decoded.uid.slice(0, 4).toUpperCase()}`,
-          created_at: new Date().toISOString()
-        };
-        db.data.users.push(profile);
+    if (profile) {
+      if (isBootstrapAdmin && profile.role !== 'admin') {
+        profile.role = 'admin';
+        profile.designation = 'System Administrator';
         db.save();
       }
-    } else if (isBootstrapAdmin && profile.role !== 'admin') {
-      profile.role = 'admin';
-      profile.designation = 'System Administrator';
-      db.save();
     }
 
-    req.user = profile;
+    req.user = profile || null;
     next();
   } catch (err) {
     console.warn('[Auth] Token decode/verify warning:', err.message);
@@ -104,18 +87,18 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Authentication required. Please sign in.' });
   }
 
-  // If user has a valid Firebase token but no local DB profile yet, auto-create a basic profile
+  // If user has a valid Firebase token but no local DB profile yet, create a clean profile
   if (!req.user) {
     const uid = req.firebaseUser.uid;
     const email = (req.firebaseUser.email || '').trim().toLowerCase();
-    const isBootstrapAdmin = email && (email === BOOTSTRAP_ADMIN_EMAIL || email.includes('battin.ec24@pravaraengg'));
+    const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && email === BOOTSTRAP_ADMIN_EMAIL);
 
     const newUser = {
       id: uid,
-      name: req.firebaseUser.name || email.split('@')[0] || 'User',
+      name: req.firebaseUser.name || (email ? email.split('@')[0] : 'User'),
       email: req.firebaseUser.email || '',
       role: isBootstrapAdmin ? 'admin' : 'pending_member',
-      designation: isBootstrapAdmin ? 'System Administrator' : 'Team Member',
+      designation: isBootstrapAdmin ? 'System Administrator' : 'Participant',
       stall_id: null,
       phone: null,
       college_name: 'Pravara Rural Engineering College, Loni',
@@ -166,4 +149,3 @@ export function requireStallCoordinator(req, res, next) {
     });
   });
 }
-

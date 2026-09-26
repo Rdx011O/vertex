@@ -83,7 +83,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
               <span class="label-icon">✉️</span> Registered Email
             </label>
             <div class="input-with-icon">
-              <input type="email" id="signin-email" class="form-input" placeholder="you@pravaraengg.org.in" autocomplete="email" required />
+              <input type="email" id="signin-email" class="form-input" placeholder="name@example.com" autocomplete="email" required />
             </div>
           </div>
 
@@ -110,10 +110,10 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
 
           <div class="auth-helper-cards">
             <div class="helper-mini-badge">
-              <span>👑 Admins: Instant pass-through</span>
+              <span>👑 Admins: Central Control</span>
             </div>
             <div class="helper-mini-badge">
-              <span>👔 Coordinators: Live stall POS</span>
+              <span>👔 Coordinators: Live Stall POS</span>
             </div>
           </div>
         </form>
@@ -160,18 +160,18 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
           <div class="grid-2col">
             <div class="form-group">
               <label class="form-label" for="signup-name">Full Name <span class="required">*</span></label>
-              <input type="text" id="signup-name" class="form-input" placeholder="e.g. Aaditya Battin" required />
+              <input type="text" id="signup-name" class="form-input" placeholder="e.g. Aarav Sharma" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="signup-username">Username <span class="required">*</span></label>
-              <input type="text" id="signup-username" class="form-input" placeholder="e.g. aaditya_b" required />
+              <input type="text" id="signup-username" class="form-input" placeholder="e.g. aarav_s" required />
             </div>
           </div>
 
           <div class="grid-2col">
             <div class="form-group">
               <label class="form-label" for="signup-email">Email <span class="required">*</span></label>
-              <input type="email" id="signup-email" class="form-input" placeholder="you@pravaraengg.org.in" autocomplete="email" required />
+              <input type="email" id="signup-email" class="form-input" placeholder="name@example.com" autocomplete="email" required />
             </div>
             <div class="form-group">
               <label class="form-label" for="signup-phone">Phone Number</label>
@@ -266,7 +266,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
 
           <div class="form-group">
             <label class="form-label" for="forgot-email">Registered Email</label>
-            <input type="email" id="forgot-email" class="form-input" placeholder="you@pravaraengg.org.in" autocomplete="email" />
+            <input type="email" id="forgot-email" class="form-input" placeholder="name@example.com" autocomplete="email" />
           </div>
 
           <div id="forgot-error" class="auth-error" style="display:none;"></div>
@@ -499,9 +499,6 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
 
 /** "Role setup / Stall Join" screen shown to pending users */
 export function renderPendingApprovalView(container, user, onSignOut) {
-  const email = (user?.email || '').toLowerCase();
-  const isAdminEmail = email.includes('battin.ec24@pravaraengg') || email.includes('admin');
-
   container.innerHTML = `
     <div class="login-page">
       <div class="auth-bg-blob blob-1"></div>
@@ -517,27 +514,14 @@ export function renderPendingApprovalView(container, user, onSignOut) {
         <!-- Role Action Selection Tabs -->
         <div class="login-tabs-container" style="margin-bottom:20px;">
           <div class="login-tabs">
-            <button type="button" class="login-tab ${isAdminEmail ? 'active' : ''}" id="tab-opt-admin" data-panel="panel-admin">👑 Admin</button>
-            <button type="button" class="login-tab ${!isAdminEmail ? 'active' : ''}" id="tab-opt-coord" data-panel="panel-coord">👔 Coordinator</button>
+            <button type="button" class="login-tab active" id="tab-opt-coord" data-panel="panel-coord">👔 Coordinator</button>
             <button type="button" class="login-tab" id="tab-opt-member" data-panel="panel-member">🔑 Stall Code</button>
+            <button type="button" class="login-tab" id="tab-opt-admin" data-panel="panel-admin">👑 Admin</button>
           </div>
         </div>
 
-        <!-- Panel 1: Claim Admin -->
-        <div id="panel-admin" class="pending-panel" style="${isAdminEmail ? 'display:block;' : 'display:none;'}">
-          <div class="role-intro-card admin-border">
-            <div class="intro-title">👑 Event Operations Command Center</div>
-            <div class="intro-desc">
-              Direct access for festival organizers, central finance verification, and stall governance.
-            </div>
-          </div>
-          <button class="btn btn-admin btn-full auth-submit-btn" id="btn-claim-admin">
-            👑 Enter as Event Admin →
-          </button>
-        </div>
-
-        <!-- Panel 2: Setup Stall as Coordinator -->
-        <div id="panel-coord" class="pending-panel" style="${!isAdminEmail ? 'display:block;' : 'display:none;'}">
+        <!-- Panel 1: Setup Stall as Coordinator -->
+        <div id="panel-coord" class="pending-panel" style="display:block;">
           <form id="coord-setup-form" class="pending-form">
             <div class="form-group">
               <label class="form-label" for="coord-stall-name">Stall Name <span class="required">*</span></label>
