@@ -15,6 +15,9 @@ const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL ? process.env.BO
  * Supports instant role assignment: Admin, Coordinator (with new stall), or Member.
  */
 router.post('/register-profile', async (req, res) => {
+  // Wait for Firestore to finish loading (important on Vercel cold starts)
+  await db.ready();
+
   if (!req.firebaseUser) {
     return res.status(401).json({ error: 'Authentication required.' });
   }
@@ -142,8 +145,19 @@ router.post('/register-profile', async (req, res) => {
  * GET /api/auth/me
  * Returns the currently authenticated user's profile + stall info.
  */
-router.get('/me', requireAuth, (req, res) => {
-  let user = req.user;
+router.get('/me', requireAuth, async (req, res) => {
+  // Wait for Firestore to finish loading (important on Vercel cold starts)
+  await db.ready();
+
+  // Re-fetch user from DB after Firestore is loaded (middleware ran before Firestore init)
+  const uid = req.firebaseUser?.uid;
+  if (!uid) return res.status(401).json({ error: 'Authentication required.' });
+
+  let user = db.getUserByUid(uid);
+  if (!user) {
+    return res.status(404).json({ error: 'Profile not found. Please register.' });
+  }
+
   const userEmail = (user.email || '').trim().toLowerCase();
   const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && userEmail === BOOTSTRAP_ADMIN_EMAIL);
 

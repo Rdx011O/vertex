@@ -18,6 +18,7 @@ class AppState {
     this.auditLogs = [];
     this.pendingSales = [];
     this.allUsers = [];            // Admin: all registered users
+    this.isRegistering = false;    // True while signup form is completing registration
     this.theme = localStorage.getItem('vertex_theme') || 'light';
     this.listeners = new Set();
   }

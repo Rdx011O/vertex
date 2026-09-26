@@ -472,26 +472,38 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
       // 2. Set display name in Firebase Auth
       await updateProfile(userCredential.user, { displayName: name });
 
-      // 3. Register profile in our DB (need fresh token)
-      api.setTokenProvider(() => userCredential.user.getIdToken(false));
+      // 3. Force-refresh token (new account needs true to get a valid token)
+      api.setTokenProvider(() => userCredential.user.getIdToken(true));
 
-      const res = await api.registerProfile(name, phone, desiredRole, {
-        username,
-        college_name: college,
-        stall_name_desired: stallName || null,
-        stall_category_desired: stallCategory || null,
-        stall_alloted_number: stallNumber || null,
-        invite_code: memberCode || null,
-        stall_code: memberCode || null
-      });
+      // 4. Register profile in our DB
+      let res;
+      try {
+        res = await api.registerProfile(name, phone, desiredRole, {
+          username,
+          college_name: college,
+          stall_name_desired: stallName || null,
+          stall_category_desired: stallCategory || null,
+          stall_alloted_number: stallNumber || null,
+          invite_code: memberCode || null,
+          stall_code: memberCode || null
+        });
+      } catch (apiErr) {
+        console.error('[Signup] registerProfile failed:', apiErr);
+        throw apiErr;
+      }
 
-      state.isRegistering = false;
+      // 5. Update state and re-render (keep isRegistering=true until render is done)
       state.currentUser = res.user;
-      await state.refreshAll();
+      // Set permanent token provider from the auth user object
+      api.setTokenProvider(() => userCredential.user.getIdToken(false));
+      try { await state.refreshAll(); } catch (_) {}
+      state.isRegistering = false;
       if (window.vertexApp) window.vertexApp.render();
     } catch (err) {
       state.isRegistering = false;
-      showError(errorEl, friendlyFirebaseError(err.code) || err.message);
+      const msg = err.code ? (friendlyFirebaseError(err.code) || err.message) : err.message;
+      showError(errorEl, msg || 'Sign up failed. Please try again.');
+      console.error('[Signup] Error:', err);
       btn.disabled = false;
       document.getElementById('signup-btn-text').textContent = 'Create Account & Enter →';
     }

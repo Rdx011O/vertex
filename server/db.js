@@ -1,7 +1,7 @@
 /**
- * Vertex Flat-File JSON Database
- * No seed data — clean production slate.
- * All users are keyed by Firebase UID.
+ * Vertex Database — Firestore-backed (with JSON file fallback for local dev)
+ * Primary store: Firebase Firestore (persists across Vercel serverless cold starts)
+ * Fallback:      Flat JSON file (for local dev without Firebase service account)
  */
 
 import fs from 'fs';
@@ -11,25 +11,46 @@ import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-let DATA_DIR = path.join(__dirname, '..', 'data');
-let DB_FILE = path.join(DATA_DIR, 'vertex_db.json');
 
-// Ensure data directory exists (with fallback to /tmp for Vercel serverless runtime)
+// ── Local JSON file paths ──────────────────────────────────────────────────────
+let DATA_DIR = path.join(__dirname, '..', 'data');
+let DB_FILE  = path.join(DATA_DIR, 'vertex_db.json');
+
 try {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-} catch (err) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (_) {
   DATA_DIR = path.join('/tmp', 'vertex_data');
-  DB_FILE = path.join(DATA_DIR, 'vertex_db.json');
+  DB_FILE  = path.join(DATA_DIR, 'vertex_db.json');
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  } catch (_) {}
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (__) {}
 }
 
-/** Returns a fresh empty database — no fake data. */
+// ── Firestore client (lazy-imported so JSON fallback still works) ──────────────
+let _firestoreDb = null;
+async function getFirestoreDb() {
+  if (_firestoreDb) return _firestoreDb;
+  try {
+    const { firestore } = await import('./firebase-admin.js');
+    if (firestore) {
+      _firestoreDb = firestore;
+      return _firestoreDb;
+    }
+  } catch (_) {}
+  return null;
+}
+
+// ── Invite code generator ──────────────────────────────────────────────────────
+export function generateInviteCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let code = '';
+  for (let i = 0; i < 12; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+// ── Empty DB template ──────────────────────────────────────────────────────────
 function getEmptyDatabase() {
   return {
     events: [
@@ -38,108 +59,115 @@ function getEmptyDatabase() {
         name: 'Building Pravara 2026',
         venue: 'Pravara Rural Engineering College, Loni',
         start_date: '2026-10-01',
-        end_date: '2026-10-04',
+        end_date:   '2026-10-04',
         status: 'active',
-        description: 'The flagship annual technology, entrepreneurship & innovation festival.'
+        description: 'The flagship annual technology, entrepreneurship and innovation festival.'
       }
     ],
-    /**
-     * User schema:
-     * {
-     *   id: string           (Firebase UID)
-     *   name: string
-     *   email: string
-     *   role: 'admin' | 'coordinator' | 'member' | 'pending' | 'pending_coordinator' | 'pending_member'
-     *   stall_id: string | null
-     *   phone: string | null
-     *   designation: string | null
-     *   username: string | null
-     *   college_name: string | null
-     *   stall_name_desired: string | null      (coordinator-requested stall name)
-     *   stall_category_desired: string | null  (coordinator-requested stall category)
-     *   stall_alloted_number: string | null    (pre-allotted stall number)
-     *   badge_code: string
-     *   created_at: ISO string
-     * }
-     */
     users: [],
-    /**
-     * Stall schema:
-     * {
-     *   id: string
-     *   name: string
-     *   category: string
-     *   event_id: string
-     *   coordinator_user_id: string (Firebase UID)
-     *   status: 'active' | 'warning' | 'discontinued'
-     *   banner_color: string
-     *   location: string
-     *   created_at: ISO string
-     * }
-     */
     stalls: [],
-    stall_expenses: [],
-    sales_submissions: [],
-    sale_line_items: [],
-    attendance_records: [],
+    sales: [],
+    attendance: [],
     notifications: [],
     audit_logs: [],
-    stall_join_requests: [],
-    /**
-     * POS Catalog item schema:
-     * {
-     *   id: string
-     *   stall_id: string
-     *   name: string
-     *   price: number
-     *   category: string
-     * }
-     */
-    pos_catalog: []
+    pending_sales: [],
+    join_requests: []
   };
 }
 
-export function generateInviteCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
-  let code = '';
-  for (let i = 0; i < 12; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+// ── Firestore helpers ──────────────────────────────────────────────────────────
+const FS_COLLECTION = 'vertex_db';
+const FS_META_DOC   = 'vertex_meta';
+
+async function fsRead() {
+  const fsDb = await getFirestoreDb();
+  if (!fsDb) return null;
+  try {
+    const snap = await fsDb.collection(FS_COLLECTION).doc(FS_META_DOC).get();
+    if (snap.exists) return snap.data();
+  } catch (err) {
+    console.warn('[DB] Firestore read error:', err.message);
   }
-  return code;
+  return null;
 }
 
+async function fsWrite(data) {
+  const fsDb = await getFirestoreDb();
+  if (!fsDb) return false;
+  try {
+    // Exclude large log collections to stay under Firestore 1MB doc limit
+    // Only persist the critical state: users, stalls, events, etc.
+    const { audit_logs, sales, attendance, ...essentialData } = data;
+    await fsDb.collection(FS_COLLECTION).doc(FS_META_DOC).set(essentialData, { merge: false });
+    return true;
+  } catch (err) {
+    console.warn('[DB] Firestore write error:', err.message);
+    return false;
+  }
+}
+
+// ── Local JSON helpers ─────────────────────────────────────────────────────────
+function localRead() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      const hasOldSeed = parsed.users && parsed.users.some(u => u.id && u.id.startsWith('usr-'));
+      if (hasOldSeed) {
+        console.log('Old seed data detected — wiping and starting clean.');
+        return null;
+      }
+      return parsed;
+    }
+  } catch (err) {
+    console.warn('[DB] Local JSON read error:', err.message);
+  }
+  return null;
+}
+
+function localWrite(data) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('[DB] Local JSON write error:', err.message);
+  }
+}
+
+// ── Database class ─────────────────────────────────────────────────────────────
 class Database {
   constructor() {
     this.data = null;
-    this.load();
+    this._useFirestore = false;
+    this._initPromise = null;
+
+    // Synchronous bootstrap from local JSON so routes work immediately on boot
+    const local = localRead();
+    this.data = local || getEmptyDatabase();
+    if (!local) localWrite(this.data);
+    this._ensureCollections();
+
+    // Kick off async Firestore sync in background
+    this._initPromise = this._initFirestore();
   }
 
-  load() {
-    try {
-      if (fs.existsSync(DB_FILE)) {
-        const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        const parsed = JSON.parse(raw);
-        // Migrate: if old seed data detected (hardcoded IDs like 'usr-admin-01'), reset
-        const hasOldSeed = parsed.users && parsed.users.some(u => u.id && u.id.startsWith('usr-'));
-        if (hasOldSeed) {
-          console.log('⚠️  Old seed data detected — wiping and starting clean.');
-          this.data = getEmptyDatabase();
-          this.save();
-        } else {
-          this.data = parsed;
-          // Ensure all collections exist (forward-compat)
-          this._ensureCollections();
-        }
-      } else {
-        console.log('📦 No database found — initializing clean database.');
-        this.data = getEmptyDatabase();
-        this.save();
-      }
-    } catch (err) {
-      console.error('Failed to load db file, initializing clean:', err);
-      this.data = getEmptyDatabase();
-      this.save();
+  async _initFirestore() {
+    const fsDb = await getFirestoreDb();
+    if (!fsDb) {
+      console.log('[DB] Firestore not available — using local JSON storage.');
+      return;
     }
+
+    const remote = await fsRead();
+    if (remote && remote.users) {
+      this.data = remote;
+      this._ensureCollections();
+      localWrite(this.data);
+      console.log('[DB] Loaded from Firestore: ' + this.data.users.length + ' users, ' + this.data.stalls.length + ' stalls.');
+    } else {
+      await fsWrite(this.data);
+      console.log('[DB] Initialized Firestore with local data.');
+    }
+    this._useFirestore = true;
   }
 
   _ensureCollections() {
@@ -149,7 +177,6 @@ class Database {
         this.data[key] = empty[key];
       }
     }
-    // Ensure all stalls have a 12-char permanent invite_code
     if (Array.isArray(this.data.stalls)) {
       let updated = false;
       for (const stall of this.data.stalls) {
@@ -163,27 +190,29 @@ class Database {
   }
 
   save() {
-    try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
-    } catch (err) {
-      console.error('Failed to write to DB file:', err);
+    localWrite(this.data);
+    if (this._useFirestore) {
+      fsWrite(this.data).catch(err => console.warn('[DB] Async Firestore save error:', err.message));
     }
   }
-
-  // ----------------------------------------------------------------
-  // User helpers
-  // ----------------------------------------------------------------
 
   getUserByUid(firebaseUid) {
     return this.data.users.find(u => u.id === firebaseUid) || null;
   }
 
+  getUserByEmail(email) {
+    const e = (email || '').toLowerCase();
+    return this.data.users.find(u => (u.email || '').toLowerCase() === e) || null;
+  }
+
   createUser({ id, name, email, role = 'pending', phone = null, designation = null,
                username = null, college_name = null,
-               stall_name_desired = null, stall_category_desired = null, stall_alloted_number = null }) {
+               stall_name_desired = null, stall_category_desired = null,
+               stall_alloted_number = null, badge_code = null }) {
     const existingUser = this.getUserByUid(id);
     if (existingUser) return existingUser;
 
+    const prefix = role === 'admin' ? 'ADM' : role === 'coordinator' ? 'CRD' : 'MBR';
     const user = {
       id,
       name,
@@ -197,7 +226,7 @@ class Database {
       stall_name_desired,
       stall_category_desired,
       stall_alloted_number,
-      badge_code: 'BP-' + Math.random().toString(36).toUpperCase().slice(2, 8),
+      badge_code: badge_code || ('BP-' + prefix + '-' + id.slice(0, 4).toUpperCase()),
       created_at: new Date().toISOString()
     };
     this.data.users.push(user);
@@ -213,10 +242,6 @@ class Database {
     return user;
   }
 
-  // ----------------------------------------------------------------
-  // Audit
-  // ----------------------------------------------------------------
-
   logAudit(actorUserId, actorName, action, targetType, targetId, details) {
     const entry = {
       id: 'aud-' + uuidv4().slice(0, 8),
@@ -228,9 +253,17 @@ class Database {
       details,
       timestamp: new Date().toISOString()
     };
+    if (!Array.isArray(this.data.audit_logs)) this.data.audit_logs = [];
     this.data.audit_logs.unshift(entry);
+    if (this.data.audit_logs.length > 500) {
+      this.data.audit_logs = this.data.audit_logs.slice(0, 500);
+    }
     this.save();
     return entry;
+  }
+
+  async ready() {
+    if (this._initPromise) await this._initPromise;
   }
 }
 
