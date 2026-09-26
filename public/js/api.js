@@ -158,6 +158,13 @@ class ApiService {
     });
   }
 
+  async claimRole(roleData) {
+    return await this.request('/api/auth/claim-role', {
+      method: 'POST',
+      body: JSON.stringify(roleData)
+    });
+  }
+
   async getMe() { return (await this.request('/api/auth/me')).user; }
 
   async getStalls() { return (await this.request('/api/stalls')).stalls; }

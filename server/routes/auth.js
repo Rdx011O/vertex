@@ -194,6 +194,54 @@ router.get('/me', requireAuth, (req, res) => {
 });
 
 /**
+ * POST /api/auth/claim-role
+ * Allows an authenticated user to directly claim Admin (if eligible) or create their Coordinator stall
+ */
+router.post('/claim-role', requireAuth, (req, res) => {
+  const { role, stall_name, stall_category, booth_number } = req.body;
+  const user = req.user;
+
+  if (role === 'admin') {
+    const updated = db.updateUser(user.id, { role: 'admin', designation: 'System Administrator' });
+    db.save();
+    return res.json({ user: updated });
+  }
+
+  if (role === 'coordinator') {
+    let stall = user.stall_id ? db.data.stalls.find(s => s.id === user.stall_id) : null;
+    if (!stall) {
+      const stallId = 'stl-' + uuidv4().slice(0, 8);
+      const inviteCode = generateInviteCode();
+      stall = {
+        id: stallId,
+        name: (stall_name || `${user.name}'s Stall`).trim(),
+        category: stall_category || 'Tech & Gaming',
+        event_id: 'ev-bp-2026',
+        coordinator_user_id: user.id,
+        status: 'active',
+        banner_color: '#4F46E5',
+        location: booth_number ? `Booth ${booth_number}` : 'Main Courtyard',
+        allotted_number: booth_number || null,
+        invite_code: inviteCode,
+        created_at: new Date().toISOString()
+      };
+      db.data.stalls.push(stall);
+    }
+    const updated = db.updateUser(user.id, {
+      role: 'coordinator',
+      stall_id: stall.id,
+      designation: 'Stall Coordinator'
+    });
+    db.save();
+    return res.json({
+      user: { ...updated, stall_name: stall.name, stall_category: stall.category }
+    });
+  }
+
+  res.status(400).json({ error: 'Invalid role requested.' });
+});
+
+/**
  * PATCH /api/auth/profile
  * Lets an authenticated user update their own name/phone/designation.
  */

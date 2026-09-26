@@ -75,6 +75,10 @@ class VertexApp {
 
       // Listen to Firebase Auth state (also fires when another tab signs in/up on same origin)
       onAuthStateChanged(auth, async (firebaseUser) => {
+        if (state.isRegistering) {
+          return; // Allow signup form to complete registration and set state directly
+        }
+
         // Cross-tab session guard: if a DIFFERENT user's UID shows up (e.g. someone
         // signs up in another browser tab), warn the admin instead of silently failing.
         const prevUid = state.firebaseUser?.uid;
