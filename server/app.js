@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import { authenticateUser } from './rbac.js';
+import db from './db.js';
 
 // Route handlers
 import authRoutes from './routes/auth.js';
@@ -26,6 +27,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Async Firebase token verification middleware
 app.use(authenticateUser);
+
+// Wait for Firestore DB init on every API request (no-op after first request)
+app.use('/api', async (req, res, next) => {
+  await db.ready();
+  next();
+});
 
 // Inject Firebase Web Config for the client (with fallbacks)
 app.get('/api/firebase-config', (req, res) => {
@@ -69,6 +76,14 @@ app.use((req, res, next) => {
     return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
   }
   next();
+});
+
+// Global JSON error handler - prevents HTML 500 pages that break client JSON.parse()
+app.use((err, req, res, next) => {
+  console.error('[Server Error]', err.message, err.stack);
+  if (!res.headersSent) {
+    res.status(500).json({ error: err.message || 'An internal server error occurred.' });
+  }
 });
 
 export default app;

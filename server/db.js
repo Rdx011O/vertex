@@ -1,5 +1,5 @@
-/**
- * Vertex Database — Firestore-backed (with JSON file fallback for local dev)
+﻿/**
+ * Vertex Database - Firestore-backed (with JSON file fallback for local dev)
  * Primary store: Firebase Firestore (persists across Vercel serverless cold starts)
  * Fallback:      Flat JSON file (for local dev without Firebase service account)
  */
@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ── Local JSON file paths ──────────────────────────────────────────────────────
+// Local JSON file paths
 let DATA_DIR = path.join(__dirname, '..', 'data');
 let DB_FILE  = path.join(DATA_DIR, 'vertex_db.json');
 
@@ -26,7 +26,7 @@ try {
   } catch (__) {}
 }
 
-// ── Firestore client (lazy-imported so JSON fallback still works) ──────────────
+// Firestore client (lazy-imported)
 let _firestoreDb = null;
 async function getFirestoreDb() {
   if (_firestoreDb) return _firestoreDb;
@@ -40,7 +40,7 @@ async function getFirestoreDb() {
   return null;
 }
 
-// ── Invite code generator ──────────────────────────────────────────────────────
+// Invite code generator
 export function generateInviteCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
   let code = '';
@@ -50,7 +50,7 @@ export function generateInviteCode() {
   return code;
 }
 
-// ── Empty DB template ──────────────────────────────────────────────────────────
+// ALL collections that routes reference - must stay in sync with routes!
 function getEmptyDatabase() {
   return {
     events: [
@@ -59,23 +59,31 @@ function getEmptyDatabase() {
         name: 'Building Pravara 2026',
         venue: 'Pravara Rural Engineering College, Loni',
         start_date: '2026-10-01',
-        end_date:   '2026-10-04',
+        end_date: '2026-10-04',
         status: 'active',
         description: 'The flagship annual technology, entrepreneurship and innovation festival.'
       }
     ],
     users: [],
     stalls: [],
-    sales: [],
-    attendance: [],
+    // Sales & POS
+    sales_submissions: [],
+    pos_catalog: [],
+    // Attendance
+    attendance_records: [],
+    // Stall management
+    stall_expenses: [],
+    stall_join_requests: [],
+    // Notifications & audit
     notifications: [],
     audit_logs: [],
+    // Legacy / other
     pending_sales: [],
     join_requests: []
   };
 }
 
-// ── Firestore helpers ──────────────────────────────────────────────────────────
+// Firestore helpers
 const FS_COLLECTION = 'vertex_db';
 const FS_META_DOC   = 'vertex_meta';
 
@@ -96,8 +104,7 @@ async function fsWrite(data) {
   if (!fsDb) return false;
   try {
     // Exclude large log collections to stay under Firestore 1MB doc limit
-    // Only persist the critical state: users, stalls, events, etc.
-    const { audit_logs, sales, attendance, ...essentialData } = data;
+    const { audit_logs, sales_submissions, attendance_records, ...essentialData } = data;
     await fsDb.collection(FS_COLLECTION).doc(FS_META_DOC).set(essentialData, { merge: false });
     return true;
   } catch (err) {
@@ -106,7 +113,7 @@ async function fsWrite(data) {
   }
 }
 
-// ── Local JSON helpers ─────────────────────────────────────────────────────────
+// Local JSON helpers
 function localRead() {
   try {
     if (fs.existsSync(DB_FILE)) {
@@ -114,7 +121,7 @@ function localRead() {
       const parsed = JSON.parse(raw);
       const hasOldSeed = parsed.users && parsed.users.some(u => u.id && u.id.startsWith('usr-'));
       if (hasOldSeed) {
-        console.log('Old seed data detected — wiping and starting clean.');
+        console.log('Old seed data detected - wiping and starting clean.');
         return null;
       }
       return parsed;
@@ -133,7 +140,7 @@ function localWrite(data) {
   }
 }
 
-// ── Database class ─────────────────────────────────────────────────────────────
+// Database class
 class Database {
   constructor() {
     this.data = null;
@@ -153,17 +160,19 @@ class Database {
   async _initFirestore() {
     const fsDb = await getFirestoreDb();
     if (!fsDb) {
-      console.log('[DB] Firestore not available — using local JSON storage.');
+      console.log('[DB] Firestore not available - using local JSON storage.');
       return;
     }
 
     const remote = await fsRead();
     if (remote && remote.users) {
+      // Firestore has data - use it as source of truth
       this.data = remote;
       this._ensureCollections();
       localWrite(this.data);
       console.log('[DB] Loaded from Firestore: ' + this.data.users.length + ' users, ' + this.data.stalls.length + ' stalls.');
     } else {
+      // Firestore is empty - push local data to it
       await fsWrite(this.data);
       console.log('[DB] Initialized Firestore with local data.');
     }
@@ -173,10 +182,11 @@ class Database {
   _ensureCollections() {
     const empty = getEmptyDatabase();
     for (const key of Object.keys(empty)) {
-      if (this.data[key] === undefined) {
+      if (!this.data[key]) {
         this.data[key] = empty[key];
       }
     }
+    // Ensure all stalls have a permanent invite_code
     if (Array.isArray(this.data.stalls)) {
       let updated = false;
       for (const stall of this.data.stalls) {
@@ -262,6 +272,7 @@ class Database {
     return entry;
   }
 
+  // Wait for Firestore init to finish before serving data
   async ready() {
     if (this._initPromise) await this._initPromise;
   }

@@ -144,9 +144,15 @@ router.post('/register-profile', async (req, res) => {
 /**
  * GET /api/auth/me
  * Returns the currently authenticated user's profile + stall info.
+ * NOTE: Does NOT use requireAuth middleware so we can await db.ready() first.
  */
-router.get('/me', requireAuth, async (req, res) => {
-  // Wait for Firestore to finish loading (important on Vercel cold starts)
+router.get('/me', async (req, res) => {
+  // Must have a valid Firebase token
+  if (!req.firebaseUser) {
+    return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+  }
+
+  // Wait for Firestore to finish loading (critical on Vercel cold starts)
   await db.ready();
 
   // Re-fetch user from DB after Firestore is loaded (middleware ran before Firestore init)

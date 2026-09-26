@@ -87,27 +87,9 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Authentication required. Please sign in.' });
   }
 
-  // If user has a valid Firebase token but no local DB profile yet, create a clean profile
+  // If user has a valid Firebase token but no DB profile yet, they need to register first
   if (!req.user) {
-    const uid = req.firebaseUser.uid;
-    const email = (req.firebaseUser.email || '').trim().toLowerCase();
-    const isBootstrapAdmin = Boolean(BOOTSTRAP_ADMIN_EMAIL && email === BOOTSTRAP_ADMIN_EMAIL);
-
-    const newUser = {
-      id: uid,
-      name: req.firebaseUser.name || (email ? email.split('@')[0] : 'User'),
-      email: req.firebaseUser.email || '',
-      role: isBootstrapAdmin ? 'admin' : 'pending_member',
-      designation: isBootstrapAdmin ? 'System Administrator' : 'Participant',
-      stall_id: null,
-      phone: null,
-      college_name: 'Pravara Rural Engineering College, Loni',
-      badge_code: `BP-${uid.slice(0, 6).toUpperCase()}`,
-      created_at: new Date().toISOString()
-    };
-    db.data.users.push(newUser);
-    db.save();
-    req.user = newUser;
+    return res.status(404).json({ error: 'Profile not found. Please register.' });
   }
 
   next();

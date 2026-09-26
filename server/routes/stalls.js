@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db, { generateInviteCode } from '../db.js';
 import { requireAuth, requireAdminMiddleware, requireCoordinatorOrAdmin, requireStallCoordinator } from '../rbac.js';
@@ -7,14 +7,14 @@ import realtime from '../ws.js';
 
 const router = express.Router();
 
-// ── List all stalls with live financial metrics ───────────────────────────────
+// â”€â”€ List all stalls with live financial metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/', (req, res) => {
   const stallsWithMetrics = db.data.stalls.map(s => {
     const fin = calculateStallFinancials(s.id, db.data);
     const coordinator = db.data.users.find(u => u.id === s.coordinator_user_id);
     const members = db.data.users.filter(u => u.stall_id === s.id && u.role === 'member');
 
-    const stallAttendance = db.data.attendance_records.filter(
+    const stallAttendance = (db.data.attendance_records || []).filter(
       a => a.stall_id === s.id && a.status === 'confirmed'
     );
     const attendancePercent = members.length > 0
@@ -34,13 +34,13 @@ router.get('/', (req, res) => {
   res.json({ stalls: stallsWithMetrics });
 });
 
-// ── Event summary (command center metrics) ────────────────────────────────────
+// â”€â”€ Event summary (command center metrics) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/summary/event', (req, res) => {
   const summary = calculateEventSummary(db.data);
   res.json({ summary });
 });
 
-// ── Member: Direct Join Stall using 12-char invite code ───────────────────────
+// â”€â”€ Member: Direct Join Stall using 12-char invite code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/join-request', requireAuth, (req, res) => {
   const { invite_code, stall_code } = req.body;
   const rawCode = invite_code || stall_code;
@@ -58,7 +58,7 @@ router.post('/join-request', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'This stall is currently inactive/discontinued.' });
   }
 
-  // Instantly activate member into this stall — direct access, no manual waiting!
+  // Instantly activate member into this stall â€” direct access, no manual waiting!
   const updatedUser = db.updateUser(req.user.id, {
     role: 'member',
     stall_id: stall.id,
@@ -77,7 +77,7 @@ router.post('/join-request', requireAuth, (req, res) => {
     id: 'notif-' + uuidv4().slice(0, 8),
     target_role: 'coordinator',
     target_scope_id: stall.id,
-    title: 'New Member Joined Stall 🎉',
+    title: 'New Member Joined Stall ðŸŽ‰',
     message: `${req.user.name} entered your Stall Invite Code and joined "${stall.name}".`,
     type: 'member_joined',
     created_by: req.user.id,
@@ -104,7 +104,7 @@ router.post('/join-request', requireAuth, (req, res) => {
 
   res.json({
     success: true,
-    message: `🎉 Successfully joined "${stall.name}"! Access granted.`,
+    message: `ðŸŽ‰ Successfully joined "${stall.name}"! Access granted.`,
     user: {
       ...updatedUser,
       stall_name: stall.name,
@@ -114,7 +114,7 @@ router.post('/join-request', requireAuth, (req, res) => {
   });
 });
 
-// ── Single stall details ──────────────────────────────────────────────────────
+// â”€â”€ Single stall details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/:stallId', (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
   if (!stall) return res.status(404).json({ error: 'Stall not found' });
@@ -128,20 +128,20 @@ router.get('/:stallId', (req, res) => {
   const financials = calculateStallFinancials(stall.id, db.data);
   const coordinator = db.data.users.find(u => u.id === stall.coordinator_user_id);
   const members = db.data.users.filter(u => u.stall_id === stall.id && u.role === 'member');
-  const expenses = db.data.stall_expenses.filter(e => e.stall_id === stall.id);
+  const expenses = (db.data.stall_expenses || []).filter(e => e.stall_id === stall.id);
 
-  const verifiedSubmissions = db.data.sales_submissions.filter(
+  const verifiedSubmissions = (db.data.sales_submissions || []).filter(
     s => s.stall_id === stall.id && s.status === 'verified'
   );
-  const pendingSubmissions = db.data.sales_submissions.filter(
+  const pendingSubmissions = (db.data.sales_submissions || []).filter(
     s => s.stall_id === stall.id && s.status === 'pending'
   );
-  const rejectedSubmissions = db.data.sales_submissions.filter(
+  const rejectedSubmissions = (db.data.sales_submissions || []).filter(
     s => s.stall_id === stall.id && s.status === 'rejected'
   );
 
-  const catalog = db.data.pos_catalog.filter(c => c.stall_id === stall.id);
-  const attendance = db.data.attendance_records.filter(a => a.stall_id === stall.id);
+  const catalog = (db.data.pos_catalog || []).filter(c => c.stall_id === stall.id);
+  const attendance = (db.data.attendance_records || []).filter(a => a.stall_id === stall.id);
   const joinRequests = (db.data.stall_join_requests || []).filter(
     r => r.stall_id === stall.id && r.status === 'pending'
   );
@@ -161,7 +161,7 @@ router.get('/:stallId', (req, res) => {
   });
 });
 
-// ── Admin: Create new stall ───────────────────────────────────────────────────
+// â”€â”€ Admin: Create new stall â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/', requireAdminMiddleware, (req, res) => {
   const { name, category, coordinator_uid, coordinator_name, coordinator_phone, location, banner_color, allotted_number } = req.body;
   if (!name || !category) {
@@ -223,7 +223,7 @@ router.post('/', requireAdminMiddleware, (req, res) => {
   res.status(201).json({ stall: newStall });
 });
 
-// ── Admin: Update stall details ───────────────────────────────────────────────
+// â”€â”€ Admin: Update stall details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.put('/:stallId', requireAdminMiddleware, (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
   if (!stall) return res.status(404).json({ error: 'Stall not found' });
@@ -265,7 +265,7 @@ router.put('/:stallId', requireAdminMiddleware, (req, res) => {
   res.json({ stall, message: 'Stall updated successfully.' });
 });
 
-// ── Admin: Delete stall ───────────────────────────────────────────────────────
+// â”€â”€ Admin: Delete stall â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.delete('/:stallId', requireAdminMiddleware, (req, res) => {
   const stallIndex = db.data.stalls.findIndex(s => s.id === req.params.stallId);
   if (stallIndex === -1) return res.status(404).json({ error: 'Stall not found' });
@@ -297,7 +297,7 @@ router.delete('/:stallId', requireAdminMiddleware, (req, res) => {
 });
 
 
-// ── Coordinator / Admin: Get pending join requests for a stall ────────────────
+// â”€â”€ Coordinator / Admin: Get pending join requests for a stall â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/:stallId/join-requests', requireAuth, (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
   if (!stall) return res.status(404).json({ error: 'Stall not found' });
@@ -312,7 +312,7 @@ router.get('/:stallId/join-requests', requireAuth, (req, res) => {
   res.json({ requests });
 });
 
-// ── Coordinator / Admin: Approve join request ─────────────────────────────────
+// â”€â”€ Coordinator / Admin: Approve join request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/:stallId/join-requests/:requestId/approve', requireAuth, (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
   if (!stall) return res.status(404).json({ error: 'Stall not found' });
@@ -349,7 +349,7 @@ router.post('/:stallId/join-requests/:requestId/approve', requireAuth, (req, res
     id: 'notif-' + uuidv4().slice(0, 8),
     target_role: 'member',
     target_scope_id: joinReq.user_id,
-    title: 'Join Request Approved 🎉',
+    title: 'Join Request Approved ðŸŽ‰',
     message: `You are now an active member of ${stall.name}!`,
     type: 'join_approved',
     created_by: req.user.id,
@@ -368,7 +368,7 @@ router.post('/:stallId/join-requests/:requestId/approve', requireAuth, (req, res
   res.json({ message: `Approved ${joinReq.user_name} as member of ${stall.name}.`, request: joinReq });
 });
 
-// ── Coordinator / Admin: Reject join request ──────────────────────────────────
+// â”€â”€ Coordinator / Admin: Reject join request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/:stallId/join-requests/:requestId/reject', requireAuth, (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
   if (!stall) return res.status(404).json({ error: 'Stall not found' });
@@ -395,7 +395,7 @@ router.post('/:stallId/join-requests/:requestId/reject', requireAuth, (req, res)
   res.json({ message: `Rejected join request for ${joinReq.user_name}.`, request: joinReq });
 });
 
-// ── Admin: Change stall status ────────────────────────────────────────────────
+// â”€â”€ Admin: Change stall status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.patch('/:stallId/status', requireAdminMiddleware, (req, res) => {
   const { status, warning_reason } = req.body;
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
@@ -419,7 +419,7 @@ router.patch('/:stallId/status', requireAdminMiddleware, (req, res) => {
       id: 'notif-' + uuidv4().slice(0, 8),
       target_role: 'coordinator',
       target_scope_id: stall.id,
-      title: status === 'discontinued' ? '⚠️ Stall Discontinued by Admin' : '⚠️ Admin Warning Notice',
+      title: status === 'discontinued' ? 'âš ï¸ Stall Discontinued by Admin' : 'âš ï¸ Admin Warning Notice',
       message: warning_reason || `Stall status updated to ${status}. Please contact Admin.`,
       type: 'warning',
       created_by: req.user.id,
@@ -434,7 +434,7 @@ router.patch('/:stallId/status', requireAdminMiddleware, (req, res) => {
   res.json({ stall });
 });
 
-// ── Admin Manage Action 1: Issue Warning [with context] ────────────────────────
+// â”€â”€ Admin Manage Action 1: Issue Warning [with context] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/:stallId/manage/warning', requireAdminMiddleware, (req, res) => {
   const { reason } = req.body;
   if (!reason || !reason.trim()) {
@@ -453,7 +453,7 @@ router.post('/:stallId/manage/warning', requireAdminMiddleware, (req, res) => {
     id: 'notif-' + uuidv4().slice(0, 8),
     target_role: 'coordinator',
     target_scope_id: stall.id,
-    title: `⚠️ Official Warning: ${stall.name}`,
+    title: `âš ï¸ Official Warning: ${stall.name}`,
     message: cleanReason,
     type: 'warning',
     created_by: req.user.id,
@@ -476,7 +476,7 @@ router.post('/:stallId/manage/warning', requireAdminMiddleware, (req, res) => {
   res.json({ success: true, message: `Warning issued to ${stall.name}.`, stall });
 });
 
-// ── Admin Manage Action 2: Discontinue Them (Coordinator or Member) ────────────
+// â”€â”€ Admin Manage Action 2: Discontinue Them (Coordinator or Member) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/:stallId/manage/discontinue-user', requireAdminMiddleware, (req, res) => {
   const { user_id, reason } = req.body;
   if (!user_id) {
@@ -505,7 +505,7 @@ router.post('/:stallId/manage/discontinue-user', requireAdminMiddleware, (req, r
     id: 'notif-' + uuidv4().slice(0, 8),
     target_role: prevRole,
     target_scope_id: targetUser.id,
-    title: '⚠️ Role Discontinued Notice',
+    title: 'âš ï¸ Role Discontinued Notice',
     message: `You have been discontinued from "${stall.name}". Reason: ${targetUser.discontinue_reason}`,
     type: 'warning',
     created_by: req.user.id,
@@ -528,7 +528,7 @@ router.post('/:stallId/manage/discontinue-user', requireAdminMiddleware, (req, r
   res.json({ success: true, message: `Discontinued ${targetUser.name} from ${stall.name}.`, user: targetUser });
 });
 
-// ── Admin Manage Action 3: Flag Them [with context] ───────────────────────────
+// â”€â”€ Admin Manage Action 3: Flag Them [with context] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/:stallId/manage/flag', requireAdminMiddleware, (req, res) => {
   const { target_type, user_id, reason } = req.body;
   if (!reason || !reason.trim()) {
@@ -571,7 +571,7 @@ router.post('/:stallId/manage/flag', requireAdminMiddleware, (req, res) => {
   res.json({ success: true, message: `Flagged successfully with context.`, stall });
 });
 
-// ── Admin Manage Action 4: Stall Discontinue [with context] ───────────────────
+// â”€â”€ Admin Manage Action 4: Stall Discontinue [with context] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/:stallId/manage/discontinue', requireAdminMiddleware, (req, res) => {
   const { reason } = req.body;
   if (!reason || !reason.trim()) {
@@ -591,7 +591,7 @@ router.post('/:stallId/manage/discontinue', requireAdminMiddleware, (req, res) =
     id: 'notif-' + uuidv4().slice(0, 8),
     target_role: 'coordinator',
     target_scope_id: stall.id,
-    title: `🛑 STALL DISCONTINUED: ${stall.name}`,
+    title: `ðŸ›‘ STALL DISCONTINUED: ${stall.name}`,
     message: `This stall has been formally discontinued by Administrator. Context: ${cleanReason}`,
     type: 'warning',
     created_by: req.user.id,
@@ -615,7 +615,7 @@ router.post('/:stallId/manage/discontinue', requireAdminMiddleware, (req, res) =
 });
 
 
-// ── Expense logging ───────────────────────────────────────────────────────────
+// â”€â”€ Expense logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.post('/:stallId/expenses', requireAuth, (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
   if (!stall) return res.status(404).json({ error: 'Stall not found' });
@@ -639,11 +639,11 @@ router.post('/:stallId/expenses', requireAuth, (req, res) => {
     timestamp: new Date().toISOString()
   };
 
-  db.data.stall_expenses.push(newExpense);
+  (db.data.stall_expenses = db.data.stall_expenses || []).push(newExpense);
   db.logAudit(
     req.user.id, req.user.name,
     'EXPENSE_LOGGED', 'STALL_EXPENSE', newExpense.id,
-    `Logged ₹${newExpense.amount} under "${newExpense.category}" for "${stall.name}": ${newExpense.name}`
+    `Logged â‚¹${newExpense.amount} under "${newExpense.category}" for "${stall.name}": ${newExpense.name}`
   );
 
   db.save();
@@ -654,9 +654,9 @@ router.post('/:stallId/expenses', requireAuth, (req, res) => {
   res.status(201).json({ expense: newExpense, financials: updatedFinancials });
 });
 
-// ── POS Catalog ───────────────────────────────────────────────────────────────
+// â”€â”€ POS Catalog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 router.get('/:stallId/catalog', (req, res) => {
-  const catalog = db.data.pos_catalog.filter(c => c.stall_id === req.params.stallId);
+  const catalog = (db.data.pos_catalog || []).filter(c => c.stall_id === req.params.stallId);
   res.json({ catalog });
 });
 
@@ -682,7 +682,7 @@ router.post('/:stallId/catalog', requireAuth, (req, res) => {
     category: category || 'Standard'
   };
 
-  db.data.pos_catalog.push(newItem);
+  (db.data.pos_catalog = db.data.pos_catalog || []).push(newItem);
   db.save();
 
   res.status(201).json({ item: newItem });
@@ -697,7 +697,7 @@ router.delete('/:stallId/catalog/:itemId', requireAuth, (req, res) => {
     return res.status(403).json({ error: 'Only the stall coordinator or admin can manage catalog items' });
   }
 
-  const idx = db.data.pos_catalog.findIndex(
+  const idx = (db.data.pos_catalog || []).findIndex(
     c => c.id === req.params.itemId && c.stall_id === stall.id
   );
   if (idx === -1) return res.status(404).json({ error: 'Catalog item not found' });
@@ -708,7 +708,7 @@ router.delete('/:stallId/catalog/:itemId', requireAuth, (req, res) => {
   res.json({ message: 'Item removed from catalog.' });
 });
 
-// ── Stall Team Members Management ─────────────────────────────────────────────
+// â”€â”€ Stall Team Members Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Add a team member to the stall (by Coordinator or Admin)
 router.post('/:stallId/members', requireAuth, (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
@@ -783,3 +783,4 @@ router.delete('/:stallId/members/:memberId', requireAuth, (req, res) => {
 });
 
 export default router;
+

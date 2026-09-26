@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
 import db from '../db.js';
@@ -77,7 +77,7 @@ export async function getOrCreateUserQRBadge(user) {
   };
 }
 
-// ── GET /api/attendance/qr-badge/:userId? ────────────────────────────────────
+// â”€â”€ GET /api/attendance/qr-badge/:userId? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Returns the unique QR badge for the requesting user (or target user for coordinator/admin)
 router.get('/qr-badge/:userId?', requireAuth, async (req, res) => {
   const targetId = req.params.userId || req.user.id;
@@ -97,7 +97,7 @@ router.get('/qr-badge/:userId?', requireAuth, async (req, res) => {
   res.json({ badge: badgeInfo });
 });
 
-// ── GET /api/attendance/stall/:stallId ─────────────────────────────────────────
+// â”€â”€ GET /api/attendance/stall/:stallId â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Get attendance stats and list for a stall
 router.get('/stall/:stallId', (req, res) => {
   const stall = db.data.stalls.find(s => s.id === req.params.stallId);
@@ -107,7 +107,7 @@ router.get('/stall/:stallId', (req, res) => {
 
   const members = db.data.users.filter(u => u.stall_id === stall.id && u.role === 'member');
   const coordinator = stall.coordinator_user_id ? db.data.users.find(u => u.id === stall.coordinator_user_id) : null;
-  const records = db.data.attendance_records.filter(a => a.stall_id === stall.id);
+  const records = (db.data.attendance_records || []).filter(a => a.stall_id === stall.id);
 
   // Coordinator attendance status
   let coordinatorStatus = null;
@@ -163,7 +163,7 @@ router.get('/stall/:stallId', (req, res) => {
   });
 });
 
-// ── POST /api/attendance/checkin-request ───────────────────────────────────────
+// â”€â”€ POST /api/attendance/checkin-request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Member: Tap "I'm at my stall"
 router.post('/checkin-request', requireAuth, (req, res) => {
   if (!req.user) {
@@ -184,7 +184,7 @@ router.post('/checkin-request', requireAuth, (req, res) => {
   }
 
   // Check if member already has confirmed or pending attendance
-  const existingRecord = db.data.attendance_records.find(
+  const existingRecord = (db.data.attendance_records || []).find(
     a => a.member_user_id === req.user.id && a.stall_id === stall.id
   );
 
@@ -216,7 +216,7 @@ router.post('/checkin-request', requireAuth, (req, res) => {
     verified_method: 'LOCATION_REQUEST'
   };
 
-  db.data.attendance_records.push(newRecord);
+  (db.data.attendance_records = db.data.attendance_records || []).push(newRecord);
 
   // Notify the Stall Coordinator
   const notif = {
@@ -257,14 +257,14 @@ router.post('/checkin-request', requireAuth, (req, res) => {
   });
 });
 
-// ── POST /api/attendance/:attendanceId/confirm ────────────────────────────────
+// â”€â”€ POST /api/attendance/:attendanceId/confirm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Stall Coordinator: Confirm attendance for a member manually
 router.post('/:attendanceId/confirm', requireAuth, (req, res) => {
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  const record = db.data.attendance_records.find(a => a.id === req.params.attendanceId);
+  const record = (db.data.attendance_records || []).find(a => a.id === req.params.attendanceId);
   if (!record) {
     return res.status(404).json({ error: 'Attendance record not found' });
   }
@@ -310,7 +310,7 @@ router.post('/:attendanceId/confirm', requireAuth, (req, res) => {
     id: 'notif-' + uuidv4().slice(0, 8),
     target_role: 'member',
     target_scope_id: record.member_user_id,
-    title: 'Attendance Confirmed ✅',
+    title: 'Attendance Confirmed âœ…',
     message: `Your check-in at ${stall.name} was confirmed by ${req.user.name}.`,
     type: 'attendance_confirmed',
     created_by: req.user.id,
@@ -338,7 +338,7 @@ router.post('/:attendanceId/confirm', requireAuth, (req, res) => {
   });
 });
 
-// ── POST /api/attendance/scan-confirm ─────────────────────────────────────────
+// â”€â”€ POST /api/attendance/scan-confirm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Direct QR Scan Engine: Marks Member attendance by Coordinator, AND Coordinator attendance by Coordinator/Admin!
 router.post('/scan-confirm', requireAuth, async (req, res) => {
   if (!req.user) {
@@ -399,7 +399,7 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
   const isAdminScanning = req.user.role === 'admin';
   const isSelfScanning = req.user.id === targetUser.id;
 
-  // ── BRANCH 1: TARGET IS A STALL MEMBER ───────────────────────────────────────
+  // â”€â”€ BRANCH 1: TARGET IS A STALL MEMBER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (targetUser.role === 'member') {
     // Only the coordinator of this member's stall (or admin) can confirm member attendance
     if (!isAdminScanning && (!isCoordinatorScanning || stall.coordinator_user_id !== req.user.id)) {
@@ -408,7 +408,7 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
       });
     }
 
-    let record = db.data.attendance_records.find(
+    let record = (db.data.attendance_records || []).find(
       a => a.member_user_id === targetUser.id && a.stall_id === stall.id
     );
 
@@ -420,7 +420,7 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
         role: 'member',
         date: new Date().toISOString().split('T')[0]
       };
-      db.data.attendance_records.push(record);
+      (db.data.attendance_records = db.data.attendance_records || []).push(record);
     }
 
     record.status = 'confirmed';
@@ -445,7 +445,7 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
       id: 'notif-' + uuidv4().slice(0, 8),
       target_role: 'member',
       target_scope_id: targetUser.id,
-      title: 'Badge Scanned & Confirmed ✅',
+      title: 'Badge Scanned & Confirmed âœ…',
       message: `Your badge was scanned by ${req.user.name}. Attendance confirmed!`,
       type: 'attendance_confirmed',
       created_by: req.user.id,
@@ -471,11 +471,11 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
       user: targetUser,
       stall: { id: stall.id, name: stall.name },
       type: 'MEMBER_ATTENDANCE_CONFIRMED',
-      message: `✅ Badge verified! Attendance confirmed for Member ${targetUser.name}.`
+      message: `âœ… Badge verified! Attendance confirmed for Member ${targetUser.name}.`
     });
   }
 
-  // ── BRANCH 2: TARGET IS A STALL COORDINATOR ─────────────────────────────────
+  // â”€â”€ BRANCH 2: TARGET IS A STALL COORDINATOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (targetUser.role === 'coordinator') {
     // Stall coordinator can mark their own coordinator attendance OR admin can scan coordinator badge
     if (!isAdminScanning && !isSelfScanning && req.user.id !== targetUser.id) {
@@ -484,7 +484,7 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
       });
     }
 
-    let record = db.data.attendance_records.find(
+    let record = (db.data.attendance_records || []).find(
       a => a.member_user_id === targetUser.id && a.stall_id === stall?.id
     );
 
@@ -496,7 +496,7 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
         role: 'coordinator',
         date: new Date().toISOString().split('T')[0]
       };
-      db.data.attendance_records.push(record);
+      (db.data.attendance_records = db.data.attendance_records || []).push(record);
     }
 
     record.status = 'confirmed';
@@ -533,17 +533,17 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
       user: targetUser,
       stall: stall ? { id: stall.id, name: stall.name } : null,
       type: 'COORDINATOR_ATTENDANCE_CONFIRMED',
-      message: `🎉 Coordinator Verified! Attendance confirmed for Stall Coordinator ${targetUser.name}.`
+      message: `ðŸŽ‰ Coordinator Verified! Attendance confirmed for Stall Coordinator ${targetUser.name}.`
     });
   }
 
-  // ── BRANCH 3: ADMIN ATTENDANCE ──────────────────────────────────────────────
+  // â”€â”€ BRANCH 3: ADMIN ATTENDANCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (targetUser.role === 'admin') {
     return res.json({
       success: true,
       user: targetUser,
       type: 'ADMIN_CREDENTIAL_VERIFIED',
-      message: `👑 Verified Administrator Credential: ${targetUser.name}`
+      message: `ðŸ‘‘ Verified Administrator Credential: ${targetUser.name}`
     });
   }
 
@@ -551,3 +551,4 @@ router.post('/scan-confirm', requireAuth, async (req, res) => {
 });
 
 export default router;
+

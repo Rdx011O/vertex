@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Financial Calculation Engine adhering strictly to 04-FINANCIAL_LOGIC.md
  */
 
 export function formatINR(amount) {
-  if (amount === null || amount === undefined || isNaN(amount)) return '₹0';
+  if (amount === null || amount === undefined || isNaN(amount)) return 'â‚¹0';
   const isNegative = amount < 0;
   const absVal = Math.abs(Math.round(amount));
   
@@ -12,7 +12,7 @@ export function formatINR(amount) {
     maximumFractionDigits: 0
   }).format(absVal);
 
-  return isNegative ? `-₹${formatted}` : `₹${formatted}`;
+  return isNegative ? `-â‚¹${formatted}` : `â‚¹${formatted}`;
 }
 
 export function calculateStallFinancials(stallId, dbData) {
@@ -57,7 +57,7 @@ export function calculateStallFinancials(stallId, dbData) {
   // 4. Break-even check
   const isBreakEven = grossSales >= totalExpenses && totalExpenses > 0;
 
-  // 5. % of Expenses Recovered: min(100, round(Gross Sales ÷ Total Expenses × 100))
+  // 5. % of Expenses Recovered: min(100, round(Gross Sales Ã· Total Expenses Ã— 100))
   // Edge case: Total Expenses = 0
   let recoveredPercent = null;
   let recoveredPercentDisplay = 'N/A';
@@ -125,13 +125,13 @@ export function calculateEventSummary(dbData) {
     .map((s, index) => ({
       ...s,
       rank: index + 1,
-      medal: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : null
+      medal: index === 0 ? 'ðŸ¥‡' : index === 1 ? 'ðŸ¥ˆ' : index === 2 ? 'ðŸ¥‰' : null
     }));
 
   // Attendance stats
   const totalMembers = dbData.users.filter(u => u.role === 'member').length;
-  const confirmedAttendance = dbData.attendance_records.filter(a => a.status === 'confirmed').length;
-  const pendingAttendance = dbData.attendance_records.filter(a => a.status === 'pending_coordinator').length;
+  const confirmedAttendance = (dbData.attendance_records || []).filter(a => a.status === 'confirmed').length;
+  const pendingAttendance = (dbData.attendance_records || []).filter(a => a.status === 'pending_coordinator').length;
   const attendanceRate = totalMembers > 0 ? Math.round((confirmedAttendance / totalMembers) * 100) : 0;
 
   return {
@@ -162,3 +162,4 @@ export function calculateEventSummary(dbData) {
     leaderboard
   };
 }
+

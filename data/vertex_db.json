@@ -17,5 +17,9 @@
   "attendance_records": [],
   "join_requests": [],
   "notifications": [],
+  "pending_sales": [],
+  "pos_catalog": [],
+  "stall_expenses": [],
+  "stall_join_requests": [],
   "audit_logs": []
 }
