@@ -40,8 +40,13 @@ app.use(authenticateUser);
 
 // Inject Firebase Web Config for the client (with fallbacks)
 app.get('/api/firebase-config', (req, res) => {
+  const envKey = (process.env.FIREBASE_API_KEY || '').trim();
+  const apiKey = envKey.startsWith('AIzaSy')
+    ? envKey
+    : 'AIzaSyDwRnL6LDmnl81OwYmhbPpTaWJOv3UQzWU';
+
   res.json({
-    apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyDwRnL6LDmnl81OwYmhbPpTaWJOv3UQzWU',
+    apiKey,
     authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'aadix001.firebaseapp.com',
     projectId: process.env.FIREBASE_PROJECT_ID || 'aadix001',
     messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '653439560758',

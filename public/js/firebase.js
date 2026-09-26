@@ -39,8 +39,8 @@ export async function initFirebase() {
     const res = await fetch('/api/firebase-config');
     if (res.ok) {
       const serverConfig = await res.json();
-      if (serverConfig && serverConfig.apiKey && serverConfig.apiKey !== 'undefined' && !serverConfig.apiKey.includes('AIzaSy...')) {
-        config = serverConfig;
+      if (serverConfig && typeof serverConfig.apiKey === 'string' && serverConfig.apiKey.startsWith('AIzaSy')) {
+        config = { ...DEFAULT_FIREBASE_CONFIG, ...serverConfig };
       }
     }
   } catch (err) {

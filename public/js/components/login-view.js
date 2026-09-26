@@ -704,7 +704,9 @@ function friendlyFirebaseError(code) {
     'auth/weak-password':           'Password is too weak. Use at least 6 characters.',
     'auth/too-many-requests':       'Too many failed attempts. Please wait and try again.',
     'auth/network-request-failed':  'Network error. Please check your connection.',
-    'auth/missing-email':           'Please enter your email address.'
+    'auth/missing-email':           'Please enter your email address.',
+    'auth/api-key-not-valid':       'Firebase API key is invalid in Vercel configuration.',
+    'auth/invalid-api-key':         'Firebase API key is invalid in Vercel configuration.'
   };
-  return map[code] || 'Something went wrong. Please try again.';
+  return map[code] || (code ? `Authentication error (${code})` : 'Something went wrong. Please try again.');
 }
