@@ -20,43 +20,43 @@
 </head>
 <body>
 
-  <!-- Top Status / Network Bar -->
-  <div class="role-switcher-bar">
-    <div id="role-switcher-container">
-      <!-- Kept for layout compatibility; content cleared by app.js after auth -->
-    </div>
-
-    <!-- Diagnostics & Offline Simulator Toggle -->
-    <div class="system-status-indicator">
-      <label class="sim-offline-toggle" title="Simulate unreliable Wi-Fi / dead spot to test offline POS queue">
-        <input type="checkbox" id="sim-offline-toggle" />
-        <span>⚡ Simulate Dead Spot (Offline)</span>
-      </label>
-      <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--text-secondary);">
-        <span class="status-dot online" id="ws-status-dot"></span>
-        <span id="ws-status-text">Live Sync</span>
-      </div>
-      <button class="btn btn-outline" id="theme-toggle-btn" style="padding:4px 8px; font-size:12px;" title="Toggle Dark / Light Theme">
-        🌓 Theme
-      </button>
-    </div>
-  </div>
-
-
-  <!-- App Header -->
+  <!-- Unified Modern App Header -->
   <header class="app-header">
     <div class="header-left">
       <a href="#" class="brand-badge">
         <div class="brand-logo">V</div>
         <div class="brand-info">
-          <div class="brand-title">VERTEX</div>
-          <div class="event-tag">Building Pravara '26 • PREC Loni</div>
+          <div class="brand-title">VERTEX <span class="badge-tag-bp">BP'26</span></div>
+          <div class="event-tag">Building Pravara 2026 • PREC Loni</div>
         </div>
       </a>
+
+      <!-- Real-time Synchronization Status Pill -->
+      <div class="header-sync-pill" title="Real-time WebSocket & Event Synchronization Status">
+        <span class="status-dot online" id="ws-status-dot"></span>
+        <span id="ws-status-text">Live Sync</span>
+      </div>
     </div>
 
-    <div class="header-right" id="header-user-info">
-      <!-- Injected via app.js -->
+    <!-- Hidden compatibility container -->
+    <div id="role-switcher-container" style="display:none;"></div>
+
+    <div class="header-right">
+      <!-- Diagnostics: Simulate Dead Spot (Offline Mode) -->
+      <label class="sim-offline-toggle" title="Simulate unreliable Wi-Fi / dead spot to test offline POS queue">
+        <input type="checkbox" id="sim-offline-toggle" />
+        <span>⚡ Dead Spot</span>
+      </label>
+
+      <!-- Theme Toggle -->
+      <button class="header-btn header-btn-theme" id="theme-toggle-btn" title="Toggle Dark / Light Theme">
+        🌓
+      </button>
+
+      <!-- User Profile & Navigation Actions -->
+      <div id="header-user-info" class="header-user-actions">
+        <!-- Injected via app.js renderHeader() -->
+      </div>
     </div>
   </header>
 

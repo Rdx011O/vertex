@@ -97,18 +97,31 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.pos-custom-row .pos-input {
+  flex: 1;
+  min-width: 140px;
 }
 
 .pos-input {
-  flex: 1;
-  min-width: 140px;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-medium);
+  height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-medium);
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 14px;
   font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pos-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .pos-input.price-input {
