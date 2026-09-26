@@ -819,24 +819,86 @@
   position: relative;
 }
 
-/* ── Responsive Adaptations ── */
+/* ── Responsive Adaptations across Devices ── */
+@media (max-width: 768px) {
+  .ebadge-perspective-wrapper {
+    max-width: 100%;
+  }
+
+  .ebadge-left-panel {
+    padding: 22px 20px;
+  }
+
+  .ebadge-right-panel {
+    padding: 20px 18px;
+  }
+}
+
 @media (max-width: 680px) {
   .ebadge-grid-layout {
     grid-template-columns: 1fr;
     min-height: auto;
   }
+  
   .ebadge-left-panel {
     border-right: none;
     border-bottom: 1px dashed rgba(203, 213, 225, 0.8);
-    padding: 20px;
+    padding: 18px 16px;
   }
+
   .ebadge-right-panel {
-    padding: 20px;
+    padding: 18px 16px;
     border-top-right-radius: 0;
     border-bottom-left-radius: 26px;
+    border-bottom-right-radius: 26px;
   }
+
+  .ebadge-brand-title {
+    font-size: 16px;
+  }
+
+  .ebadge-user-name {
+    font-size: 18px;
+  }
+
+  .ebadge-avatar-wrap {
+    width: 60px;
+    height: 60px;
+  }
+
+  .ebadge-avatar-ring {
+    font-size: 22px;
+  }
+
+  .ebadge-qr-frame img, .ebadge-qr-frame svg {
+    width: 136px;
+    height: 136px;
+  }
+
   .ebadge-back-layout {
-    padding: 20px;
+    padding: 20px 16px;
+    min-height: auto;
+  }
+
+  .ebadge-theme-selector {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ebadge-qr-frame img, .ebadge-qr-frame svg {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .ebadge-avatar-wrap {
+    width: 52px;
+    height: 52px;
+  }
+
+  .ebadge-user-name {
+    font-size: 16px;
   }
 }
 

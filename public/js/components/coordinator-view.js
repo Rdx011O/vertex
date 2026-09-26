@@ -131,7 +131,7 @@ function renderCoordinatorTab(tab, stall, fin, state) {
       ` : ''}
 
       <!-- Break-even Visualizer & Expense Breakdown -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:20px; margin-bottom:24px;">
         <div class="section-card" style="margin-bottom:0;">
           <div class="section-header">
             <div class="section-title">Break-Even Progress</div>

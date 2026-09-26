@@ -1,6 +1,7 @@
 /* ==========================================================================
    VERTEX POS TERMINAL STYLESHEET
    Optimized for single-hand, thumb-reachable touch targets at a crowded stall table
+   Responsive across Mobile (<640px), Tablet (641px - 1024px) & Desktop (>1024px)
    ========================================================================== */
 
 .pos-container {
@@ -9,9 +10,10 @@
   gap: 20px;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1024px) {
   .pos-container {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
@@ -30,6 +32,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .pos-catalog-grid {
@@ -93,10 +96,12 @@
 .pos-custom-row {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .pos-input {
   flex: 1;
+  min-width: 140px;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-medium);
@@ -150,17 +155,22 @@
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   font-size: 13px;
+  gap: 10px;
 }
 
 .cart-item-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow: hidden;
 }
 
 .cart-item-title {
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cart-item-meta {
@@ -172,6 +182,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .cart-qty-btn {
@@ -272,4 +283,42 @@
 .btn-finish-day:hover:not(:disabled) {
   background: var(--role-coordinator-hover);
   transform: translateY(-1px);
+}
+
+/* ── Mobile Specific POS Optimizations ── */
+@media (max-width: 640px) {
+  .pos-catalog-panel {
+    padding: 14px;
+  }
+
+  .pos-catalog-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .pos-item-btn {
+    padding: 12px 10px;
+    min-height: 80px;
+  }
+
+  .pos-item-name {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .pos-item-price {
+    font-size: 14px;
+  }
+
+  .pos-custom-row {
+    flex-direction: column;
+  }
+
+  .pos-input.price-input {
+    max-width: 100%;
+  }
+
+  .pos-cart-panel {
+    padding: 16px;
+  }
 }

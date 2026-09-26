@@ -340,13 +340,13 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
             <div class="section-title">Stall Governance & Intervention</div>
             <div class="section-desc">Issue operational warnings, adjust stall details, flag violations, or register new booths.</div>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <input type="text" id="stall-search-input-ops" class="pos-input" value="${stallSearchQuery}" placeholder="🔍 Search stalls..." style="width:250px; padding:7px 12px; font-size:13px;" />
-            <button class="btn btn-admin" id="btn-add-stall-modal-2">+ Register New Stall</button>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; width:100%; max-width:480px;">
+            <input type="text" id="stall-search-input-ops" class="pos-input" value="${stallSearchQuery}" placeholder="🔍 Search stalls..." style="flex:1 1 180px; min-width:140px; padding:7px 12px; font-size:13px;" />
+            <button class="btn btn-admin" id="btn-add-stall-modal-2" style="white-space:nowrap;">+ Register New Stall</button>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:16px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:16px;">
           ${filteredStalls.map(s => {
             const isFlagged = !!s.is_flagged;
             return `
