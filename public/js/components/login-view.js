@@ -1,7 +1,7 @@
 /**
  * Login / Sign-up / Forgot-Password View Component
+ * Modern, rich glassmorphism UI with interactive role selection and password toggles.
  * Handles email/password auth via Firebase SDK.
- * Sign-up collects role-specific details for admin to review.
  */
 
 import {
@@ -27,158 +27,252 @@ const COLLEGE_LIST = [
 ];
 
 const STALL_CATEGORIES = [
-  { value: 'food', label: '🍕 Food' },
-  { value: 'game', label: '🎮 Game' },
-  { value: 'business', label: '💼 Business' },
-  { value: 'business_with_sponsorship', label: '🤝 Business with Sponsorship' }
+  { value: 'food', label: '🍕 Food & Beverage' },
+  { value: 'game', label: '🎮 Gaming & Fun Arena' },
+  { value: 'business', label: '💼 Commercial & Startup' },
+  { value: 'business_with_sponsorship', label: '🤝 Business with Sponsorship' },
+  { value: 'robotics', label: '🤖 Robotics & Tech Lab' },
+  { value: 'merchandise', label: '👕 Merchandise & Crafts' }
 ];
 
 export function renderLoginView(container, firebaseAuth, onSuccess) {
   container.innerHTML = `
     <div class="login-page">
+      <!-- Ambient background decoration glow -->
+      <div class="auth-bg-blob blob-1"></div>
+      <div class="auth-bg-blob blob-2"></div>
+      <div class="auth-bg-blob blob-3"></div>
+
       <div class="login-card" id="auth-card">
         
-        <!-- Brand -->
+        <!-- Brand Header -->
         <div class="login-brand">
-          <div class="login-logo">V</div>
+          <div class="login-logo-wrapper">
+            <div class="login-logo">V</div>
+            <div class="login-logo-glow"></div>
+          </div>
           <div class="login-brand-text">
-            <div class="login-title">VERTEX</div>
+            <div class="login-title">VERTEX <span class="badge-tag-bp">BP'26</span></div>
             <div class="login-subtitle">Building Pravara 2026 · PREC Loni</div>
           </div>
         </div>
 
-        <!-- Tab switcher -->
-        <div class="login-tabs" id="auth-tabs">
-          <button class="login-tab active" id="tab-signin" data-tab="signin">Sign In</button>
-          <button class="login-tab" id="tab-signup" data-tab="signup">Sign Up</button>
+        <!-- Segmented Tab Switcher -->
+        <div class="login-tabs-container">
+          <div class="login-tabs" id="auth-tabs">
+            <button type="button" class="login-tab active" id="tab-signin" data-tab="signin">
+              <span>Sign In</span>
+            </button>
+            <button type="button" class="login-tab" id="tab-signup" data-tab="signup">
+              <span>Create Account</span>
+            </button>
+          </div>
         </div>
 
         <!-- ═══════════════════════════════════════════════════════ -->
         <!-- Sign In Form                                           -->
         <!-- ═══════════════════════════════════════════════════════ -->
-        <form id="signin-form" class="auth-form active">
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" id="signin-email" class="form-input" placeholder="you@prec.ac.in" autocomplete="email" required />
+        <form id="signin-form" class="auth-form active" novalidate>
+          <div class="auth-form-intro">
+            <h3>Welcome Back</h3>
+            <p>Access your live festival operations dashboard, stall POS & ledger</p>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" id="signin-password" class="form-input" placeholder="••••••••" autocomplete="current-password" required />
+            <label class="form-label" for="signin-email">
+              <span class="label-icon">✉️</span> Registered Email
+            </label>
+            <div class="input-with-icon">
+              <input type="email" id="signin-email" class="form-input" placeholder="you@pravaraengg.org.in" autocomplete="email" required />
+            </div>
           </div>
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label" for="signin-password">
+                <span class="label-icon">🔒</span> Password
+              </label>
+              <a href="#" id="forgot-password-link" class="forgot-link">Forgot?</a>
+            </div>
+            <div class="input-with-toggle">
+              <input type="password" id="signin-password" class="form-input" placeholder="Enter your password" autocomplete="current-password" required />
+              <button type="button" class="password-toggle-btn" data-target="signin-password" title="Toggle password visibility">
+                👁️
+              </button>
+            </div>
+          </div>
+
           <div id="signin-error" class="auth-error" style="display:none;"></div>
-          <button type="submit" class="btn btn-primary btn-full" id="signin-btn">
-            <span id="signin-btn-text">Sign In →</span>
+
+          <button type="submit" class="btn btn-primary btn-full auth-submit-btn" id="signin-btn">
+            <span id="signin-btn-text">Sign In to Vertex →</span>
           </button>
-          <p class="auth-note" style="text-align:right; margin-top:10px;">
-            <a href="#" id="forgot-password-link" style="color:var(--accent-primary); font-size:13px; text-decoration:none;">Forgot Password?</a>
-          </p>
+
+          <div class="auth-helper-cards">
+            <div class="helper-mini-badge">
+              <span>👑 Admins: Instant pass-through</span>
+            </div>
+            <div class="helper-mini-badge">
+              <span>👔 Coordinators: Live stall POS</span>
+            </div>
+          </div>
         </form>
 
         <!-- ═══════════════════════════════════════════════════════ -->
         <!-- Sign Up Form                                           -->
         <!-- ═══════════════════════════════════════════════════════ -->
-        <form id="signup-form" class="auth-form">
-          
-          <!-- Step 1: Basic Info -->
-          <div class="signup-section-title">👤 Personal Info</div>
+        <form id="signup-form" class="auth-form" novalidate>
+          <div class="auth-form-intro">
+            <h3>Join Building Pravara '26</h3>
+            <p>Register as an Admin, Stall Coordinator, or Member</p>
+          </div>
+
+          <!-- Step 1: Interactive Role Picker Cards -->
+          <div class="form-group">
+            <label class="form-label">
+              <span class="label-icon">🎯</span> Select Your Role <span class="required">*</span>
+            </label>
+            <div class="role-selector-grid" id="role-selector-cards">
+              <div class="role-card-opt" data-role="coordinator">
+                <div class="role-card-icon">👔</div>
+                <div class="role-card-title">Coordinator</div>
+                <div class="role-card-desc">Lead a Stall & Team</div>
+              </div>
+              <div class="role-card-opt" data-role="member">
+                <div class="role-card-icon">👤</div>
+                <div class="role-card-title">Member</div>
+                <div class="role-card-desc">POS Counter & Sales</div>
+              </div>
+              <div class="role-card-opt" data-role="admin">
+                <div class="role-card-icon">👑</div>
+                <div class="role-card-title">Admin</div>
+                <div class="role-card-desc">Event Operations</div>
+              </div>
+            </div>
+            <input type="hidden" id="signup-role" value="coordinator" />
+          </div>
+
+          <!-- Personal Info Group -->
+          <div class="signup-section-header">
+            <span>👤 Personal Details</span>
+          </div>
+
+          <div class="grid-2col">
+            <div class="form-group">
+              <label class="form-label" for="signup-name">Full Name <span class="required">*</span></label>
+              <input type="text" id="signup-name" class="form-input" placeholder="e.g. Aaditya Battin" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-username">Username <span class="required">*</span></label>
+              <input type="text" id="signup-username" class="form-input" placeholder="e.g. aaditya_b" required />
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="form-group">
+              <label class="form-label" for="signup-email">Email <span class="required">*</span></label>
+              <input type="email" id="signup-email" class="form-input" placeholder="you@pravaraengg.org.in" autocomplete="email" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-phone">Phone Number</label>
+              <input type="tel" id="signup-phone" class="form-input" placeholder="+91 98000 00000" />
+            </div>
+          </div>
 
           <div class="form-group">
-            <label class="form-label">Username <span class="required">*</span></label>
-            <input type="text" id="signup-username" class="form-input" placeholder="e.g. aarav_d" required />
-            <span class="form-hint">Unique handle — no spaces, use underscores</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Full Name <span class="required">*</span></label>
-            <input type="text" id="signup-name" class="form-input" placeholder="Aarav Deshmukh" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email <span class="required">*</span></label>
-            <input type="email" id="signup-email" class="form-input" placeholder="you@prec.ac.in" autocomplete="email" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Phone (optional)</label>
-            <input type="tel" id="signup-phone" class="form-input" placeholder="+91 98000 00000" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">College <span class="required">*</span></label>
+            <label class="form-label" for="signup-college">College / Institute <span class="required">*</span></label>
             <select id="signup-college" class="form-input" required>
               <option value="">— Select your college —</option>
               ${COLLEGE_LIST.map(c => `<option value="${c}">${c}</option>`).join('')}
             </select>
           </div>
 
+          <!-- Coordinator Stall Fields (Dynamic) -->
+          <div id="coordinator-stall-fields" class="dynamic-role-box">
+            <div class="signup-section-header">
+              <span>🏪 Stall Information</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-stall-name">Stall Name <span class="required">*</span></label>
+              <input type="text" id="signup-stall-name" class="form-input" placeholder="e.g. Flavors of Pravara / RoboWars" />
+              <span class="form-hint">Name of your festival booth</span>
+            </div>
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="signup-stall-category">Category <span class="required">*</span></label>
+                <select id="signup-stall-category" class="form-input">
+                  <option value="">— Select category —</option>
+                  ${STALL_CATEGORIES.map(c => `<option value="${c.value}">${c.label}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="signup-stall-number">Booth / Stall # <span class="required">*</span></label>
+                <input type="text" id="signup-stall-number" class="form-input" placeholder="e.g. S-07 / A-12" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Member Invite Code Field (Dynamic) -->
+          <div id="member-stall-code-field" class="dynamic-role-box" style="display:none;">
+            <div class="signup-section-header">
+              <span>🔑 Stall Join Code</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-member-code">
+                Stall Invite Code <span class="form-hint-inline">(12 characters, from your Coordinator)</span>
+              </label>
+              <input type="text" id="signup-member-code" class="form-input invite-code-input" placeholder="e.g. Vk9$mX2#pL8Q" maxlength="16" />
+              <span class="form-hint">Leave blank if you will join or be approved later</span>
+            </div>
+          </div>
+
+          <!-- Admin Info Box (Dynamic) -->
+          <div id="admin-info-field" class="dynamic-role-box" style="display:none;">
+            <div class="admin-notice-pill">
+              👑 <strong>Event Admin Operations:</strong> Direct access for organizing committee and operations leads.
+            </div>
+          </div>
+
+          <!-- Password Group -->
+          <div class="signup-section-header">
+            <span>🔒 Security</span>
+          </div>
+
           <div class="form-group">
-            <label class="form-label">Role <span class="required">*</span></label>
-            <select id="signup-role" class="form-input" required>
-              <option value="">— Select your role —</option>
-              <option value="admin">👑 Event Admin / Administrator</option>
-              <option value="coordinator">👔 Stall Coordinator</option>
-              <option value="member">👤 Stall Member</option>
-            </select>
-          </div>
-
-          <!-- Step 3: Member-only Stall Code (optional) -->
-          <div id="member-stall-code-field" style="display:none;">
-            <div class="signup-section-title" style="margin-top:20px;">🔑 Stall Join Code</div>
-            <div class="form-group">
-              <label class="form-label">Stall Invite Code <span style="font-weight:400;color:var(--text-secondary);font-size:12px;">(optional — paste 12-char code to join instantly)</span></label>
-              <input type="text" id="signup-member-code" class="form-input" placeholder="e.g. Vk9$mX2#pL8Q" style="font-family:monospace;letter-spacing:1px;" />
+            <label class="form-label" for="signup-password">Create Password <span class="required">*</span></label>
+            <div class="input-with-toggle">
+              <input type="password" id="signup-password" class="form-input" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6" />
+              <button type="button" class="password-toggle-btn" data-target="signup-password" title="Toggle password visibility">
+                👁️
+              </button>
             </div>
-          </div>
-
-          <!-- Step 3: Coordinator-only stall info (shown/hidden by JS) -->
-          <div id="coordinator-stall-fields" style="display:none;">
-            <div class="signup-section-title" style="margin-top:20px;">🏪 Stall Information</div>
-            <div class="form-group">
-              <label class="form-label">Stall Name <span class="required">*</span></label>
-              <input type="text" id="signup-stall-name" class="form-input" placeholder="e.g. Food Fiesta, Tech Zone" />
-              <span class="form-hint">As pre-allotted by the event organizers</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Stall Category <span class="required">*</span></label>
-              <select id="signup-stall-category" class="form-input">
-                <option value="">— Select category —</option>
-                ${STALL_CATEGORIES.map(c => `<option value="${c.value}">${c.label}</option>`).join('')}
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Stall Allotted Number <span class="required">*</span></label>
-              <input type="text" id="signup-stall-number" class="form-input" placeholder="e.g. S-07, A-12" />
-              <span class="form-hint">The stall number given to you by the organizers</span>
-            </div>
-          </div>
-
-          <!-- Step 4: Password -->
-          <div class="signup-section-title" style="margin-top:20px;">🔑 Set Password</div>
-          <div class="form-group">
-            <label class="form-label">Password <span class="required">*</span> <span style="font-weight:400;color:var(--text-secondary);font-size:12px;">(min 6 characters)</span></label>
-            <input type="password" id="signup-password" class="form-input" placeholder="••••••••" autocomplete="new-password" required />
           </div>
 
           <div id="signup-error" class="auth-error" style="display:none;"></div>
-          <button type="submit" class="btn btn-primary btn-full" id="signup-btn">
-            <span id="signup-btn-text">Create Account →</span>
+
+          <button type="submit" class="btn btn-primary btn-full auth-submit-btn" id="signup-btn">
+            <span id="signup-btn-text">Create Account & Enter →</span>
           </button>
-          <p class="auth-note">
-            🚀 Direct instant access for Admin & Coordinator. Members can join with stall invite code instantly.
-          </p>
         </form>
 
         <!-- ═══════════════════════════════════════════════════════ -->
-        <!-- Forgot Password View (shown by JS)                     -->
+        <!-- Forgot Password View                                   -->
         <!-- ═══════════════════════════════════════════════════════ -->
         <div id="forgot-password-view" style="display:none;">
-          <div class="signup-section-title" style="margin-bottom:16px;">🔑 Reset Password</div>
-          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
-            Enter your registered email address and we'll send you a link to reset your password.
-          </p>
-          <div class="form-group">
-            <label class="form-label">Registered Email</label>
-            <input type="email" id="forgot-email" class="form-input" placeholder="you@prec.ac.in" autocomplete="email" />
+          <div class="auth-form-intro">
+            <h3>🔑 Reset Password</h3>
+            <p>Enter your email and we'll send you an instant reset link.</p>
           </div>
+
+          <div class="form-group">
+            <label class="form-label" for="forgot-email">Registered Email</label>
+            <input type="email" id="forgot-email" class="form-input" placeholder="you@pravaraengg.org.in" autocomplete="email" />
+          </div>
+
           <div id="forgot-error" class="auth-error" style="display:none;"></div>
           <div id="forgot-success" class="auth-success" style="display:none;"></div>
-          <div style="display:flex; gap:10px; margin-top:4px;">
+
+          <div style="display:flex; gap:10px; margin-top:16px;">
             <button type="button" class="btn btn-primary" id="forgot-send-btn" style="flex:1;">
               <span id="forgot-btn-text">Send Reset Link</span>
             </button>
@@ -187,7 +281,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
         </div>
 
         <div class="login-footer">
-          <span>🔒 Secured with Firebase Authentication</span>
+          <span class="security-tag">🔒 Secured with Firebase Authentication</span>
         </div>
       </div>
     </div>
@@ -200,23 +294,53 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
       container.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
-      document.getElementById(`${tab}-form`).classList.add('active');
+      const targetForm = document.getElementById(`${tab}-form`);
+      if (targetForm) targetForm.classList.add('active');
       document.getElementById('forgot-password-view').style.display = 'none';
       document.getElementById('auth-tabs').style.display = '';
     });
   });
 
-  // ── Show/hide coordinator stall fields / member code ───────────────
-  const roleSelect = document.getElementById('signup-role');
-  roleSelect?.addEventListener('change', () => {
-    const stallFields = document.getElementById('coordinator-stall-fields');
-    const memberCodeField = document.getElementById('member-stall-code-field');
-    if (stallFields) {
-      stallFields.style.display = roleSelect.value === 'coordinator' ? 'block' : 'none';
-    }
-    if (memberCodeField) {
-      memberCodeField.style.display = roleSelect.value === 'member' ? 'block' : 'none';
-    }
+  // ── Password Visibility Toggle ──────────────────────────────────────
+  container.querySelectorAll('.password-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const input = document.getElementById(targetId);
+      if (input) {
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.textContent = '🔒';
+        } else {
+          input.type = 'password';
+          btn.textContent = '👁️';
+        }
+      }
+    });
+  });
+
+  // ── Interactive Role Card Selection ────────────────────────────────
+  const roleCards = container.querySelectorAll('.role-card-opt');
+  const roleHiddenInput = document.getElementById('signup-role');
+  const stallFields = document.getElementById('coordinator-stall-fields');
+  const memberCodeField = document.getElementById('member-stall-code-field');
+  const adminInfoField = document.getElementById('admin-info-field');
+
+  // Set initial selected state
+  if (roleCards.length > 0) {
+    roleCards[0].classList.add('active');
+  }
+
+  roleCards.forEach(card => {
+    card.addEventListener('click', () => {
+      roleCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const selectedRole = card.dataset.role;
+      if (roleHiddenInput) roleHiddenInput.value = selectedRole;
+
+      if (stallFields) stallFields.style.display = selectedRole === 'coordinator' ? 'block' : 'none';
+      if (memberCodeField) memberCodeField.style.display = selectedRole === 'member' ? 'block' : 'none';
+      if (adminInfoField) adminInfoField.style.display = selectedRole === 'admin' ? 'block' : 'none';
+    });
   });
 
   // ── Forgot Password link ───────────────────────────────────────────
@@ -277,6 +401,12 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
     const btn = document.getElementById('signin-btn');
 
     errorEl.style.display = 'none';
+
+    if (!email || !password) {
+      showError(errorEl, 'Please enter both email and password.');
+      return;
+    }
+
     btn.disabled = true;
     document.getElementById('signin-btn-text').textContent = 'Signing in…';
 
@@ -287,7 +417,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
       errorEl.textContent = friendlyFirebaseError(err.code);
       errorEl.style.display = 'block';
       btn.disabled = false;
-      document.getElementById('signin-btn-text').textContent = 'Sign In →';
+      document.getElementById('signin-btn-text').textContent = 'Sign In to Vertex →';
     }
   });
 
@@ -300,7 +430,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
     const email        = document.getElementById('signup-email').value.trim();
     const phone        = document.getElementById('signup-phone').value.trim();
     const college      = document.getElementById('signup-college').value;
-    const desiredRole  = document.getElementById('signup-role')?.value;
+    const desiredRole  = document.getElementById('signup-role')?.value || 'coordinator';
     const password     = document.getElementById('signup-password').value;
     const errorEl      = document.getElementById('signup-error');
     const btn          = document.getElementById('signup-btn');
@@ -315,17 +445,19 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
     errorEl.style.display = 'none';
 
     // Validate
-    if (!username)    { showError(errorEl, 'Please enter a username.'); return; }
+    if (!username) { showError(errorEl, 'Please enter a username.'); return; }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) { showError(errorEl, 'Username can only contain letters, numbers and underscores.'); return; }
-    if (!name)        { showError(errorEl, 'Please enter your full name.'); return; }
-    if (!email)       { showError(errorEl, 'Please enter your email.'); return; }
-    if (!college)     { showError(errorEl, 'Please select your college.'); return; }
+    if (!name) { showError(errorEl, 'Please enter your full name.'); return; }
+    if (!email) { showError(errorEl, 'Please enter your email.'); return; }
+    if (!college) { showError(errorEl, 'Please select your college.'); return; }
     if (!desiredRole) { showError(errorEl, 'Please select your role.'); return; }
+    
     if (desiredRole === 'coordinator') {
-      if (!stallName)     { showError(errorEl, 'Please enter your stall name.'); return; }
+      if (!stallName) { showError(errorEl, 'Please enter your stall name.'); return; }
       if (!stallCategory) { showError(errorEl, 'Please select your stall category.'); return; }
-      if (!stallNumber)   { showError(errorEl, 'Please enter your stall allotted number.'); return; }
+      if (!stallNumber) { showError(errorEl, 'Please enter your stall booth number.'); return; }
     }
+    
     if (password.length < 6) { showError(errorEl, 'Password must be at least 6 characters.'); return; }
 
     state.isRegistering = true;
@@ -360,7 +492,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
       state.isRegistering = false;
       showError(errorEl, friendlyFirebaseError(err.code) || err.message);
       btn.disabled = false;
-      document.getElementById('signup-btn-text').textContent = 'Create Account →';
+      document.getElementById('signup-btn-text').textContent = 'Create Account & Enter →';
     }
   });
 }
@@ -372,85 +504,86 @@ export function renderPendingApprovalView(container, user, onSignOut) {
 
   container.innerHTML = `
     <div class="login-page">
-      <div class="login-card pending-card" style="max-width:520px;">
-        <div class="pending-icon">⚡</div>
-        <h2 class="pending-title" style="font-size:22px; margin-bottom:4px;">Welcome, ${user?.displayName || user?.name || 'Participant'}!</h2>
-        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:20px;">
-          Choose how you'd like to enter <strong>Building Pravara '26</strong>:
+      <div class="auth-bg-blob blob-1"></div>
+      <div class="auth-bg-blob blob-2"></div>
+
+      <div class="login-card pending-card" style="max-width:540px;">
+        <div class="pending-icon-glow">⚡</div>
+        <h2 class="pending-title">Welcome, ${user?.displayName || user?.name || 'Participant'}!</h2>
+        <p class="pending-subtitle">
+          Choose your access pathway into <strong>Building Pravara '26</strong>:
         </p>
 
         <!-- Role Action Selection Tabs -->
-        <div class="login-tabs" style="margin-bottom:20px;">
-          <button class="login-tab ${isAdminEmail ? 'active' : ''}" id="tab-opt-admin" data-panel="panel-admin" style="font-size:12px;">👑 Admin</button>
-          <button class="login-tab ${!isAdminEmail ? 'active' : ''}" id="tab-opt-coord" data-panel="panel-coord" style="font-size:12px;">👔 Coordinator</button>
-          <button class="login-tab" id="tab-opt-member" data-panel="panel-member" style="font-size:12px;">🔑 Member Code</button>
+        <div class="login-tabs-container" style="margin-bottom:20px;">
+          <div class="login-tabs">
+            <button type="button" class="login-tab ${isAdminEmail ? 'active' : ''}" id="tab-opt-admin" data-panel="panel-admin">👑 Admin</button>
+            <button type="button" class="login-tab ${!isAdminEmail ? 'active' : ''}" id="tab-opt-coord" data-panel="panel-coord">👔 Coordinator</button>
+            <button type="button" class="login-tab" id="tab-opt-member" data-panel="panel-member">🔑 Stall Code</button>
+          </div>
         </div>
 
         <!-- Panel 1: Claim Admin -->
-        <div id="panel-admin" class="pending-panel" style="${isAdminEmail ? 'display:block;' : 'display:none;'} text-align:left;">
-          <div style="background:var(--role-admin-light); border:1px solid var(--role-admin-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:16px;">
-            <div style="font-weight:700; color:var(--role-admin-text); font-size:14px; margin-bottom:4px;">👑 Event Operations Command Center</div>
-            <div style="font-size:12px; color:var(--text-secondary);">
-              Direct access for festival organizers, ledger audit verification, and stall governance.
+        <div id="panel-admin" class="pending-panel" style="${isAdminEmail ? 'display:block;' : 'display:none;'}">
+          <div class="role-intro-card admin-border">
+            <div class="intro-title">👑 Event Operations Command Center</div>
+            <div class="intro-desc">
+              Direct access for festival organizers, central finance verification, and stall governance.
             </div>
           </div>
-          <button class="btn btn-admin btn-full" id="btn-claim-admin" style="padding:12px; font-size:15px; font-weight:700;">
+          <button class="btn btn-admin btn-full auth-submit-btn" id="btn-claim-admin">
             👑 Enter as Event Admin →
           </button>
         </div>
 
         <!-- Panel 2: Setup Stall as Coordinator -->
-        <div id="panel-coord" class="pending-panel" style="${!isAdminEmail ? 'display:block;' : 'display:none;'} text-align:left;">
-          <form id="coord-setup-form" style="display:flex; flex-direction:column; gap:12px;">
-            <div>
-              <label class="form-label" style="font-weight:700; font-size:12px;">Stall Name *</label>
+        <div id="panel-coord" class="pending-panel" style="${!isAdminEmail ? 'display:block;' : 'display:none;'}">
+          <form id="coord-setup-form" class="pending-form">
+            <div class="form-group">
+              <label class="form-label" for="coord-stall-name">Stall Name <span class="required">*</span></label>
               <input type="text" id="coord-stall-name" class="form-input" placeholder="e.g. RoboWars Zone / Food Fiesta" required />
             </div>
-            <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:10px;">
-              <div>
-                <label class="form-label" style="font-weight:700; font-size:12px;">Category *</label>
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="coord-stall-cat">Category <span class="required">*</span></label>
                 <select id="coord-stall-cat" class="form-input" required>
-                  <option value="Tech & Gaming">Tech & Gaming</option>
-                  <option value="Food & Beverage">Food & Beverage</option>
-                  <option value="Electronics & DIY">Electronics & DIY</option>
-                  <option value="Robotics">Robotics</option>
-                  <option value="Merchandise">Merchandise</option>
-                  <option value="Rural Tech">Rural Tech</option>
+                  <option value="Food & Beverage">🍕 Food & Beverage</option>
+                  <option value="Tech & Gaming">🎮 Tech & Gaming</option>
+                  <option value="Robotics">🤖 Robotics & DIY</option>
+                  <option value="Merchandise">👕 Merchandise & Stalls</option>
+                  <option value="Rural Tech">🌾 Rural Tech & Projects</option>
                 </select>
               </div>
-              <div>
-                <label class="form-label" style="font-weight:700; font-size:12px;">Booth #</label>
-                <input type="text" id="coord-booth-num" class="form-input" placeholder="e.g. B-04" />
+              <div class="form-group">
+                <label class="form-label" for="coord-booth-num">Booth #</label>
+                <input type="text" id="coord-booth-num" class="form-input" placeholder="e.g. B-04 / S-12" />
               </div>
             </div>
-            <button type="submit" class="btn btn-coordinator btn-full" id="btn-setup-coord" style="padding:12px; font-size:15px; font-weight:700; margin-top:6px;">
+            <button type="submit" class="btn btn-coordinator btn-full auth-submit-btn" id="btn-setup-coord">
               👔 Launch Stall Coordinator Dashboard →
             </button>
           </form>
         </div>
 
         <!-- Panel 3: Paste Member Stall Invite Code -->
-        <div id="panel-member" class="pending-panel" style="display:none; text-align:left;">
-          <form id="pending-join-form" style="display:flex; flex-direction:column; gap:14px; margin-bottom:14px;">
-            <div>
-              <label class="form-label" style="font-weight:700; font-size:12px;">Paste 12-Character Stall Invite Code</label>
-              <input type="text" id="join-invite-code" class="form-input" placeholder="e.g. Vk9$mX2#pL8Q" required style="font-family:monospace; font-size:16px; font-weight:700; text-align:center; letter-spacing:1.5px; padding:10px;" />
-              <span class="form-hint" style="text-align:center; display:block; margin-top:4px;">Obtain this code from your Stall Coordinator</span>
+        <div id="panel-member" class="pending-panel" style="display:none;">
+          <form id="pending-join-form" class="pending-form">
+            <div class="form-group">
+              <label class="form-label" for="join-invite-code">Paste 12-Character Stall Invite Code</label>
+              <input type="text" id="join-invite-code" class="form-input invite-code-input" placeholder="e.g. Vk9$mX2#pL8Q" required maxlength="16" />
+              <span class="form-hint" style="text-align:center; display:block;">Provided by your Stall Coordinator</span>
             </div>
-            <button type="submit" class="btn btn-primary btn-full" id="btn-submit-join-code" style="padding:12px; font-size:15px; font-weight:700;">
+            <button type="submit" class="btn btn-primary btn-full auth-submit-btn" id="btn-submit-join-code">
               Join Stall as Member →
             </button>
           </form>
         </div>
 
-        <div id="role-action-error" class="auth-error" style="display:none; margin-top:12px;"></div>
+        <div id="role-action-error" class="auth-error" style="display:none; margin-top:14px;"></div>
 
-        <div class="pending-info" style="margin-top:16px; text-align:left; font-size:12px; border-top:1px solid var(--border-subtle); padding-top:12px;">
+        <div class="pending-footer">
           <div>📧 Logged in as: <strong>${user?.email || 'N/A'}</strong></div>
-        </div>
-
-        <div style="display:flex; gap:12px; margin-top:16px;">
-          <button class="btn btn-outline" id="pending-signout-btn" style="flex:1;">⏏ Sign Out</button>
+          <button class="btn btn-outline btn-sm" id="pending-signout-btn">⏏ Sign Out</button>
         </div>
       </div>
     </div>
@@ -547,6 +680,7 @@ export function renderPendingApprovalView(container, user, onSignOut) {
 }
 
 function showError(el, msg) {
+  if (!el) return;
   el.textContent = msg;
   el.style.display = 'block';
 }
