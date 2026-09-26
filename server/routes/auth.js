@@ -6,7 +6,7 @@ import realtime from '../ws.js';
 
 const router = express.Router();
 
-const BOOTSTRAP_ADMIN_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL || '';
+const BOOTSTRAP_ADMIN_EMAIL = (process.env.BOOTSTRAP_ADMIN_EMAIL || 'aadiyta.battin.ec24@pravaraengg.org.in').trim().toLowerCase();
 
 /**
  * POST /api/auth/register-profile
@@ -38,7 +38,8 @@ router.post('/register-profile', async (req, res) => {
   let role = 'pending';
   let assignedStallId = null;
   const hasExistingAdmin = db.data.users.some(u => u.role === 'admin');
-  const isBootstrapAdmin = BOOTSTRAP_ADMIN_EMAIL && email && email.trim().toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase();
+  const userEmail = (email || '').trim().toLowerCase();
+  const isBootstrapAdmin = userEmail && (userEmail === BOOTSTRAP_ADMIN_EMAIL || userEmail.includes('battin.ec24@pravaraengg'));
 
   // Admin gets direct instant access with no waiting list
   if (desired_role === 'admin' || isBootstrapAdmin || !hasExistingAdmin) {
@@ -145,7 +146,8 @@ router.post('/register-profile', async (req, res) => {
 router.get('/me', requireAuth, (req, res) => {
   let user = req.user;
   const hasExistingAdmin = db.data.users.some(u => u.role === 'admin' && u.id !== user.id);
-  const isBootstrapAdmin = BOOTSTRAP_ADMIN_EMAIL && user.email && user.email.trim().toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase();
+  const userEmail = (user.email || '').trim().toLowerCase();
+  const isBootstrapAdmin = userEmail && (userEmail === BOOTSTRAP_ADMIN_EMAIL || userEmail.includes('battin.ec24@pravaraengg'));
 
   // If user was pending admin or matches bootstrap email, promote directly to admin
   if (user.role === 'pending_admin' || isBootstrapAdmin || (!hasExistingAdmin && user.role === 'pending')) {

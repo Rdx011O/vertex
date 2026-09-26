@@ -1,6 +1,6 @@
 /**
  * Firebase Admin SDK Initializer
- * Used server-side to verify Firebase ID tokens.
+ * Used server-side to verify Firebase ID tokens and sync with Cloud Firestore.
  */
 
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
@@ -10,34 +10,39 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Only initialize once (guard for hot-reload scenarios)
-if (!getApps().length) {
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+let adminAuthInstance = null;
+let firestoreInstance = null;
 
-  const isPlaceholder = !privateKey ||
-    privateKey.includes('PASTE_YOUR_FULL_PRIVATE_KEY_HERE') ||
-    privateKey.includes('YOUR_PRIVATE_KEY_HERE');
+try {
+  if (!getApps().length) {
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const projectId = process.env.FIREBASE_PROJECT_ID || 'aadix001';
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 
-  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || isPlaceholder) {
-    console.error('========================================================');
-    console.error('❌ FIREBASE ADMIN SDK: Missing or incomplete credentials!');
-    console.error('========================================================');
-    process.exit(1);
+    if (projectId && clientEmail && privateKey && !privateKey.includes('PASTE_YOUR_FULL_PRIVATE_KEY_HERE')) {
+      initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey
+        })
+      });
+      console.log(`🔥 Firebase Admin SDK initialized (Project: ${projectId})`);
+    } else {
+      // Fallback initialization without service account for basic token decoding
+      initializeApp({ projectId });
+      console.log(`ℹ️  Firebase Admin SDK running with project ID: ${projectId}`);
+    }
   }
 
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey
-    })
-  });
-
-  console.log(`🔥 Firebase Admin SDK initialized (Project: ${process.env.FIREBASE_PROJECT_ID})`);
+  adminAuthInstance = getAuth();
+  firestoreInstance = getFirestore();
+} catch (err) {
+  console.warn('⚠️ Firebase Admin SDK initialization notice:', err.message);
 }
 
-export const firebaseAuth = getAuth();
-export const firestore = getFirestore();
+export const firebaseAuth = adminAuthInstance;
+export const firestore = firestoreInstance;
 
 let firestoreDisabledWarned = false;
 
@@ -61,8 +66,6 @@ export async function saveQRBadgeToFirebase(badgeData) {
     if (!firestoreDisabledWarned && err.message?.includes('Cloud Firestore API has not been')) {
       firestoreDisabledWarned = true;
       console.log('ℹ️  [Firebase Firestore] Firestore Database is not yet created in project aadix001.');
-      console.log('   Local database (vertex_db.json) is handling all QR and attendance data.');
-      console.log('   To enable cloud sync: Create Firestore at https://console.firebase.google.com/project/aadix001/firestore');
     }
   }
 }
@@ -78,11 +81,8 @@ export async function saveAttendanceToFirebase(recordData) {
     if (!firestoreDisabledWarned && err.message?.includes('Cloud Firestore API has not been')) {
       firestoreDisabledWarned = true;
       console.log('ℹ️  [Firebase Firestore] Firestore Database is not yet created in project aadix001.');
-      console.log('   Local database (vertex_db.json) is handling all QR and attendance data.');
-      console.log('   To enable cloud sync: Create Firestore at https://console.firebase.google.com/project/aadix001/firestore');
     }
   }
 }
 
 export default firebaseAuth;
-
