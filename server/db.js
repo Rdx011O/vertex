@@ -11,12 +11,22 @@ import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const DB_FILE = path.join(DATA_DIR, 'vertex_db.json');
+let DATA_DIR = path.join(__dirname, '..', 'data');
+let DB_FILE = path.join(DATA_DIR, 'vertex_db.json');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure data directory exists (with fallback to /tmp for Vercel serverless runtime)
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (err) {
+  DATA_DIR = path.join('/tmp', 'vertex_data');
+  DB_FILE = path.join(DATA_DIR, 'vertex_db.json');
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (_) {}
 }
 
 /** Returns a fresh empty database — no fake data. */
