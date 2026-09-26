@@ -50,13 +50,24 @@
   --font-display: 'Outfit', 'Space Grotesk', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
 
+  /* Accent Tokens */
+  --accent: #4f46e5;
+  --accent-primary: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-light: #e0e7ff;
+  --accent-glow: rgba(79, 70, 229, 0.25);
+
   /* Light Theme (Default) */
   --bg-app: #f8fafc;
   --bg-surface: #ffffff;
   --bg-surface-elevated: #ffffff;
   --bg-surface-subtle: #f1f5f9;
   --bg-surface-inset: #e2e8f0;
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --bg-primary: #ffffff;
+  --bg-hover: #f1f5f9;
 
+  --border: #e2e8f0;
   --border-subtle: #e2e8f0;
   --border-medium: #cbd5e1;
   --border-strong: #94a3b8;
@@ -69,26 +80,38 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+  --shadow-glow: 0 0 20px -3px rgba(79, 70, 229, 0.25);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
   --radius-full: 9999px;
 
   --header-height: 64px;
-  --role-bar-height: 48px;
+  --role-bar-height: 44px;
 }
 
 /* Dark Theme */
 [data-theme="dark"] {
-  --bg-app: #090d16;
-  --bg-surface: #111827;
-  --bg-surface-elevated: #1f2937;
-  --bg-surface-subtle: #1a2234;
-  --bg-surface-inset: #0d1321;
+  --accent: #6366f1;
+  --accent-primary: #6366f1;
+  --accent-hover: #818cf8;
+  --accent-light: rgba(99, 102, 241, 0.2);
+  --accent-glow: rgba(99, 102, 241, 0.35);
 
-  --border-subtle: #1f293d;
+  --bg-app: #080d1a;
+  --bg-surface: #10172a;
+  --bg-surface-elevated: #1e293b;
+  --bg-surface-subtle: #141e33;
+  --bg-surface-inset: #0a0f1d;
+  --bg-card: rgba(16, 23, 42, 0.94);
+  --bg-primary: #10172a;
+  --bg-hover: #1e293b;
+
+  --border: #1e293b;
+  --border-subtle: #1e293b;
   --border-medium: #334155;
   --border-strong: #475569;
 
@@ -100,7 +123,8 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 4px 24px -2px rgba(0, 0, 0, 0.6), 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 25px -3px rgba(99, 102, 241, 0.4);
 
   --status-success-bg: rgba(16, 185, 129, 0.15);
   --status-success-text: #34d399;

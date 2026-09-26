@@ -239,14 +239,45 @@ h1, h2, h3, h4, .stat-value, .brand-title {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+}
+
+.user-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px 4px 4px;
+  border-radius: var(--radius-full);
+  transition: all 0.2s ease;
+}
+
+.user-display-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name-short {
+  display: none;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .header-btn {
   background: var(--bg-surface-subtle);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  padding: 8px 12px;
+  padding: 7px 12px;
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
@@ -254,13 +285,30 @@ h1, h2, h3, h4, .stat-value, .brand-title {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.15s ease;
+  min-height: 38px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .header-btn:hover {
   background: var(--bg-surface-elevated);
   color: var(--text-primary);
   border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+
+.header-btn:active {
+  transform: translateY(1px);
+}
+
+.header-btn.btn-signout {
+  color: var(--status-danger);
+}
+
+.header-btn.btn-signout:hover {
+  background: var(--status-danger-bg);
+  border-color: var(--status-danger);
 }
 
 .header-btn .badge-count {
@@ -398,56 +446,82 @@ h1, h2, h3, h4, .stat-value, .brand-title {
 /* Segmented Tabs */
 .tab-navigation {
   display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--border-subtle);
+  gap: 6px;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 6px;
   margin-bottom: 24px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tab-navigation::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-btn {
   background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
+  border: 1px solid transparent;
   color: var(--text-secondary);
-  padding: 10px 18px;
-  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tab-btn:hover {
   color: var(--text-primary);
-  background: var(--bg-surface-subtle);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--bg-surface);
 }
 
 .tab-btn.active {
+  background: var(--bg-surface);
   color: var(--text-primary);
-  border-bottom-color: var(--text-primary);
   font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-medium);
 }
 
-.tab-btn.active.admin { border-bottom-color: var(--role-admin); color: var(--role-admin); }
-.tab-btn.active.coordinator { border-bottom-color: var(--role-coordinator); color: var(--role-coordinator); }
-.tab-btn.active.member { border-bottom-color: var(--role-member); color: var(--role-member); }
+.tab-btn.active.admin {
+  color: var(--role-admin);
+  border-color: var(--role-admin-border);
+  box-shadow: 0 2px 10px -2px var(--role-admin-light);
+}
+
+.tab-btn.active.coordinator {
+  color: var(--role-coordinator);
+  border-color: var(--role-coordinator-border);
+  box-shadow: 0 2px 10px -2px var(--role-coordinator-light);
+}
+
+.tab-btn.active.member {
+  color: var(--role-member);
+  border-color: var(--role-member-border);
+  box-shadow: 0 2px 10px -2px var(--role-member-light);
+}
 
 .tab-btn .tab-badge {
   background: var(--bg-surface-inset);
   color: var(--text-secondary);
   font-size: 11px;
+  font-weight: 700;
   padding: 2px 7px;
   border-radius: var(--radius-full);
 }
 
 .tab-btn.active .tab-badge {
-  background: var(--text-primary);
-  color: var(--bg-surface);
+  background: currentColor;
+  color: #ffffff;
 }
 
 /* Card & Section Containers */
@@ -802,49 +876,84 @@ h1, h2, h3, h4, .stat-value, .brand-title {
   }
 
   .app-header {
-    height: auto;
-    min-height: 56px;
-    padding: 8px 12px;
-    flex-wrap: wrap;
+    height: 58px;
+    min-height: 58px;
+    padding: 0 12px;
+    flex-wrap: nowrap;
     gap: 8px;
   }
 
   .header-left {
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .brand-logo {
-    width: 30px;
-    height: 30px;
-    font-size: 14px;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    border-radius: var(--radius-sm);
   }
 
   .brand-title {
-    font-size: 16px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
   }
 
   .event-tag {
-    font-size: 9px;
+    display: none;
   }
 
   .header-right {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    justify-content: flex-end;
     gap: 6px;
-    border-top: 1px solid var(--border-subtle);
-    padding-top: 6px;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .user-pill-badge {
+    padding: 2px 6px 2px 2px;
+    gap: 4px;
   }
 
   .role-badge-header {
     font-size: 10px;
-    padding: 3px 8px;
+    padding: 2px 6px;
+  }
+
+  .role-name {
+    display: none;
+  }
+
+  .user-display-name {
+    max-width: 70px;
+    font-size: 12px;
+  }
+
+  .name-full {
+    display: none;
+  }
+
+  .name-short {
+    display: inline;
+  }
+
+  .header-actions {
+    gap: 4px;
   }
 
   .header-btn {
-    padding: 6px 10px;
-    font-size: 11px;
-    flex: 1;
+    padding: 6px 8px;
+    font-size: 12px;
+    min-height: 34px;
+    min-width: 34px;
     justify-content: center;
+    border-radius: var(--radius-sm);
+  }
+
+  .header-btn .btn-label {
+    display: none;
   }
 
   /* Main Container */
@@ -864,24 +973,36 @@ h1, h2, h3, h4, .stat-value, .brand-title {
     width: 100%;
   }
 
-  /* Stats Grid */
+  /* 2-Column Balanced Stats Grid on Mobile */
   .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
     margin-bottom: 16px;
   }
 
   .stat-card {
-    padding: 16px;
+    padding: 14px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .stat-header {
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    line-height: 1.2;
   }
 
   .stat-value {
-    font-size: 22px;
+    font-size: 18px;
+    margin-bottom: 4px;
   }
 
   .stat-subtext {
-    font-size: 11px;
+    font-size: 10px;
     flex-wrap: wrap;
+    gap: 2px;
   }
 
   /* Tab Navigation (Scrollable Pill Slider) */
@@ -892,9 +1013,11 @@ h1, h2, h3, h4, .stat-value, .brand-title {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     gap: 6px;
-    padding: 4px 2px 10px 2px;
+    padding: 4px;
     margin-bottom: 16px;
-    border-bottom: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-subtle);
   }
 
   .tab-navigation::-webkit-scrollbar {
@@ -902,12 +1025,9 @@ h1, h2, h3, h4, .stat-value, .brand-title {
   }
 
   .tab-btn {
-    padding: 8px 12px;
+    padding: 7px 12px;
     font-size: 12px;
-    flex-shrink: 0;
-    border-radius: 8px;
-    background: var(--bg-surface-subtle);
-    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
   }
 
   .tab-btn.active {
@@ -993,10 +1113,11 @@ h1, h2, h3, h4, .stat-value, .brand-title {
     font-size: 12px;
   }
 
-  /* Forms & Search Inputs */
-  .pos-input, .form-input {
-    font-size: 14px;
-    padding: 10px 12px;
+  /* Forms & Search Inputs — 16px prevents iOS Safari viewport auto-zoom */
+  .pos-input, .form-input, select.form-input {
+    font-size: 16px !important;
+    padding: 12px 14px;
+    min-height: 44px;
   }
 
   /* Stack multi-column form rows on small mobile screens */

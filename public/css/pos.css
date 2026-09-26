@@ -282,43 +282,63 @@
 
 .btn-finish-day:hover:not(:disabled) {
   background: var(--role-coordinator-hover);
-  transform: translateY(-1px);
+/* ── Mobile Specific POS Optimizations ── */
+@media (max-width: 1024px) {
+  .pos-cart-panel {
+    position: sticky;
+    bottom: 16px;
+    z-index: 80;
+    box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.22);
+    border: 1px solid var(--border-medium);
+  }
 }
 
-/* ── Mobile Specific POS Optimizations ── */
 @media (max-width: 640px) {
   .pos-catalog-panel {
     padding: 14px;
+    border-radius: var(--radius-lg);
   }
 
   .pos-catalog-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 10px;
   }
 
   .pos-item-btn {
-    padding: 12px 10px;
-    min-height: 80px;
+    padding: 14px 12px;
+    min-height: 84px;
+    border-radius: var(--radius-md);
   }
 
   .pos-item-name {
     font-size: 13px;
+    font-weight: 700;
     margin-bottom: 4px;
   }
 
   .pos-item-price {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .pos-custom-row {
     flex-direction: column;
   }
 
+  .pos-input,
   .pos-input.price-input {
     max-width: 100%;
+    font-size: 16px; /* Prevents auto-zoom on iOS Safari */
+    min-height: 44px;
   }
 
   .pos-cart-panel {
     padding: 16px;
+    border-radius: var(--radius-lg);
+  }
+
+  .btn-finish-day {
+    padding: 15px;
+    font-size: 16px;
+    min-height: 48px;
   }
 }

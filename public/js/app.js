@@ -208,18 +208,41 @@ class VertexApp {
     }
 
     const notifCount = state.unreadCount || 0;
-    const roleLabel = user.role === 'admin' ? '👑 Admin'
-      : user.role === 'coordinator' ? '👔 Coordinator'
-      : '👤 Member';
+    const roleIcon = user.role === 'admin' ? '👑'
+      : user.role === 'coordinator' ? '👔'
+      : '👤';
+    const roleTitle = user.role === 'admin' ? 'Admin'
+      : user.role === 'coordinator' ? 'Coordinator'
+      : 'Member';
+    const firstName = (user.name || '').split(' ')[0] || user.name || 'User';
 
     this.headerUserContainer.innerHTML = `
-      <span class="role-badge-header ${user.role}">${roleLabel}</span>
-      <span style="font-size:13px;color:var(--text-secondary);font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${user.name}</span>
-      <button class="header-btn" id="btn-show-my-qr">🪪 My Badge</button>
-      <button class="header-btn" id="notif-btn-header">
-        🔔 Alerts ${notifCount > 0 ? `<span class="badge-count">${notifCount}</span>` : ''}
-      </button>
-      <button class="header-btn" id="signout-header-btn" title="Sign Out" style="color:var(--status-danger);">⏏ Sign Out</button>
+      <div class="user-pill-badge" title="${user.name} (${roleTitle})">
+        <span class="role-badge-header ${user.role}">
+          <span class="role-icon">${roleIcon}</span>
+          <span class="role-name">${roleTitle}</span>
+        </span>
+        <span class="user-display-name" title="${user.name}">
+          <span class="name-full">${user.name}</span>
+          <span class="name-short">${firstName}</span>
+        </span>
+      </div>
+
+      <div class="header-actions">
+        <button class="header-btn" id="btn-show-my-qr" title="Open Dynamic E-Badge & Gate QR">
+          <span class="btn-icon">🪪</span>
+          <span class="btn-label">Badge</span>
+        </button>
+        <button class="header-btn" id="notif-btn-header" title="Operational Alerts & Broadcasts">
+          <span class="btn-icon">🔔</span>
+          <span class="btn-label">Alerts</span>
+          ${notifCount > 0 ? `<span class="badge-count">${notifCount}</span>` : ''}
+        </button>
+        <button class="header-btn btn-signout" id="signout-header-btn" title="Sign Out">
+          <span class="btn-icon">⏏</span>
+          <span class="btn-label">Exit</span>
+        </button>
+      </div>
     `;
 
     document.getElementById('btn-show-my-qr')?.addEventListener('click', () => showQRModal(user));
