@@ -11,6 +11,7 @@ import {
   sendPasswordResetEmail
 } from '../firebase.js';
 import api from '../api.js';
+import state from '../state.js';
 
 // 10 colleges for the dropdown
 const COLLEGE_LIST = [
