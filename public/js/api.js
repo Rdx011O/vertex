@@ -8,12 +8,18 @@ class ApiService {
     this.baseUrl = window.location.origin;
     this.wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
     this.ws = null;
+    this.wsReconnectAttempts = 0;
     this.idToken = null;           // Firebase ID token
+    this.tokenExpiresAt = 0;
     this.getTokenFn = null;        // Function that returns fresh token
     this.listeners = new Set();
     this.isSimulatedOffline = false;
     this.offlineQueue = this.loadOfflineQueue();
     this.isSyncing = false;
+
+    // Performance optimizations: In-flight deduplication & Micro-cache
+    this.cache = new Map();        // endpoint -> { data, time }
+    this.inFlight = new Map();     // endpoint -> Promise
 
     this.initWebSocket();
   }
@@ -21,12 +27,19 @@ class ApiService {
   /** Called by app.js after Firebase auth — provides a getter for fresh tokens */
   setTokenProvider(fn) {
     this.getTokenFn = fn;
+    this.idToken = null;
+    this.tokenExpiresAt = 0;
   }
 
   async getToken() {
+    if (this.idToken && Date.now() < this.tokenExpiresAt) {
+      return this.idToken;
+    }
     if (this.getTokenFn) {
       try {
         this.idToken = await this.getTokenFn();
+        // Firebase tokens are valid for 1 hour; cache for 15 minutes locally
+        this.tokenExpiresAt = Date.now() + 15 * 60 * 1000;
       } catch (e) {
         console.warn('[Auth] Could not refresh token:', e);
       }
@@ -54,22 +67,31 @@ class ApiService {
     if (!isOffline) this.syncOfflineQueue();
   }
 
-  // WebSocket Connection
+  // WebSocket Connection (with graceful backoff)
   initWebSocket() {
     try {
       this.ws = new WebSocket(this.wsUrl);
-      this.ws.onopen = () => this.notifyListeners({ type: 'WS_STATUS', status: 'connected' });
+      this.ws.onopen = () => {
+        this.wsReconnectAttempts = 0;
+        this.notifyListeners({ type: 'WS_STATUS', status: 'connected' });
+      };
       this.ws.onmessage = (event) => {
         try { this.notifyListeners(JSON.parse(event.data)); }
         catch (err) { console.error('[WebSocket] Message parse error:', err); }
       };
       this.ws.onclose = () => {
         this.notifyListeners({ type: 'WS_STATUS', status: 'disconnected' });
-        setTimeout(() => this.initWebSocket(), 3000);
+        // Exponential backoff capped at 30s to prevent battery/network drain
+        if (this.wsReconnectAttempts < 6) {
+          const delay = Math.min(30000, 3000 * Math.pow(1.5, this.wsReconnectAttempts++));
+          setTimeout(() => this.initWebSocket(), delay);
+        }
       };
-      this.ws.onerror = () => console.warn('[WebSocket] Connection error');
+      this.ws.onerror = () => {
+        // Silent handling for serverless environments where persistent WS is unsupported
+      };
     } catch (err) {
-      console.error('[WebSocket] Init failed:', err);
+      console.warn('[WebSocket] Init skipped:', err.message);
     }
   }
 
@@ -85,10 +107,18 @@ class ApiService {
     }
   }
 
-  // HTTP Request Helper
+  // HTTP Request Helper with Caching & Deduplication
   async request(endpoint, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    const isGet = method === 'GET';
+
+    // Invalidate client cache immediately on any state-modifying action
+    if (!isGet) {
+      this.cache.clear();
+    }
+
     // Offline queue for POS sales
-    if (this.isSimulatedOffline && options.method && options.method !== 'GET') {
+    if (this.isSimulatedOffline && !isGet) {
       if (endpoint === '/api/sales/submit') {
         const payload = JSON.parse(options.body || '{}');
         const queueItem = {
@@ -117,29 +147,59 @@ class ApiService {
       throw new Error('Network is offline (Simulated dead spot)');
     }
 
-    const token = await this.getToken();
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      ...(options.headers || {})
-    };
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
-    const text = await response.text();
-    let data;
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch (_) {
-      if (!response.ok) {
-        throw new Error(text || `Server error (${response.status})`);
+    // Check memory micro-cache for idempotent GET requests (3s TTL)
+    if (isGet) {
+      const cached = this.cache.get(endpoint);
+      if (cached && (Date.now() - cached.time) < 3000) {
+        return cached.data;
       }
-      throw new Error(`Unexpected server response: ${text.slice(0, 150)}`);
+      // If same GET request is already in-flight, return the existing Promise
+      if (this.inFlight.has(endpoint)) {
+        return await this.inFlight.get(endpoint);
+      }
     }
 
-    if (!response.ok) {
-      throw new Error(data.error || data.message || `HTTP error ${response.status}`);
+    const execPromise = (async () => {
+      const token = await this.getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(options.headers || {})
+      };
+
+      const response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (_) {
+        if (!response.ok) {
+          throw new Error(text || `Server error (${response.status})`);
+        }
+        throw new Error(`Unexpected server response: ${text.slice(0, 150)}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || `HTTP error ${response.status}`);
+      }
+
+      if (isGet) {
+        this.cache.set(endpoint, { data, time: Date.now() });
+      }
+
+      return data;
+    })();
+
+    if (isGet) {
+      this.inFlight.set(endpoint, execPromise);
+      try {
+        return await execPromise;
+      } finally {
+        this.inFlight.delete(endpoint);
+      }
     }
-    return data;
+
+    return await execPromise;
   }
 
   async syncOfflineQueue() {

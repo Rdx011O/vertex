@@ -77,11 +77,13 @@ class AppState {
       }
     }
 
-    if (this.currentUser) {
-      await this.refreshAll();
-    }
-
+    // Immediately emit change so shell/dashboard renders without delay
     this.emitChange();
+
+    // Concurrently fetch all operational data in background
+    if (this.currentUser) {
+      this.refreshAll();
+    }
   }
 
   setTab(tabId) {
@@ -90,41 +92,64 @@ class AppState {
   }
 
   async refreshAll() {
+    if (this._isRefreshing) return;
+    this._isRefreshing = true;
+
     try {
-      if (this.isAuthenticated) {
-        try {
-          this.currentUser = await api.getMe();
-        } catch (_) { /* profile not yet ready */ }
-      }
-
-      this.eventSummary = await api.getEventSummary();
-      this.stalls = await api.getStalls();
-
-      try {
-        this.notifications = await api.getNotifications();
-        this.unreadCount = this.notifications.filter(n => !n.is_read).length;
-      } catch (_) { /* non-critical */ }
+      const promises = [
+        api.getEventSummary()
+          .then(s => { if (s) this.eventSummary = s; })
+          .catch(e => console.warn('[State] getEventSummary:', e.message)),
+        api.getStalls()
+          .then(s => { if (Array.isArray(s)) this.stalls = s; })
+          .catch(e => console.warn('[State] getStalls:', e.message)),
+        api.getNotifications()
+          .then(n => {
+            if (Array.isArray(n)) {
+              this.notifications = n;
+              this.unreadCount = n.filter(x => !x.is_read).length;
+            }
+          })
+          .catch(e => console.warn('[State] getNotifications:', e.message))
+      ];
 
       if (this.currentUser && this.currentUser.stall_id) {
-        this.activeStall = await api.getStallDetails(this.currentUser.stall_id);
+        promises.push(
+          api.getStallDetails(this.currentUser.stall_id)
+            .then(d => { if (d) this.activeStall = d; })
+            .catch(e => console.warn('[State] getStallDetails:', e.message))
+        );
       } else {
         this.activeStall = null;
       }
 
       if (this.currentUser) {
-        try {
-          this.auditLogs = await api.getAuditLogs(100);
-        } catch (_) { /* non-critical */ }
+        promises.push(
+          api.getAuditLogs(100)
+            .then(l => { if (Array.isArray(l)) this.auditLogs = l; })
+            .catch(e => console.warn('[State] getAuditLogs:', e.message))
+        );
 
         if (this.currentUser.role === 'admin') {
-          this.pendingSales = await api.getPendingSales();
-          try { this.allUsers = await api.getAllUsers(); } catch (_) { /* non-critical */ }
+          promises.push(
+            api.getPendingSales()
+              .then(p => { if (Array.isArray(p)) this.pendingSales = p; })
+              .catch(e => console.warn('[State] getPendingSales:', e.message))
+          );
+          promises.push(
+            api.getAllUsers()
+              .then(u => { if (Array.isArray(u)) this.allUsers = u; })
+              .catch(e => console.warn('[State] getAllUsers:', e.message))
+          );
         }
       }
 
+      await Promise.allSettled(promises);
       this.emitChange();
     } catch (err) {
       console.error('Refresh error:', err);
+    } finally {
+      this._isRefreshing = false;
     }
   }
 }

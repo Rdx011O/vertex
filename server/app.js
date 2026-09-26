@@ -76,8 +76,18 @@ app.get('/api/health', (req, res) => {
 app.get('/admin', (req, res) => res.redirect('/'));
 app.get('/admin/*', (req, res) => res.redirect('/'));
 
-// Serve Static Web Frontend
-app.use(express.static(PUBLIC_DIR));
+// Serve Static Web Frontend with efficient caching
+app.use(express.static(PUBLIC_DIR, {
+  maxAge: '1h',
+  etag: true,
+  setHeaders: (res, filepath) => {
+    if (filepath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  }
+}));
 
 // Fallback to index.html for SPA routing (all non-API GET requests)
 app.use((req, res, next) => {

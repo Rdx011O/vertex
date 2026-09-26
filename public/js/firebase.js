@@ -27,27 +27,10 @@ const DEFAULT_FIREBASE_CONFIG = {
   appId: "1:653439560758:web:03754bd2a88912cc85fc97"
 };
 
-/**
- * Initialize Firebase once, fetching config from server or falling back to default web credentials.
- * Returns { app, auth }.
- */
 export async function initFirebase() {
   if (_app) return { app: _app, auth: _auth };
 
-  let config = DEFAULT_FIREBASE_CONFIG;
-  try {
-    const res = await fetch('/api/firebase-config');
-    if (res.ok) {
-      const serverConfig = await res.json();
-      if (serverConfig && typeof serverConfig.apiKey === 'string' && serverConfig.apiKey.startsWith('AIzaSy')) {
-        config = { ...DEFAULT_FIREBASE_CONFIG, ...serverConfig };
-      }
-    }
-  } catch (err) {
-    console.warn('Could not fetch remote Firebase config from /api/firebase-config, using client fallback:', err.message);
-  }
-
-  _app = initializeApp(config);
+  _app = initializeApp(DEFAULT_FIREBASE_CONFIG);
   _auth = getAuth(_app);
 
   return { app: _app, auth: _auth };

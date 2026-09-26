@@ -22,6 +22,27 @@ export function isAdminEmail(email) {
   return ADMIN_EMAILS.includes(email.trim().toLowerCase());
 }
 
+// Fast in-memory verification cache: idToken -> { decoded, expiresAt }
+const tokenCache = new Map();
+
+function getCachedToken(idToken) {
+  const item = tokenCache.get(idToken);
+  if (item && item.expiresAt > Date.now()) {
+    return item.decoded;
+  }
+  return null;
+}
+
+function setCachedToken(idToken, decoded) {
+  const tokenExpMs = decoded.exp ? decoded.exp * 1000 : Date.now() + 5 * 60 * 1000;
+  const expiresAt = Math.min(tokenExpMs, Date.now() + 5 * 60 * 1000);
+  tokenCache.set(idToken, { decoded, expiresAt });
+  if (tokenCache.size > 2000) {
+    const firstKey = tokenCache.keys().next().value;
+    tokenCache.delete(firstKey);
+  }
+}
+
 /**
  * Middleware: verifies Firebase ID token and attaches req.user (DB profile).
  */
@@ -37,29 +58,35 @@ export async function authenticateUser(req, res, next) {
   const idToken = authHeader.slice(7);
 
   try {
-    let decoded = null;
+    let decoded = getCachedToken(idToken);
 
-    if (firebaseAuth) {
-      try {
-        decoded = await firebaseAuth.verifyIdToken(idToken);
-      } catch (err) {
-        // Fallback: decode JWT payload if admin cert is unconfigured in serverless
+    if (!decoded) {
+      if (firebaseAuth) {
+        try {
+          decoded = await firebaseAuth.verifyIdToken(idToken);
+        } catch (err) {
+          // Fallback: decode JWT payload if admin cert is unconfigured in serverless
+          const parts = idToken.split('.');
+          if (parts.length === 3) {
+            const payload = Buffer.from(parts[1], 'base64').toString('utf8');
+            decoded = JSON.parse(payload);
+            decoded.uid = decoded.uid || decoded.user_id || decoded.sub;
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        // Decode JWT payload directly
         const parts = idToken.split('.');
         if (parts.length === 3) {
           const payload = Buffer.from(parts[1], 'base64').toString('utf8');
           decoded = JSON.parse(payload);
           decoded.uid = decoded.uid || decoded.user_id || decoded.sub;
-        } else {
-          throw err;
         }
       }
-    } else {
-      // Decode JWT payload directly
-      const parts = idToken.split('.');
-      if (parts.length === 3) {
-        const payload = Buffer.from(parts[1], 'base64').toString('utf8');
-        decoded = JSON.parse(payload);
-        decoded.uid = decoded.uid || decoded.user_id || decoded.sub;
+
+      if (decoded && decoded.uid) {
+        setCachedToken(idToken, decoded);
       }
     }
 
