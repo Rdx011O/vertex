@@ -10,16 +10,296 @@
       "description": "The flagship annual technology, entrepreneurship & innovation festival."
     }
   ],
-  "users": [],
-  "stalls": [],
+  "users": [
+    {
+      "id": "jFfaxBMQTAhQ5N3OeHRDQWLhzp42",
+      "name": "aaditya battin",
+      "email": "aaditya.battin.ec24@pravaraengg.org.in",
+      "role": "admin",
+      "stall_id": null,
+      "phone": "+917038676118",
+      "designation": "System Administrator",
+      "username": "Aadix",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": null,
+      "stall_category_desired": null,
+      "stall_alloted_number": null,
+      "badge_code": "BP-ADM-JFFA",
+      "created_at": "2026-09-26T15:04:38.413Z",
+      "qr_image_url": "data:image/png;base64,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",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:jFfaxBMQTAhQ5N3OeHRDQWLhzp42:BP-ADM-JFFA:admin:none"
+    },
+    {
+      "id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "name": "Stall coor",
+      "email": "aadityabattin7@gmail.com",
+      "role": "coordinator",
+      "stall_id": "stl-0f80a555",
+      "phone": null,
+      "designation": "Stall Coordinator",
+      "username": "Doom",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": "Foodie basket",
+      "stall_category_desired": "food",
+      "stall_alloted_number": "S-01",
+      "badge_code": "BP-CRD-SFKR",
+      "created_at": "2026-09-26T15:09:47.278Z"
+    },
+    {
+      "id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
+      "name": "user",
+      "email": "aadiprec@gmail.com",
+      "role": "member",
+      "stall_id": "stl-0f80a555",
+      "phone": null,
+      "designation": "Participant",
+      "username": "thor",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": null,
+      "stall_category_desired": null,
+      "stall_alloted_number": null,
+      "badge_code": "MBR-0f80a555-ZLS5UD",
+      "created_at": "2026-09-26T15:12:42.162Z",
+      "qr_image_url": "data:image/png;base64,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upKdefCUeTDpSt7QlUzMgycWIiKXWoiIXGohInKphYjIpRYiIpf64h/QlXwn8+CprmRiHuy6kk+YB7uuZNKVnDIPJl3Jzjx4yjx4S1fylHlwqit5yjzYdSVPmQeTrmRnHky6klNdycQ8ONWVvME8mHQlb1iIiFxqISJyqYWIyKUWIiKX+uJF5sFTXckbzINT5sEnupI3dCUT82DXlUzMg0lXsjMPnjIPvlNXMjEPdl3JW8yDn8A82HUlp8yDt3QlT3UlTyxERC61EBG51EJE5FILEZFLLURELvXFBcyDXVfyncyDSVcyMQ92XclP0JW8wTyYdCWnzINT5sFT5sGpruQT5sFTXcmpruQp8+AN5sGpruTUQkTkUgsRkUstREQutRARudQXF+hKdubBpCt5yjw4ZR6cMg/eYh7supJT5sFTXclbupKdeTDpSt5gHnyiKzllHky6kp158JauZGceTMyDU13JxDx4YiEicqmFiMilFiIil1qIiFxqISJyqS9e1JX8l5kHk67klHlwqiuZmAenupJT5sGkK/lO5sGprmRiHuy6kol5MOlKdubBpCvZdSUT82BiHpzqSibmwRu6kol5sOtKJubBriuZmAdvWIiIXGohInKphYjIpRYiIpdaiIhc6ot/gHnwb9OVTMyDp8yDXVcy6Uom5sGpruQNXcnEPDjVlXwn8+CnMg8mXcnEPNh1JRPz4FRXcso8mJgHp8yDSVdyqit5w0JE5FILEZFLLURELrUQEbnUr99/ICJyoYWIyKUWIiKXWoiIXGohInKphYjIpRYiIpdaiIhcaiEicqmFiMilFiIil/ofGcHf7znH4ZEAAAAASUVORK5CYII=",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:zls5UD1meNZqQjeZMcThQaUJzxY2:MBR-0f80a555-ZLS5UD:member:stl-0f80a555",
+      "is_flagged": true,
+      "flag_reason": "Why you're out there",
+      "flagged_at": "2026-09-26T15:36:27.377Z"
+    },
+    {
+      "id": "n2UX2LVCbGW84x4d4zW9IFB9TSn2",
+      "name": "Darshan sanap",
+      "email": "darshansanap2811@gmail.com",
+      "role": "member",
+      "stall_id": "stl-0f80a555",
+      "phone": "8830329092",
+      "designation": "Participant",
+      "username": "Darsh",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": null,
+      "stall_category_desired": null,
+      "stall_alloted_number": null,
+      "badge_code": "MBR-0f80a555-N2UX2L",
+      "created_at": "2026-09-27T15:14:58.801Z",
+      "qr_image_url": "data:image/png;base64,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Snbmwamu5BPmwa4reco8mHQlb+hKnupKJubBqa5kYh58p67kO3UlTyxERC61EBG51EJE5FILEZFLLURELvXFh8yDXVcyMQ8mXckT5sGkK3nKPDjVlXynruSpruQn6Ep25sF36ko+YR7supJT5sFTXcnEPJh0JafMg11X8gnz4A1dyRsWIiKXWoiIXGohInKphYjIpRYiIpf64i8wDyZdySnz4FRX8gnz4FRXsjMPnjIPJl3JpCt5wjz4RFey60om5sHOPHhLVzIxD3ZdyVPmwaQr2ZkHk67kVFfyFvPgVFeyMw8+0ZWcMg92XcnEPDjVlZxaiIhcaiEicqmFiMilFiIil/r1+w8+YB7supKJefBUV7IzD57qSibmwa4rmZgHk67klHkw6Up25sGkK3nKPNh1JU+ZB5OuZGceTLqSn8A8eENX8hbzYNeVTMyDU13JKfNg0pXszIOnupJTCxGRSy1ERC61EBG51EJE5FILEZFLffEP6Ep25sGprmRiHky6kp15MOlKfgLzYNeVnDIPPtGV7MyDU13JpCuZmAdPmQe7ruSUeTDpSk51JRPzYNeVfMI8+E5dyc48mJgHp7qSp7qSNyxERC61EBG51EJE5FILEZFLLURELvXFX2AeTLqSiXlwyjx4Q1cyMQ92XcknzINdV/KJrmRnHpzqSibmwb+NefCUebDrSibmwSnz4JR58Imu5JR5MOlKTpkHu67kLebBriv5TgsRkUstREQutRARudRCRORSv37/wUPmwSe6kjeYB6e6kol5cKormZgHb+hKTpkHk67klHkw6UpOmQeTrmRnHky6ku9kHpzqSibmwa4reYt58J26kol5sOtKJubBriuZmAeTruSJhYjIpRYiIpdaiIhcaiEicqmFiMilfv3+g29mHuy6klPmwaQrmZgHp7qSnXkw6UpOmQef6EreYB5MupKdeTDpSnbmwXfrSnbmwamuZGIevKErmZgHp7qST5gHP1VX8pR5sOtKTi1ERC61EBG51EJE5FILEZFL/fr9B/9x5sGuK5mYB7uuZGIeTLqSnXnwVFcyMQ92XcnEPPhOXclT5sGprmRiHpzqSibmwa4rOWUeTLqSp8yDN3QlT5kHk67klHlwqis5tRARudRCRORSCxGRSy1ERC61EBG51BcfMg9+qq5k0pWc6kpOdSWnupJPmAc782DSlezMg0lXcso8eIt5sOtKPtGV7MyDSVdyyjx4yjzYdSUT8+BUV/JUVzIxD06ZB5Ou5Anz4DstREQutRARudRCRORSCxGRSy1ERC71xV/QlXwn8+At5sGuK5mYB091JZOu5A3mwamu5JR58Imu5CnzYNeVTMyDf5p5MOlKTpkHk65kYh7szIOnupI3dCWfMA+eWIiIXGohInKphYjIpRYiIpf64kXmwVNdyVPmwa4rmXQlO/PgE13JzjyYmAeTruSUebDrSp4yD54yD/5tupKJefCdzINdV/JUVzIxD3bmwXcyD77TQkTkUgsRkUstREQutRARudRCRORSX8j/Yx78BObBqa5kZx58ois51ZXszINPdCU78+An60pOdSXfyTx4qis5ZR5MupJT5sGuK5mYB5Ou5ImFiMilFiIil1qIiFxqISJyqS/kf9aVTMyDp7qSnXkwMQ/e0JVMzINTXcnEPHiDeTDpSnbmwcQ8mHQlO/Ng0pXszIOnzINJV3LKPDjVlUy6kol58G+yEBG51EJE5FILEZFLLURELrUQEbnUFy/qSn6CrmRnHky6kp158FRXMjEPnupKdubBd+pKPtGVnDIPJl3JzjyYmAe7rmRiHkzMg11XMjEPvpN5MOlKdl3JxDzYmQeTrmTSlezMg7eYB7uu5NRCRORSCxGRSy1ERC61EBG51EJE5FK/fv/BB8yDn6orOWUevKUr2ZkHT3UlE/PgVFdyyjz4r+hKdubBJ7qSnXkw6UpOmQeTruSUefCGrmRiHryhK5mYB5Ou5ImFiMilFiIil1qIiFxqISJyqV+//0BE5EILEZFLLURELrUQEbnUQkTkUgsRkUstREQutRARudRCRORSCxGRSy1ERC71fzlp7BjHWlGQAAAAAElFTkSuQmCC",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:n2UX2LVCbGW84x4d4zW9IFB9TSn2:MBR-0f80a555-N2UX2L:member:stl-0f80a555"
+    },
+    {
+      "id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "name": "Darshan sanap",
+      "email": "darshansanap72@gmail.com",
+      "role": "coordinator",
+      "stall_id": "stl-65fe68da",
+      "phone": "8830329092",
+      "designation": "Stall Coordinator",
+      "username": "Darshhh",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": "Blue film binge watching",
+      "stall_category_desired": "game",
+      "stall_alloted_number": "A-13",
+      "badge_code": "BP-CRD-YAFN",
+      "created_at": "2026-09-27T17:29:50.989Z"
+    }
+  ],
+  "stalls": [
+    {
+      "id": "stl-0f80a555",
+      "name": "Foodie basket",
+      "category": "food",
+      "event_id": "ev-bp-2026",
+      "coordinator_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "status": "active",
+      "banner_color": "#4F46E5",
+      "location": "Booth S-01",
+      "allotted_number": "S-01",
+      "invite_code": "pfvfL97r4pfm",
+      "created_at": "2026-09-26T15:09:47.277Z"
+    },
+    {
+      "id": "stl-65fe68da",
+      "name": "Blue film binge watching",
+      "category": "game",
+      "event_id": "ev-bp-2026",
+      "coordinator_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "status": "active",
+      "banner_color": "#4F46E5",
+      "location": "Booth A-13",
+      "allotted_number": "A-13",
+      "invite_code": "JE6JXE8Bs6Ne",
+      "created_at": "2026-09-27T17:29:50.988Z"
+    }
+  ],
   "sales_submissions": [],
   "expenses": [],
-  "attendance_records": [],
+  "attendance_records": [
+    {
+      "id": "att-9bd5a6d2",
+      "member_user_id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
+      "stall_id": "stl-0f80a555",
+      "role": "member",
+      "date": "2026-09-26",
+      "status": "confirmed",
+      "confirmed_by_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "timestamp": "2026-09-26T15:15:42.531Z",
+      "verified_method": "QR_SCAN"
+    },
+    {
+      "id": "att-96e0331d",
+      "member_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "stall_id": "stl-65fe68da",
+      "role": "coordinator",
+      "date": "2026-09-27",
+      "status": "confirmed",
+      "confirmed_by_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "timestamp": "2026-09-27T17:31:17.838Z",
+      "verified_method": "COORDINATOR_SELF_QR"
+    }
+  ],
   "join_requests": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif-d4217929",
+      "target_role": "member",
+      "target_scope_id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
+      "title": "Badge Scanned & Confirmed âœ…",
+      "message": "Your badge was scanned by Stall coor. Attendance confirmed!",
+      "type": "attendance_confirmed",
+      "created_by": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "read_by": [
+        "zls5UD1meNZqQjeZMcThQaUJzxY2",
+        "SfKRp2lfKecA2okIncVEqx62pM03",
+        "jFfaxBMQTAhQ5N3OeHRDQWLhzp42"
+      ],
+      "created_at": "2026-09-26T15:15:42.532Z"
+    },
+    {
+      "id": "notif-6e93f4e8",
+      "target_role": "member",
+      "target_scope_id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
+      "title": "Badge Scanned & Confirmed âœ…",
+      "message": "Your badge was scanned by Stall coor. Attendance confirmed!",
+      "type": "attendance_confirmed",
+      "created_by": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "read_by": [
+        "zls5UD1meNZqQjeZMcThQaUJzxY2",
+        "SfKRp2lfKecA2okIncVEqx62pM03",
+        "jFfaxBMQTAhQ5N3OeHRDQWLhzp42"
+      ],
+      "created_at": "2026-09-26T15:15:32.140Z"
+    }
+  ],
   "pending_sales": [],
-  "pos_catalog": [],
+  "pos_catalog": [
+    {
+      "id": "cat-2549b8f6",
+      "stall_id": "stl-0f80a555",
+      "name": "Dosa",
+      "price": 100,
+      "category": "Standard"
+    }
+  ],
   "stall_expenses": [],
   "stall_join_requests": [],
-  "audit_logs": []
+  "audit_logs": [
+    {
+      "id": "aud-3008c347",
+      "actor_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "actor_name": "Darshan sanap",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-96e0331d",
+      "details": "Stall Coordinator attendance verified via QR badge for Darshan sanap (BP-CRD-YAFN) at \"Blue film binge watching\".",
+      "timestamp": "2026-09-27T17:31:17.839Z"
+    },
+    {
+      "id": "aud-fadd77bc",
+      "actor_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "actor_name": "Darshan sanap",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "details": "New user registered: darshansanap72@gmail.com (coordinator) from Pravara Rural Engineering College, Loni, stall #A-13",
+      "timestamp": "2026-09-27T17:29:52.884Z"
+    },
+    {
+      "id": "aud-c6bbd1c4",
+      "actor_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "actor_name": "Darshan sanap",
+      "action": "STALL_CREATED",
+      "target_type": "STALL",
+      "target_id": "stl-65fe68da",
+      "details": "Stall \"Blue film binge watching\" created by coordinator Darshan sanap (Invite Code: JE6JXE8Bs6Ne).",
+      "timestamp": "2026-09-27T17:29:50.988Z"
+    },
+    {
+      "id": "aud-9d081a43",
+      "actor_user_id": "n2UX2LVCbGW84x4d4zW9IFB9TSn2",
+      "actor_name": "Darshan sanap",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "n2UX2LVCbGW84x4d4zW9IFB9TSn2",
+      "details": "New user registered: darshansanap2811@gmail.com (member) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-27T15:15:00.583Z"
+    },
+    {
+      "id": "aud-0512041c",
+      "actor_user_id": "jFfaxBMQTAhQ5N3OeHRDQWLhzp42",
+      "actor_name": "aaditya battin",
+      "action": "FLAG_ISSUED",
+      "target_type": "USER",
+      "target_id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
+      "details": "Flagged user user (Foodie basket): Why you're out there",
+      "timestamp": "2026-09-26T15:36:27.377Z"
+    },
+    {
+      "id": "aud-b2b0efd4",
+      "actor_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "actor_name": "Stall coor",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-9bd5a6d2",
+      "details": "Coordinator scanned badge QR and confirmed attendance for Member user (MBR-0f80a555-ZLS5UD) at \"Foodie basket\".",
+      "timestamp": "2026-09-26T15:15:42.531Z"
+    },
+    {
+      "id": "aud-088fc986",
+      "actor_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "actor_name": "Stall coor",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-9bd5a6d2",
+      "details": "Coordinator scanned badge QR and confirmed attendance for Member user (MBR-0f80a555-ZLS5UD) at \"Foodie basket\".",
+      "timestamp": "2026-09-26T15:15:32.139Z"
+    },
+    {
+      "id": "aud-43e2762f",
+      "actor_user_id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
+      "actor_name": "user",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
+      "details": "New user registered: aadiprec@gmail.com (member) from Pravara Rural Engineering College, Loni",
+      "timestamp": "2026-09-26T15:12:43.904Z"
+    },
+    {
+      "id": "aud-9e1b6f76",
+      "actor_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "actor_name": "Stall coor",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "details": "New user registered: aadityabattin7@gmail.com (coordinator) from Pravara Rural Engineering College, Loni, stall #S-01",
+      "timestamp": "2026-09-26T15:09:49.032Z"
+    },
+    {
+      "id": "aud-7ce52cb1",
+      "actor_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "actor_name": "Stall coor",
+      "action": "STALL_CREATED",
+      "target_type": "STALL",
+      "target_id": "stl-0f80a555",
+      "details": "Stall \"Foodie basket\" created by coordinator Stall coor (Invite Code: pfvfL97r4pfm).",
+      "timestamp": "2026-09-26T15:09:47.277Z"
+    }
+  ]
 }

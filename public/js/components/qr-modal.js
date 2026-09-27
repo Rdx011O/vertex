@@ -450,13 +450,14 @@ export async function showQRModal(user) {
     <div class="modal-backdrop active" id="qr-modal-backdrop">
       <div class="modal-card" style="max-width: 820px; padding: 0; background: transparent; border: none; box-shadow: none;">
         <div style="background:var(--bg-surface); padding:36px; border-radius:var(--radius-xl); text-align:center; box-shadow:0 25px 50px rgba(0,0,0,0.25);">
-          <div style="font-size:32px; margin-bottom:12px;">⚡</div>
+          <div style="font-size:32px; margin-bottom:12px; color:var(--primary);"><i data-lucide="sparkles"></i></div>
           <div style="font-size:18px; font-weight:800; color:var(--text-primary);">Rendering Dynamic Vertex E-Badge...</div>
           <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Fetching encrypted cryptographic QR credential...</div>
         </div>
       </div>
     </div>
   `;
+  window.renderIcons?.();
 
   let badgeData = null;
   try {
@@ -476,11 +477,11 @@ export async function showQRModal(user) {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 6px;">
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="badge" style="background:#4f46e5; color:white; font-size:11px; padding:4px 10px; font-weight:800;">
-              ⚡ OFFICIAL PASS
+              <i data-lucide="shield-check"></i> OFFICIAL PASS
             </span>
             <span style="font-size:12px; color:white; opacity:0.9;">Move cursor to 3D tilt • Tap QR to zoom • Flip for NFC back</span>
           </div>
-          <button class="modal-close-btn" id="close-qr-btn" style="color:white; background:rgba(255,255,255,0.2); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">✕</button>
+          <button class="modal-close-btn" id="close-qr-btn" style="color:white; background:rgba(255,255,255,0.2); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button>
         </div>
 
         <!-- Rendered 3D Badge -->
@@ -498,22 +499,23 @@ export async function showQRModal(user) {
         <!-- Interactive Control Toolbar -->
         <div style="display:flex; justify-content:center; gap:10px; margin-top:16px; flex-wrap:wrap;">
           <button class="btn btn-outline" id="btn-flip-badge" style="background:white; color:#0f172a; font-size:13px; font-weight:700; padding:8px 18px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
-            🔄 Flip Badge (Back View)
+            <i data-lucide="rotate-cw"></i> Flip Badge (Back View)
           </button>
           <button class="btn btn-outline" id="btn-toggle-lanyard" style="background:rgba(255,255,255,0.2); color:white; font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; border-color:rgba(255,255,255,0.4);">
-            🎗️ Toggle Lanyard Strap
+            <i data-lucide="tag"></i> Toggle Lanyard Strap
           </button>
           <button class="btn btn-outline" id="btn-print-badge" style="background:rgba(255,255,255,0.2); color:white; font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; border-color:rgba(255,255,255,0.4);">
-            🖨️ Print Lanyard Pass
+            <i data-lucide="printer"></i> Print Lanyard Pass
           </button>
           <button class="btn btn-outline" id="btn-copy-badge-id" style="background:rgba(255,255,255,0.2); color:white; font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; border-color:rgba(255,255,255,0.4);">
-            📋 Copy Pass ID
+            <i data-lucide="copy"></i> Copy Pass ID
           </button>
         </div>
 
       </div>
     </div>
   `;
+  window.renderIcons?.();
 
   // Attach Close handlers
   document.getElementById('close-qr-btn')?.addEventListener('click', () => modalContainer.innerHTML = '');
@@ -530,7 +532,7 @@ export async function showQRModal(user) {
  */
 let html5QrCodeScanner = null;
 
-export function showQRScannerModal({ onScanSuccess, title = '📷 Scan Participant Badge QR', hint = 'Point camera at member or coordinator badge QR' } = {}) {
+export function showQRScannerModal({ onScanSuccess, title = 'Scan Participant Badge QR', hint = 'Point camera at member or coordinator badge QR' } = {}) {
   const modalContainer = document.getElementById('qr-modal-container');
   if (!modalContainer) return;
 
@@ -538,8 +540,8 @@ export function showQRScannerModal({ onScanSuccess, title = '📷 Scan Participa
     <div class="modal-backdrop active" id="scanner-modal-backdrop">
       <div class="modal-card" style="max-width: 480px; padding: 22px;">
         <div class="modal-header" style="margin-bottom:12px;">
-          <h3 style="font-size:18px;">${title}</h3>
-          <button class="modal-close-btn" id="close-scanner-btn">✕</button>
+          <h3 style="font-size:18px;"><i data-lucide="scan"></i> ${title}</h3>
+          <button class="modal-close-btn" id="close-scanner-btn"><i data-lucide="x"></i></button>
         </div>
 
         <div style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
@@ -549,7 +551,8 @@ export function showQRScannerModal({ onScanSuccess, title = '📷 Scan Participa
         <!-- Camera Scanner Viewport -->
         <div id="qr-reader" style="width:100%; min-height:250px; background:#0f172a; border-radius:var(--radius-md); overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center;">
           <div style="color:white; font-size:13px; text-align:center; padding:20px;" id="camera-loading-msg">
-            🎥 Initializing Camera Feed...<br>
+            <i data-lucide="camera" style="margin-bottom:6px;"></i><br>
+            Initializing Camera Feed...<br>
             <span style="font-size:11px; opacity:0.7;">Please allow camera permissions if prompted.</span>
           </div>
         </div>
@@ -560,13 +563,14 @@ export function showQRScannerModal({ onScanSuccess, title = '📷 Scan Participa
           <form id="manual-scan-form" style="display:flex; gap:8px;">
             <input type="text" id="manual-badge-input" class="pos-input" placeholder="e.g. MBR-1234 / COORD-5678 / VERTEX:..." style="flex:1;" required />
             <button type="submit" class="btn btn-admin" style="padding:0 16px;">
-              ✓ Verify
+              <i data-lucide="check-circle-2"></i> Verify
             </button>
           </form>
         </div>
       </div>
     </div>
   `;
+  window.renderIcons?.();
 
   const stopScanner = async () => {
     if (html5QrCodeScanner) {

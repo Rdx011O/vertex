@@ -22,27 +22,27 @@ export function renderAdminView(container, state) {
     <!-- Segmented Navigation for Admin -->
     <div class="tab-navigation">
       <button class="tab-btn admin ${activeTab === 'command-center' ? 'active' : ''}" data-tab="command-center">
-        <span>⚡ Command Center</span>
+        <span><i data-lucide="layout-dashboard"></i> Command Center</span>
       </button>
       <button class="tab-btn admin ${activeTab === 'verification-queue' ? 'active' : ''}" data-tab="verification-queue">
-        <span>📝 Sales Verification</span>
+        <span><i data-lucide="check-check"></i> Sales Verification</span>
         ${pendingSales.length > 0 ? `<span class="tab-badge" style="background:var(--status-danger);color:white;">${pendingSales.length}</span>` : ''}
       </button>
       <button class="tab-btn admin ${activeTab === 'user-management' ? 'active' : ''}" data-tab="user-management">
-        <span>👥 User Management</span>
+        <span><i data-lucide="users"></i> User Management</span>
         ${(state.allUsers || []).filter(u => u.role && u.role.startsWith('pending')).length > 0 ? `<span class="tab-badge" style="background:var(--status-warning);color:white;">${(state.allUsers || []).filter(u => u.role && u.role.startsWith('pending')).length} pending</span>` : ''}
       </button>
       <button class="tab-btn admin ${activeTab === 'stall-operations' ? 'active' : ''}" data-tab="stall-operations">
-        <span>🏪 Stall Operations</span>
+        <span><i data-lucide="store"></i> Stall Operations</span>
       </button>
       <button class="tab-btn admin ${activeTab === 'broadcast-center' ? 'active' : ''}" data-tab="broadcast-center">
-        <span>📢 Broadcasts</span>
+        <span><i data-lucide="megaphone"></i> Broadcasts</span>
       </button>
       <button class="tab-btn admin ${activeTab === 'audit-log' ? 'active' : ''}" data-tab="audit-log">
-        <span>📜 Audit Ledger</span>
+        <span><i data-lucide="history"></i> Audit Ledger</span>
       </button>
       <button class="tab-btn admin ${activeTab === 'leaderboard' ? 'active' : ''}" data-tab="leaderboard">
-        <span>🏆 Event Leaderboard</span>
+        <span><i data-lucide="trophy"></i> Event Leaderboard</span>
       </button>
     </div>
 
@@ -62,6 +62,7 @@ export function renderAdminView(container, state) {
 
   // Attach actions for sub-views
   attachAdminEventListeners(container, state);
+  window.renderIcons?.();
 }
 
 function filterStalls(stalls, query) {
@@ -88,7 +89,7 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
         <div class="stat-card accent-indigo">
           <div class="stat-header">
             <span class="stat-label">Total Verified Gross Sales</span>
-            <span class="stat-icon">💰</span>
+            <span class="stat-icon"><i data-lucide="credit-card"></i></span>
           </div>
           <div class="stat-value mono-num">${summary.total_gross_sales_formatted || '₹0'}</div>
           <div class="stat-subtext">
@@ -100,7 +101,7 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
         <div class="stat-card accent-amber">
           <div class="stat-header">
             <span class="stat-label">Pending Verification</span>
-            <span class="stat-icon">⏳</span>
+            <span class="stat-icon"><i data-lucide="clock"></i></span>
           </div>
           <div class="stat-value mono-num">${summary.pending_submissions_total_formatted || '₹0'}</div>
           <div class="stat-subtext">
@@ -111,7 +112,7 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
         <div class="stat-card accent-green">
           <div class="stat-header">
             <span class="stat-label">Break-Even Clearance</span>
-            <span class="stat-icon">📈</span>
+            <span class="stat-icon"><i data-lucide="trending-up"></i></span>
           </div>
           <div class="stat-value mono-num">${summary.break_even_rate || 0}%</div>
           <div class="stat-subtext">
@@ -122,7 +123,7 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
         <div class="stat-card accent-rose">
           <div class="stat-header">
             <span class="stat-label">Event Attendance</span>
-            <span class="stat-icon">👥</span>
+            <span class="stat-icon"><i data-lucide="users"></i></span>
           </div>
           <div class="stat-value mono-num">${summary.attendance ? summary.attendance.rate : 0}%</div>
           <div class="stat-subtext">
@@ -135,7 +136,7 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
       ${pendingSales.length > 0 ? `
         <div style="background:var(--status-warning-bg); border:1px solid var(--status-warning); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
           <div style="display:flex; align-items:center; gap:12px;">
-            <span style="font-size:24px;">🔔</span>
+            <span style="font-size:24px; color:var(--status-warning);"><i data-lucide="bell"></i></span>
             <div>
               <div style="font-weight:700; color:var(--status-warning-text);">Action Required: ${pendingSales.length} Sales Logs Awaiting Verification</div>
               <div style="font-size:13px; color:var(--text-secondary);">Unverified sales will NOT reflect in leaderboard or gross earnings until you review them.</div>
@@ -154,9 +155,9 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
           </div>
           <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
             <div style="position:relative;">
-              <input type="text" id="stall-search-input-cc" class="pos-input" value="${stallSearchQuery}" placeholder="🔍 Search stalls by name, category, location..." style="width:280px; padding:7px 12px; font-size:13px;" />
+              <input type="text" id="stall-search-input-cc" class="pos-input" value="${stallSearchQuery}" placeholder="Search stalls by name, category, location..." style="width:280px; padding:7px 12px; font-size:13px;" />
             </div>
-            <button class="btn btn-admin" id="btn-add-stall-modal">+ Register New Stall</button>
+            <button class="btn btn-admin" id="btn-add-stall-modal"><i data-lucide="plus-circle"></i> Register New Stall</button>
           </div>
         </div>
 
@@ -218,10 +219,10 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
                     <td style="text-align:center;">
                       <div style="display:flex; justify-content:center; gap:6px;">
                         <button class="btn btn-outline btn-manage-stall" data-stall-id="${s.id}" style="padding:4px 10px; font-size:12px; font-weight:700;">
-                          ⚙️ Manage
+                          <i data-lucide="settings"></i> Manage
                         </button>
                         <button class="btn btn-outline btn-edit-stall" data-stall-id="${s.id}" style="padding:4px 8px; font-size:12px;" title="Edit Stall Details">
-                          ✏️
+                          <i data-lucide="edit-3"></i>
                         </button>
                       </div>
                     </td>
@@ -255,7 +256,7 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
 
         ${pendingSales.length === 0 ? `
           <div style="text-align:center; padding:48px 20px; color:var(--text-tertiary);">
-            <div style="font-size:40px; margin-bottom:12px;">✅</div>
+            <div style="margin-bottom:12px; color:var(--status-success);"><i data-lucide="check-circle-2" style="width:44px; height:44px;"></i></div>
             <div style="font-size:16px; font-weight:700; color:var(--text-primary);">All Submissions Verified</div>
             <div style="font-size:13px; margin-top:4px;">No pending sales logs awaiting Admin approval right now.</div>
           </div>

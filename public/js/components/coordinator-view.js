@@ -22,14 +22,14 @@ export function renderCoordinatorView(container, state) {
     <!-- Segmented Navigation for Coordinator -->
     <div class="tab-navigation">
       <button class="tab-btn coordinator ${activeTab === 'analytics' ? 'active' : ''}" data-tab="analytics">
-        <span>📊 Business Analytics</span>
+        <span><i data-lucide="bar-chart-3"></i> Business Analytics</span>
       </button>
       <button class="tab-btn coordinator ${activeTab === 'pos' ? 'active' : ''}" data-tab="pos">
-        <span>⚡ POS Fast Entry</span>
+        <span><i data-lucide="shopping-cart"></i> POS Fast Entry</span>
         ${offlineQueueCount > 0 ? `<span class="tab-badge" style="background:var(--status-danger);color:white;">${offlineQueueCount} offline</span>` : ''}
       </button>
       <button class="tab-btn coordinator ${activeTab === 'attendance' ? 'active' : ''}" data-tab="attendance">
-        <span>👥 Team & Attendance</span>
+        <span><i data-lucide="users"></i> Team & Attendance</span>
         ${stall.attendance && stall.attendance.filter(a => a.status === 'pending_coordinator').length > 0 ? `
           <span class="tab-badge" style="background:var(--role-coordinator);color:white;">
             ${stall.attendance.filter(a => a.status === 'pending_coordinator').length} req
@@ -37,13 +37,13 @@ export function renderCoordinatorView(container, state) {
         ` : ''}
       </button>
       <button class="tab-btn coordinator ${activeTab === 'expenses' ? 'active' : ''}" data-tab="expenses">
-        <span>💸 Expense Logger</span>
+        <span><i data-lucide="receipt"></i> Expense Logger</span>
       </button>
       <button class="tab-btn coordinator ${activeTab === 'leaderboard' ? 'active' : ''}" data-tab="leaderboard">
-        <span>🏆 Leaderboard</span>
+        <span><i data-lucide="trophy"></i> Leaderboard</span>
       </button>
       <button class="tab-btn coordinator ${activeTab === 'audit-log' ? 'active' : ''}" data-tab="audit-log">
-        <span>📜 Stall Audit</span>
+        <span><i data-lucide="history"></i> Stall Audit</span>
       </button>
     </div>
 
@@ -62,6 +62,7 @@ export function renderCoordinatorView(container, state) {
   });
 
   attachCoordinatorEventListeners(container, state, stall);
+  window.renderIcons?.();
 }
 
 function renderCoordinatorTab(tab, stall, fin, state) {
@@ -75,7 +76,7 @@ function renderCoordinatorTab(tab, stall, fin, state) {
         <div class="stat-card accent-amber">
           <div class="stat-header">
             <span class="stat-label">Verified Gross Sales</span>
-            <span class="stat-icon">💰</span>
+            <span class="stat-icon"><i data-lucide="credit-card"></i></span>
           </div>
           <div class="stat-value mono-num">${fin.gross_sales_formatted || '₹0'}</div>
           <div class="stat-subtext">
@@ -87,7 +88,7 @@ function renderCoordinatorTab(tab, stall, fin, state) {
         <div class="stat-card accent-rose">
           <div class="stat-header">
             <span class="stat-label">Total Logged Expenses</span>
-            <span class="stat-icon">🧾</span>
+            <span class="stat-icon"><i data-lucide="receipt"></i></span>
           </div>
           <div class="stat-value mono-num">${fin.total_expenses_formatted || '₹0'}</div>
           <div class="stat-subtext">
@@ -98,24 +99,24 @@ function renderCoordinatorTab(tab, stall, fin, state) {
         <div class="stat-card ${isProfitable ? 'accent-green' : 'accent-rose'}">
           <div class="stat-header">
             <span class="stat-label">Net Profit / Loss</span>
-            <span class="stat-icon">${isProfitable ? '📈' : '📉'}</span>
+            <span class="stat-icon"><i data-lucide="${isProfitable ? 'trending-up' : 'trending-down'}"></i></span>
           </div>
           <div class="stat-value mono-num" style="color:${isProfitable ? 'var(--status-success)' : 'var(--status-danger)'};">
             ${fin.net_profit_formatted || '₹0'}
           </div>
           <div class="stat-subtext">
-            ${isProfitable ? '✅ Running at a clean profit' : `Needs <strong>${fin.amount_needed_formatted || '₹0'}</strong> to reach break-even`}
+            ${isProfitable ? 'Running at a clean profit' : `Needs <strong>${fin.amount_needed_formatted || '₹0'}</strong> to reach break-even`}
           </div>
         </div>
 
         <div class="stat-card accent-indigo">
           <div class="stat-header">
             <span class="stat-label">Expense Recovery %</span>
-            <span class="stat-icon">🎯</span>
+            <span class="stat-icon"><i data-lucide="target"></i></span>
           </div>
           <div class="stat-value mono-num">${fin.recovered_percent_display || 'N/A'}</div>
           <div class="stat-subtext">
-            ${isBreakEven ? '🎉 Break-even goal achieved!' : `${fin.recovered_percent || 0}% of initial investment recovered`}
+            ${isBreakEven ? 'Break-even goal achieved!' : `${fin.recovered_percent || 0}% of initial investment recovered`}
           </div>
         </div>
       </div>
@@ -216,10 +217,10 @@ function renderCoordinatorTab(tab, stall, fin, state) {
           <!-- Payment Mode Toggle -->
           <div class="cart-payment-switch">
             <button class="payment-mode-btn ${selectedPaymentMode === 'online' ? 'active online' : ''}" data-mode="online">
-              💳 UPI / Online
+              <i data-lucide="credit-card"></i> UPI / Online
             </button>
             <button class="payment-mode-btn ${selectedPaymentMode === 'offline' ? 'active offline' : ''}" data-mode="offline">
-              💵 Cash / Offline
+              <i data-lucide="banknote"></i> Cash / Offline
             </button>
           </div>
 
@@ -227,7 +228,8 @@ function renderCoordinatorTab(tab, stall, fin, state) {
           <div class="cart-items-list">
             ${posCart.length === 0 ? `
               <div style="text-align:center; padding:32px 10px; color:var(--text-tertiary); font-size:13px;">
-                🛒 Cart is empty.<br>Tap catalog items to start ringing up sales.
+                <i data-lucide="shopping-bag" style="width:28px; height:28px; margin-bottom:8px; opacity:0.5;"></i><br>
+                Cart is empty.<br>Tap catalog items to start ringing up sales.
               </div>
             ` : posCart.map((it, idx) => `
               <div class="cart-item-row">
@@ -263,7 +265,7 @@ function renderCoordinatorTab(tab, stall, fin, state) {
 
           <!-- Finish My Day / Submit to Admin Button -->
           <button class="btn-finish-day" id="btn-finish-day" ${posCart.length === 0 ? 'disabled' : ''}>
-            <span>📤 Submit Sales Log to Admin</span>
+            <span><i data-lucide="send"></i> Submit Sales Log to Admin</span>
           </button>
           <div style="font-size:11px; text-align:center; color:var(--text-tertiary); margin-top:8px;">
             Enforces idempotency • Saves locally if offline
@@ -286,12 +288,12 @@ function renderCoordinatorTab(tab, stall, fin, state) {
       <!-- Coordinator Self Attendance Status Card -->
       <div style="background:var(--bg-surface); border:1px solid ${isCoordConfirmed ? 'var(--status-success)' : 'var(--border-medium)'}; border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
         <div style="display:flex; align-items:center; gap:12px;">
-          <span style="font-size:28px;">⭐</span>
+          <span style="font-size:24px; color:var(--role-coordinator);"><i data-lucide="award"></i></span>
           <div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-weight:800; font-size:15px; color:var(--text-primary);">Stall Coordinator Attendance Status:</span>
               <span class="badge ${isCoordConfirmed ? 'badge-verified' : 'badge-pending'}">
-                ${isCoordConfirmed ? '✓ CONFIRMED PRESENT' : '⏳ NOT YET MARKED'}
+                ${isCoordConfirmed ? '✓ CONFIRMED PRESENT' : 'NOT YET MARKED'}
               </span>
             </div>
             <div style="font-size:12px; color:var(--text-secondary); margin-top:3px;">
@@ -302,11 +304,11 @@ function renderCoordinatorTab(tab, stall, fin, state) {
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           ${!isCoordConfirmed ? `
             <button class="btn btn-coordinator" id="btn-mark-coord-att" style="font-size:12px; padding:7px 14px;">
-              ✓ Mark My Coordinator Attendance
+              <i data-lucide="check-circle-2"></i> Mark Coordinator Attendance
             </button>
           ` : ''}
           <button class="btn btn-outline" id="btn-view-coord-qr" style="font-size:12px; padding:7px 14px;">
-            🪪 View My Coordinator QR Badge
+            <i data-lucide="qr-code"></i> View Coordinator QR Badge
           </button>
         </div>
       </div>
@@ -318,15 +320,15 @@ function renderCoordinatorTab(tab, stall, fin, state) {
             <div class="section-desc">You are the single accountable signature for your stall's attendance. Scan member QR badges or approve check-in requests.</div>
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-coordinator" id="btn-add-member-modal">➕ Add Stall Member</button>
-            <button class="btn btn-admin" id="btn-scan-qr-modal" style="font-size:13px; font-weight:700;">📷 Scan Member Badge QR</button>
+            <button class="btn btn-coordinator" id="btn-add-member-modal"><i data-lucide="user-plus"></i> Add Stall Member</button>
+            <button class="btn btn-admin" id="btn-scan-qr-modal" style="font-size:13px; font-weight:700;"><i data-lucide="scan"></i> Scan Member Badge QR</button>
           </div>
         </div>
 
         <!-- Stall Invite Code Sharing Banner -->
         <div style="background:var(--role-coordinator-light); border:1px solid var(--role-coordinator-border); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
           <div>
-            <div style="font-size:12px; font-weight:700; color:var(--role-coordinator-text); text-transform:uppercase; letter-spacing:0.5px;">🔑 Stall Member Invite Code</div>
+            <div style="font-size:12px; font-weight:700; color:var(--role-coordinator-text); text-transform:uppercase; letter-spacing:0.5px;"><i data-lucide="key"></i> Stall Member Invite Code</div>
             <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
               <span class="mono-num" style="font-size:20px; font-weight:800; color:var(--text-primary); letter-spacing:2px; background:var(--bg-surface); padding:4px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-medium);">${inviteCode}</span>
             </div>
@@ -335,7 +337,7 @@ function renderCoordinatorTab(tab, stall, fin, state) {
             </div>
           </div>
           <button class="btn btn-coordinator btn-copy-invite-code" data-code="${inviteCode}">
-            📋 Copy Invite Code
+            <i data-lucide="copy"></i> Copy Invite Code
           </button>
         </div>
 

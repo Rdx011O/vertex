@@ -13,6 +13,13 @@ import { renderMemberView } from './components/member-view.js';
 import { showQRModal } from './components/qr-modal.js';
 import { showNotificationsDrawer } from './components/notifications-drawer.js';
 
+// Global Icon Rendering Helper (Lucide Engine)
+window.renderIcons = () => {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+};
+
 // Global Toast Notification Helper
 window.showToast = function (message, type = 'info') {
   const container = document.getElementById('toast-container');
@@ -20,12 +27,13 @@ window.showToast = function (message, type = 'info') {
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  const icon = type === 'success' ? '✅' : type === 'warning' ? '⚠️' : type === 'error' ? '❌' : 'ℹ️';
+  const iconName = type === 'success' ? 'check-circle-2' : type === 'warning' ? 'alert-triangle' : type === 'error' ? 'alert-circle' : 'info';
   toast.innerHTML = `
-    <span style="font-size:16px;">${icon}</span>
+    <span style="font-size:16px; display:inline-flex; align-items:center;"><i data-lucide="${iconName}"></i></span>
     <div style="flex:1;">${message}</div>
   `;
   container.appendChild(toast);
+  window.renderIcons();
 
   setTimeout(() => {
     toast.style.opacity = '0';
@@ -54,7 +62,10 @@ class VertexApp {
     api.subscribe((event) => this.handleRealtimeEvent(event));
 
     // Theme toggle
-    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => state.toggleTheme());
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
+      state.toggleTheme();
+      this.updateThemeIcon();
+    });
 
     // Offline simulator
     const simOfflineCheckbox = document.getElementById('sim-offline-toggle');
@@ -121,38 +132,49 @@ class VertexApp {
         }
       }
     } else if (event.type === 'SALE_VERIFIED') {
-      window.showToast(`🎉 ${event.payload?.stall_name} sales verified!`, 'success');
-      state.refreshAll();
+      const isTargetStall = state.currentUser?.stall_id === event.payload?.stall_id;
+      const isAdmin = state.currentUser?.role === 'admin';
+      if (isTargetStall || isAdmin) {
+        window.showToast(`🎉 ${event.payload?.stall_name || 'Stall'} sales verified!`, 'success');
+        state.scheduleRefresh(300);
+      }
     } else if (event.type === 'ATTENDANCE_CONFIRMED') {
-      window.showToast(`✅ Attendance confirmed for ${event.payload?.member_name}.`, 'success');
-      state.refreshAll();
+      const isTargetStall = state.currentUser?.stall_id === event.payload?.stall_id;
+      const isTargetUser = state.currentUser?.id === event.payload?.member_id;
+      const isAdmin = state.currentUser?.role === 'admin';
+      if (isTargetStall || isTargetUser || isAdmin) {
+        window.showToast(`✅ Attendance confirmed for ${event.payload?.member_name}.`, 'success');
+        state.scheduleRefresh(300);
+      }
     } else if (event.type === 'ATTENDANCE_REQUESTED') {
       if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
         window.showToast(`🔔 Arrival: ${event.payload?.member?.name} is at your stall!`, 'warning');
+        state.scheduleRefresh(300);
       }
-      state.refreshAll();
     } else if (event.type === 'SALE_SUBMITTED') {
       if (state.currentUser?.role === 'admin') {
         window.showToast(`📥 ${event.payload?.stall_name} submitted sales for verification.`, 'info');
+        state.scheduleRefresh(300);
       }
-      state.refreshAll();
     } else if (event.type === 'MEMBER_JOIN_REQUESTED') {
       if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
         window.showToast(`🔔 New join request: ${event.payload?.request?.user_name} wants to join your stall!`, 'warning');
+        state.scheduleRefresh(300);
       }
-      state.refreshAll();
     } else if (event.type === 'MEMBER_JOIN_APPROVED') {
       if (state.currentUser?.id === event.payload?.user_id) {
         window.showToast(`🎉 Your join request for "${event.payload?.stall_name}" was approved!`, 'success');
+        state.scheduleRefresh(100);
+      } else if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
+        state.scheduleRefresh(300);
       }
-      state.refreshAll();
     } else if (event.type === 'MEMBER_JOIN_REJECTED') {
       if (state.currentUser?.id === event.payload?.user_id) {
         window.showToast('Your stall join request was declined.', 'error');
+        state.scheduleRefresh(100);
       }
-      state.refreshAll();
     } else if (['ANNOUNCEMENT_CREATED', 'EXPENSE_ADDED', 'STALL_UPDATED', 'STALL_CREATED', 'DATABASE_RESET'].includes(event.type)) {
-      state.refreshAll();
+      state.scheduleRefresh(400);
     }
   }
 
@@ -193,9 +215,19 @@ class VertexApp {
     }
   }
 
+  updateThemeIcon() {
+    const icon = document.getElementById('theme-icon');
+    if (icon) {
+      icon.setAttribute('data-lucide', state.theme === 'dark' ? 'sun' : 'moon');
+      window.renderIcons?.();
+    }
+  }
+
   render() {
     this.renderHeader();
     this.renderMainContent();
+    this.updateThemeIcon();
+    window.renderIcons?.();
   }
 
   renderHeader() {
@@ -208,9 +240,9 @@ class VertexApp {
     }
 
     const notifCount = state.unreadCount || 0;
-    const roleIcon = user.role === 'admin' ? '👑'
-      : user.role === 'coordinator' ? '👔'
-      : '👤';
+    const roleIconTag = user.role === 'admin' ? '<i data-lucide="shield-check"></i>'
+      : user.role === 'coordinator' ? '<i data-lucide="briefcase"></i>'
+      : '<i data-lucide="user"></i>';
     const roleTitle = user.role === 'admin' ? 'Admin'
       : user.role === 'coordinator' ? 'Coordinator'
       : 'Member';
@@ -219,7 +251,7 @@ class VertexApp {
     this.headerUserContainer.innerHTML = `
       <div class="user-pill-badge" title="${user.name} (${roleTitle})">
         <span class="role-badge-header ${user.role}">
-          <span class="role-icon">${roleIcon}</span>
+          <span class="role-icon">${roleIconTag}</span>
           <span class="role-name">${roleTitle}</span>
         </span>
         <span class="user-display-name" title="${user.name}">
@@ -230,16 +262,16 @@ class VertexApp {
 
       <div class="header-actions">
         <button class="header-btn" id="btn-show-my-qr" title="Open Dynamic E-Badge & Gate QR">
-          <span class="btn-icon">🪪</span>
+          <span class="btn-icon"><i data-lucide="qr-code"></i></span>
           <span class="btn-label">Badge</span>
         </button>
         <button class="header-btn" id="notif-btn-header" title="Operational Alerts & Broadcasts">
-          <span class="btn-icon">🔔</span>
+          <span class="btn-icon"><i data-lucide="bell"></i></span>
           <span class="btn-label">Alerts</span>
           ${notifCount > 0 ? `<span class="badge-count">${notifCount}</span>` : ''}
         </button>
         <button class="header-btn btn-signout" id="signout-header-btn" title="Sign Out">
-          <span class="btn-icon">⏏</span>
+          <span class="btn-icon"><i data-lucide="log-out"></i></span>
           <span class="btn-label">Exit</span>
         </button>
       </div>

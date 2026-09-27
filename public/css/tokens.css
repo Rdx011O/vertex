@@ -147,3 +147,55 @@
   --role-member-light: rgba(225, 29, 72, 0.2);
   --role-member-text: #fda4af;
 }
+
+/* ==========================================================================
+   Lucide Icons Global System Styles
+   ========================================================================== */
+.lucide, svg.lucide, [data-lucide] {
+  width: 1.15em;
+  height: 1.15em;
+  stroke-width: 2px;
+  stroke: currentColor;
+  fill: none;
+  vertical-align: -0.18em;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.stat-icon svg.lucide,
+.stat-icon [data-lucide] {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.2px;
+}
+
+.tab-btn svg.lucide,
+.tab-btn [data-lucide],
+.nav-item svg.lucide,
+.nav-item [data-lucide] {
+  width: 17px;
+  height: 17px;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+.btn svg.lucide,
+.btn [data-lucide] {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+.icon-sm svg.lucide,
+.icon-sm[data-lucide] {
+  width: 14px;
+  height: 14px;
+}
+
+.icon-lg svg.lucide,
+.icon-lg[data-lucide] {
+  width: 28px;
+  height: 28px;
+}
+

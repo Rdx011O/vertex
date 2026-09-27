@@ -81,7 +81,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
 
           <div class="form-group">
             <label class="form-label" for="signin-email">
-              <span class="label-icon">✉️</span> Registered Email
+              <span class="label-icon"><i data-lucide="mail"></i></span> Registered Email
             </label>
             <div class="input-with-icon">
               <input type="email" id="signin-email" class="form-input" placeholder="name@example.com" autocomplete="email" required />
@@ -91,14 +91,14 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
           <div class="form-group">
             <div class="form-label-row">
               <label class="form-label" for="signin-password">
-                <span class="label-icon">🔒</span> Password
+                <span class="label-icon"><i data-lucide="lock"></i></span> Password
               </label>
               <a href="#" id="forgot-password-link" class="forgot-link">Forgot?</a>
             </div>
             <div class="input-with-toggle">
               <input type="password" id="signin-password" class="form-input" placeholder="Enter your password" autocomplete="current-password" required />
               <button type="button" class="password-toggle-btn" data-target="signin-password" title="Toggle password visibility">
-                👁️
+                <i data-lucide="eye"></i>
               </button>
             </div>
           </div>
@@ -111,10 +111,10 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
 
           <div class="auth-helper-cards">
             <div class="helper-mini-badge">
-              <span>👑 Admins: Central Control</span>
+              <span><i data-lucide="shield-check"></i> Admins: Central Control</span>
             </div>
             <div class="helper-mini-badge">
-              <span>👔 Coordinators: Live Stall POS</span>
+              <span><i data-lucide="briefcase"></i> Coordinators: Live Stall POS</span>
             </div>
           </div>
         </form>
@@ -131,21 +131,21 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
           <!-- Step 1: Interactive Role Picker Cards -->
           <div class="form-group">
             <label class="form-label">
-              <span class="label-icon">🎯</span> Select Your Role <span class="required">*</span>
+              <span class="label-icon"><i data-lucide="user-check"></i></span> Select Your Role <span class="required">*</span>
             </label>
             <div class="role-selector-grid" id="role-selector-cards">
               <div class="role-card-opt" data-role="coordinator">
-                <div class="role-card-icon">👔</div>
+                <div class="role-card-icon"><i data-lucide="briefcase"></i></div>
                 <div class="role-card-title">Coordinator</div>
                 <div class="role-card-desc">Lead a Stall & Team</div>
               </div>
               <div class="role-card-opt" data-role="member">
-                <div class="role-card-icon">👤</div>
+                <div class="role-card-icon"><i data-lucide="user"></i></div>
                 <div class="role-card-title">Member</div>
                 <div class="role-card-desc">POS Counter & Sales</div>
               </div>
               <div class="role-card-opt" data-role="admin">
-                <div class="role-card-icon">👑</div>
+                <div class="role-card-icon"><i data-lucide="shield-check"></i></div>
                 <div class="role-card-title">Admin</div>
                 <div class="role-card-desc">Event Operations</div>
               </div>
@@ -155,7 +155,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
 
           <!-- Personal Info Group -->
           <div class="signup-section-header">
-            <span>👤 Personal Details</span>
+            <span><i data-lucide="user"></i> Personal Details</span>
           </div>
 
           <div class="grid-2col">
@@ -191,7 +191,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
           <!-- Coordinator Stall Fields (Dynamic) -->
           <div id="coordinator-stall-fields" class="dynamic-role-box">
             <div class="signup-section-header">
-              <span>🏪 Stall Information</span>
+              <span><i data-lucide="store"></i> Stall Information</span>
             </div>
             <div class="form-group">
               <label class="form-label" for="signup-stall-name">Stall Name <span class="required">*</span></label>
@@ -216,7 +216,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
           <!-- Member Invite Code Field (Dynamic) -->
           <div id="member-stall-code-field" class="dynamic-role-box" style="display:none;">
             <div class="signup-section-header">
-              <span>🔑 Stall Join Code</span>
+              <span><i data-lucide="key"></i> Stall Join Code</span>
             </div>
             <div class="form-group">
               <label class="form-label" for="signup-member-code">
@@ -230,13 +230,13 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
           <!-- Admin Info Box (Dynamic) -->
           <div id="admin-info-field" class="dynamic-role-box" style="display:none;">
             <div class="admin-notice-pill">
-              👑 <strong>Event Admin Operations:</strong> Direct access for organizing committee and operations leads.
+              <i data-lucide="shield-check"></i> <strong>Event Admin Operations:</strong> Direct access for organizing committee and operations leads.
             </div>
           </div>
 
           <!-- Password Group -->
           <div class="signup-section-header">
-            <span>🔒 Security</span>
+            <span><i data-lucide="lock"></i> Security</span>
           </div>
 
           <div class="form-group">
@@ -244,7 +244,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
             <div class="input-with-toggle">
               <input type="password" id="signup-password" class="form-input" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6" />
               <button type="button" class="password-toggle-btn" data-target="signup-password" title="Toggle password visibility">
-                👁️
+                <i data-lucide="eye"></i>
               </button>
             </div>
           </div>
@@ -261,7 +261,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
         <!-- ═══════════════════════════════════════════════════════ -->
         <div id="forgot-password-view" style="display:none;">
           <div class="auth-form-intro">
-            <h3>🔑 Reset Password</h3>
+            <h3><i data-lucide="key"></i> Reset Password</h3>
             <p>Enter your email and we'll send you an instant reset link.</p>
           </div>
 
@@ -282,7 +282,7 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
         </div>
 
         <div class="login-footer">
-          <span class="security-tag">🔒 Secured with Firebase Authentication</span>
+          <span class="security-tag"><i data-lucide="shield"></i> Secured with Firebase Authentication</span>
         </div>
       </div>
     </div>

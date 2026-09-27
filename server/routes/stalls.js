@@ -7,9 +7,31 @@ import realtime from '../ws.js';
 
 const router = express.Router();
 
-// â”€â”€ List all stalls with live financial metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── In-Memory High-Performance Caching Layer ──────────────────────────────
+let cachedStallsResponse = null;
+let cachedSummaryResponse = null;
+let stallsCacheTime = 0;
+let summaryCacheTime = 0;
+const CACHE_TTL_MS = 10000; // 10s TTL fallback if no write occurs
+
+// Instantly invalidate caches whenever any write occurs in the database
+if (typeof db.onChange === 'function') {
+  db.onChange(() => {
+    cachedStallsResponse = null;
+    cachedSummaryResponse = null;
+    stallsCacheTime = 0;
+    summaryCacheTime = 0;
+  });
+}
+
+// ── List all stalls with live financial metrics ───────────────────────────
 router.get('/', (req, res) => {
   try {
+    const now = Date.now();
+    if (cachedStallsResponse && (now - stallsCacheTime < CACHE_TTL_MS)) {
+      return res.json(cachedStallsResponse);
+    }
+
     const stalls = Array.isArray(db.data?.stalls) ? db.data.stalls : [];
     const users = Array.isArray(db.data?.users) ? db.data.users : [];
     const attendanceRecords = Array.isArray(db.data?.attendance_records) ? db.data.attendance_records : [];
@@ -36,7 +58,9 @@ router.get('/', (req, res) => {
       };
     });
 
-    res.json({ stalls: stallsWithMetrics });
+    cachedStallsResponse = { stalls: stallsWithMetrics };
+    stallsCacheTime = now;
+    res.json(cachedStallsResponse);
   } catch (err) {
     console.error('[Stalls Error] GET /:', err);
     res.status(500).json({ error: err.message || 'Failed to list stalls.' });
@@ -46,8 +70,15 @@ router.get('/', (req, res) => {
 // ── Event summary (command center metrics) ──────────────────────────────────
 router.get('/summary/event', (req, res) => {
   try {
+    const now = Date.now();
+    if (cachedSummaryResponse && (now - summaryCacheTime < CACHE_TTL_MS)) {
+      return res.json(cachedSummaryResponse);
+    }
+
     const summary = calculateEventSummary(db.data);
-    res.json({ summary });
+    cachedSummaryResponse = { summary };
+    summaryCacheTime = now;
+    res.json(cachedSummaryResponse);
   } catch (err) {
     console.error('[Stalls Error] GET /summary/event:', err);
     res.status(500).json({ error: err.message || 'Failed to calculate event summary.' });

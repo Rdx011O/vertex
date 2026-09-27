@@ -45,12 +45,12 @@
       <!-- Diagnostics: Simulate Dead Spot (Offline Mode) -->
       <label class="sim-offline-toggle" title="Simulate unreliable Wi-Fi / dead spot to test offline POS queue">
         <input type="checkbox" id="sim-offline-toggle" />
-        <span>⚡ Dead Spot</span>
+        <span><i data-lucide="wifi-off"></i> Dead Spot</span>
       </label>
 
       <!-- Theme Toggle -->
       <button class="header-btn header-btn-theme" id="theme-toggle-btn" title="Toggle Dark / Light Theme">
-        🌓
+        <i data-lucide="moon" id="theme-icon"></i>
       </button>
 
       <!-- User Profile & Navigation Actions -->
@@ -63,7 +63,7 @@
   <!-- Offline Warning Banner (Shown only when offline is simulated/active) -->
   <div class="offline-banner" id="offline-notice-banner" style="display: none; margin: 12px 16px 0 16px;">
     <div style="display: flex; align-items: center; gap: 8px;">
-      <span>📡</span>
+      <span><i data-lucide="wifi-off"></i></span>
       <span><strong>Offline Mode Active:</strong> Event Wi-Fi disconnected. POS transactions are being saved in your secure local queue and will auto-sync upon reconnection.</span>
     </div>
   </div>
@@ -80,6 +80,9 @@
 
   <!-- Toast Alert Toaster -->
   <div id="toast-container"></div>
+
+  <!-- Lucide Modern Icon Engine -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
   <!-- QR Scanner Engine (deferred so it never blocks page load) -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>

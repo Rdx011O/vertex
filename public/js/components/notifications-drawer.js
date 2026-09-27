@@ -23,21 +23,21 @@ export function showNotificationsDrawer(state) {
               <h3 style="font-size:18px;">Event Notifications & Alerts</h3>
               <span class="badge badge-pending" style="font-size:11px;">${notifs.filter(n => !n.is_read).length} Unread</span>
             </div>
-            <button class="modal-close-btn" id="close-notif-btn">✕</button>
+            <button class="modal-close-btn" id="close-notif-btn"><i data-lucide="x"></i></button>
           </div>
 
           <div style="display:flex; flex-direction:column; gap:12px; max-height:480px; overflow-y:auto; padding-right:4px;">
             ${notifs.map(n => {
               const isAnnouncement = n.type === 'announcement';
               const isRead = !!n.is_read;
-              const typeIcon = isAnnouncement ? '📢' : (n.type === 'warning' ? '⚠️' : (n.type === 'member_joined' ? '🎉' : '🔔'));
+              const typeIcon = isAnnouncement ? '<i data-lucide="megaphone"></i>' : (n.type === 'warning' ? '<i data-lucide="alert-triangle"></i>' : (n.type === 'member_joined' ? '<i data-lucide="party-popper"></i>' : '<i data-lucide="bell"></i>'));
               const badgeStyle = isAnnouncement ? 'background:rgba(99,102,241,0.15); color:var(--primary);' : (n.type === 'warning' ? 'background:rgba(239,68,68,0.15); color:var(--status-danger);' : 'background:rgba(16,185,129,0.15); color:var(--status-success);');
 
               return `
                 <div class="notif-item-card ${isRead ? 'read' : 'unread'}" data-notif-id="${n.id}" data-type="${n.type}" style="border:1px solid ${isRead ? 'var(--border-subtle)' : 'var(--primary)'}; background:${isRead ? 'var(--bg-surface-subtle)' : 'var(--bg-surface)'}; border-radius:var(--radius-sm); padding:14px; position:relative; transition:all 0.2s ease;">
                   <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
                     <div style="display:flex; align-items:center; gap:6px;">
-                      <span style="font-size:16px;">${typeIcon}</span>
+                      <span style="font-size:16px; display:inline-flex; align-items:center;">${typeIcon}</span>
                       <span style="font-weight:700; font-size:14px; color:var(--text-primary);">${n.title}</span>
                       <span class="badge" style="${badgeStyle}; font-size:10px; padding:2px 6px;">${(n.type || 'NOTICE').toUpperCase()}</span>
                     </div>
@@ -72,6 +72,7 @@ export function showNotificationsDrawer(state) {
   };
 
   modalContainer.innerHTML = renderContent();
+  window.renderIcons?.();
 
   const attachEvents = () => {
     document.getElementById('close-notif-btn')?.addEventListener('click', () => {

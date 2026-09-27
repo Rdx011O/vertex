@@ -23,17 +23,17 @@ export function renderMemberView(container, state) {
     <!-- Segmented Navigation for Member -->
     <div class="tab-navigation">
       <button class="tab-btn member ${activeTab === 'member-dashboard' ? 'active' : ''}" data-tab="member-dashboard">
-        <span>📊 Stall Financials</span>
+        <span><i data-lucide="bar-chart-3"></i> Stall Financials</span>
       </button>
       <button class="tab-btn member ${activeTab === 'member-badge' ? 'active' : ''}" data-tab="member-badge">
-        <span>🪪 My QR Badge & Check-in</span>
+        <span><i data-lucide="qr-code"></i> My QR Badge & Check-in</span>
         ${myAttendance && myAttendance.status === 'confirmed' ? '<span class="tab-badge" style="background:var(--status-success);color:white;">✓ Present</span>' : ''}
       </button>
       <button class="tab-btn member ${activeTab === 'member-leaderboard' ? 'active' : ''}" data-tab="member-leaderboard">
-        <span>🏆 Event Leaderboard</span>
+        <span><i data-lucide="trophy"></i> Event Leaderboard</span>
       </button>
       <button class="tab-btn member ${activeTab === 'member-audit' ? 'active' : ''}" data-tab="member-audit">
-        <span>📜 My Activity Log</span>
+        <span><i data-lucide="history"></i> My Activity Log</span>
       </button>
     </div>
 
@@ -52,6 +52,7 @@ export function renderMemberView(container, state) {
   });
 
   attachMemberEventListeners(container, state, user);
+  window.renderIcons?.();
 }
 
 function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
@@ -64,14 +65,14 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
       <div style="background:var(--role-member-light); border:1px solid var(--role-member-border); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between;">
         <div>
           <div style="font-weight:700; color:var(--role-member-text);">
-            📍 ${stall.name || 'Your Stall'} Business Overview
+            <i data-lucide="store"></i> ${stall.name || 'Your Stall'} Business Overview
           </div>
           <div style="font-size:13px; color:var(--text-secondary);">
             As a team member, you have full transparent visibility into your stall's verified sales, expenses, and break-even math.
           </div>
         </div>
         <button class="btn btn-member" id="btn-view-my-badge-shortcut">
-          🪪 View My Badge
+          <i data-lucide="qr-code"></i> View My Badge
         </button>
       </div>
 
@@ -80,7 +81,7 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
         <div class="stat-card accent-rose">
           <div class="stat-header">
             <span class="stat-label">Verified Gross Earnings</span>
-            <span class="stat-icon">💰</span>
+            <span class="stat-icon"><i data-lucide="credit-card"></i></span>
           </div>
           <div class="stat-value mono-num">${fin.gross_sales_formatted || '₹0'}</div>
           <div class="stat-subtext">
@@ -92,7 +93,7 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
         <div class="stat-card accent-indigo">
           <div class="stat-header">
             <span class="stat-label">Total Stall Expenses</span>
-            <span class="stat-icon">🧾</span>
+            <span class="stat-icon"><i data-lucide="receipt"></i></span>
           </div>
           <div class="stat-value mono-num">${fin.total_expenses_formatted || '₹0'}</div>
           <div class="stat-subtext">
@@ -103,24 +104,24 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
         <div class="stat-card ${isProfitable ? 'accent-green' : 'accent-rose'}">
           <div class="stat-header">
             <span class="stat-label">Net Profit / Margin</span>
-            <span class="stat-icon">${isProfitable ? '📈' : '📉'}</span>
+            <span class="stat-icon"><i data-lucide="${isProfitable ? 'trending-up' : 'trending-down'}"></i></span>
           </div>
           <div class="stat-value mono-num" style="color:${isProfitable ? 'var(--status-success)' : 'var(--status-danger)'};">
             ${fin.net_profit_formatted || '₹0'}
           </div>
           <div class="stat-subtext">
-            ${isProfitable ? '🎉 Stall is operating in profit!' : `Requires <strong>${fin.amount_needed_formatted || '₹0'}</strong> to reach break-even`}
+            ${isProfitable ? 'Stall is operating in profit!' : `Requires <strong>${fin.amount_needed_formatted || '₹0'}</strong> to reach break-even`}
           </div>
         </div>
 
         <div class="stat-card accent-amber">
           <div class="stat-header">
             <span class="stat-label">Cost Recovery</span>
-            <span class="stat-icon">🎯</span>
+            <span class="stat-icon"><i data-lucide="target"></i></span>
           </div>
           <div class="stat-value mono-num">${fin.recovered_percent_display || 'N/A'}</div>
           <div class="stat-subtext">
-            ${isBreakEven ? '✅ Break-even cleared' : `${fin.recovered_percent || 0}% of initial investment recovered`}
+            ${isBreakEven ? 'Break-even cleared' : `${fin.recovered_percent || 0}% of initial investment recovered`}
           </div>
         </div>
       </div>
@@ -184,7 +185,7 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="font-weight:800; font-size:16px; color:var(--text-primary);">Arrival Check-In Status:</span>
                 <span class="badge ${isConfirmed ? 'badge-verified' : (isPending ? 'badge-pending' : 'badge-pending')}" style="font-size:12px; padding:4px 10px;">
-                  ${isConfirmed ? '✓ CONFIRMED PRESENT' : (isPending ? '⏳ APPROVAL PENDING' : '📍 NOT CHECKED IN')}
+                  ${isConfirmed ? '✓ CONFIRMED PRESENT' : (isPending ? 'APPROVAL PENDING' : 'NOT CHECKED IN')}
                 </span>
               </div>
               <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">
@@ -199,11 +200,11 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
               ${!isConfirmed && !isPending ? `
                 <button class="btn btn-member" id="btn-tap-checkin" style="font-size:13px; padding:8px 18px; font-weight:700;">
-                  📍 I'm At My Stall — Check In
+                  <i data-lucide="map-pin"></i> I'm At My Stall — Check In
                 </button>
               ` : ''}
               <button class="btn btn-outline" id="btn-enlarge-badge-modal" style="font-size:13px; padding:8px 18px;">
-                🪪 Open Fullscreen Pass
+                <i data-lucide="maximize-2"></i> Open Fullscreen Pass
               </button>
             </div>
           </div>
@@ -216,7 +217,7 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:780px; margin-bottom:16px; padding:0 8px; flex-wrap:wrap; gap:8px;">
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="badge" style="background:#4f46e5; color:white; font-size:11px; font-weight:800; padding:4px 10px;">
-                ⚡ DYNAMIC PASS
+                <i data-lucide="sparkles"></i> DYNAMIC PASS
               </span>
               <span style="font-size:12px; color:var(--text-secondary); font-weight:600;">
                 Move cursor to 3D tilt • Tap QR to zoom • Flip for back
@@ -239,16 +240,16 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
           <!-- Interactive Control Toolbar -->
           <div style="display:flex; justify-content:center; gap:10px; margin-top:20px; flex-wrap:wrap;">
             <button class="btn btn-outline" id="btn-flip-badge" style="font-size:13px; font-weight:700; padding:8px 18px; border-radius:10px; background:var(--bg-surface);">
-              🔄 Flip Badge (Back View)
+              <i data-lucide="rotate-cw"></i> Flip Badge (Back View)
             </button>
             <button class="btn btn-outline" id="btn-toggle-lanyard" style="font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; background:var(--bg-surface);">
-              🎗️ Toggle Lanyard Strap
+              <i data-lucide="tag"></i> Toggle Lanyard Strap
             </button>
             <button class="btn btn-outline" id="btn-print-badge" style="font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; background:var(--bg-surface);">
-              🖨️ Print VIP Pass
+              <i data-lucide="printer"></i> Print VIP Pass
             </button>
             <button class="btn btn-outline" id="btn-copy-badge-id" style="font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; background:var(--bg-surface);">
-              📋 Copy Pass ID
+              <i data-lucide="copy"></i> Copy Pass ID
             </button>
           </div>
 

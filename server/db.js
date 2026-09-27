@@ -136,12 +136,40 @@ function localRead() {
   return null;
 }
 
-function localWrite(data) {
+// Asynchronous, debounced local JSON persistence
+let _localWriteTimeout = null;
+let _isWritingLocal = false;
+let _pendingLocalWrite = false;
+
+async function executeLocalWrite(data) {
+  if (_isWritingLocal) {
+    _pendingLocalWrite = true;
+    return;
+  }
+  _isWritingLocal = true;
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    const serialized = JSON.stringify(data, null, 2);
+    await fs.promises.writeFile(DB_FILE, serialized, 'utf-8');
   } catch (err) {
     console.warn('[DB] Local JSON write error:', err.message);
+  } finally {
+    _isWritingLocal = false;
+    if (_pendingLocalWrite) {
+      _pendingLocalWrite = false;
+      scheduleLocalWrite(data);
+    }
   }
+}
+
+function scheduleLocalWrite(data, delay = 100) {
+  if (_localWriteTimeout) clearTimeout(_localWriteTimeout);
+  _localWriteTimeout = setTimeout(() => {
+    executeLocalWrite(data);
+  }, delay);
+}
+
+function localWrite(data) {
+  scheduleLocalWrite(data, 100);
 }
 
 // Database class
@@ -150,6 +178,12 @@ class Database {
     this.data = null;
     this._useFirestore = false;
     this._initPromise = null;
+    this._changeListeners = new Set();
+
+    // Firestore debounced write queue & mutex
+    this._fsWriteTimeout = null;
+    this._fsWriting = false;
+    this._fsNeedsWrite = false;
 
     // Synchronous bootstrap from local JSON so routes work immediately on boot
     const local = localRead();
@@ -159,6 +193,17 @@ class Database {
 
     // Kick off async Firestore sync in background
     this._initPromise = this._initFirestore();
+  }
+
+  onChange(listener) {
+    this._changeListeners.add(listener);
+    return () => this._changeListeners.delete(listener);
+  }
+
+  _notifyChange() {
+    for (const fn of this._changeListeners) {
+      try { fn(this.data); } catch (_) {}
+    }
   }
 
   async _initFirestore() {
@@ -177,6 +222,7 @@ class Database {
         localWrite(this.data);
         console.log('[DB] Loaded from Firestore: ' + (this.data.users?.length || 0) + ' users, ' + (this.data.stalls?.length || 0) + ' stalls.');
         this._useFirestore = true;
+        this._notifyChange();
       } else {
         // Firestore is empty or first run - push initial data to it
         const writeOk = await fsWrite(this.data);
@@ -212,15 +258,41 @@ class Database {
     }
   }
 
-  async save() {
-    localWrite(this.data);
-    if (this._useFirestore) {
+  // Trigger Firestore write safely using a coalescing queue (respects 1 write/sec limit)
+  _scheduleFirestoreSync() {
+    if (!this._useFirestore) return;
+
+    if (this._fsWriteTimeout) clearTimeout(this._fsWriteTimeout);
+
+    this._fsWriteTimeout = setTimeout(async () => {
+      if (this._fsWriting) {
+        this._fsNeedsWrite = true;
+        return;
+      }
+      this._fsWriting = true;
       try {
         await fsWrite(this.data);
       } catch (err) {
-        console.warn('[DB] Async Firestore save error:', err.message);
+        console.warn('[DB] Debounced Firestore save error:', err.message);
+      } finally {
+        this._fsWriting = false;
+        if (this._fsNeedsWrite) {
+          this._fsNeedsWrite = false;
+          this._scheduleFirestoreSync();
+        }
       }
-    }
+    }, 400); // 400ms debounce batches rapid concurrent bursts cleanly
+  }
+
+  save() {
+    // Notify in-process route caches to invalidate instantly
+    this._notifyChange();
+
+    // Debounced async local write (non-blocking)
+    scheduleLocalWrite(this.data, 100);
+
+    // Debounced coalesced Firestore write
+    this._scheduleFirestoreSync();
   }
 
   getUserByUid(firebaseUid) {

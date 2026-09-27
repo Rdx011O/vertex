@@ -342,17 +342,17 @@ function renderApp() {
     <!-- Tab Navigation -->
     <div class="admin-tabs">
       <button class="admin-tab ${activeTab === 'users' ? 'active' : ''}" data-tab="users">
-        👥 Users <span class="tab-badge">${allUsers.filter(u=>u.role==='pending'||u.role==='pending_coordinator'||u.role==='pending_member').length || ''}</span>
+        <i data-lucide="users"></i> Users <span class="tab-badge">${allUsers.filter(u=>u.role==='pending'||u.role==='pending_coordinator'||u.role==='pending_member').length || ''}</span>
       </button>
       <button class="admin-tab ${activeTab === 'stalls' ? 'active' : ''}" data-tab="stalls">
-        🏪 Stalls
+        <i data-lucide="store"></i> Stalls
       </button>
       <button class="admin-tab ${activeTab === 'sales' ? 'active' : ''}" data-tab="sales">
-        💰 Sales Verification
+        <i data-lucide="check-check"></i> Sales Verification
         ${pendingSales.length > 0 ? `<span class="tab-badge urgent">${pendingSales.length}</span>` : ''}
       </button>
       <button class="admin-tab ${activeTab === 'audit' ? 'active' : ''}" data-tab="audit">
-        📋 Audit Log
+        <i data-lucide="history"></i> Audit Log
       </button>
     </div>
 
@@ -371,6 +371,9 @@ function renderApp() {
   });
 
   attachTabListeners();
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
 }
 
 function renderTabContent() {

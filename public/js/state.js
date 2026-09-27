@@ -91,8 +91,20 @@ class AppState {
     this.emitChange();
   }
 
+  scheduleRefresh(delay = 400) {
+    if (this._refreshTimer) clearTimeout(this._refreshTimer);
+    // Add 50-250ms random jitter so multiple browser windows do not fire at the exact same millisecond
+    const jitter = Math.floor(Math.random() * 200);
+    this._refreshTimer = setTimeout(() => {
+      this.refreshAll();
+    }, delay + jitter);
+  }
+
   async refreshAll() {
-    if (this._isRefreshing) return;
+    if (this._isRefreshing) {
+      this._hasQueuedRefresh = true;
+      return;
+    }
     this._isRefreshing = true;
 
     try {
@@ -150,6 +162,10 @@ class AppState {
       console.error('Refresh error:', err);
     } finally {
       this._isRefreshing = false;
+      if (this._hasQueuedRefresh) {
+        this._hasQueuedRefresh = false;
+        this.scheduleRefresh(200);
+      }
     }
   }
 }
