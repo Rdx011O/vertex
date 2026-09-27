@@ -69,8 +69,62 @@ function renderCoordinatorTab(tab, stall, fin, state) {
   if (tab === 'analytics') {
     const isProfitable = fin.is_profitable;
     const isBreakEven = fin.is_break_even;
+    const pendingAttCount = stall.attendance ? stall.attendance.filter(a => a.status === 'pending_coordinator').length : 0;
 
     return `
+      <!-- Quick Operations Command Hub (Shopify / Square Style) -->
+      <div class="quick-action-hub">
+        <div class="hub-header">
+          <div class="hub-title"><i data-lucide="zap"></i> Operations Hub</div>
+          <span class="hub-badge">${stall.name || 'Your Stall'} · Quick Launcher</span>
+        </div>
+        <div class="hub-grid">
+          <button class="hub-card primary" data-hub-action="pos">
+            <div class="hub-card-icon" style="background:rgba(16, 185, 129, 0.15); color:#10b981;">
+              <i data-lucide="shopping-cart"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Ring Up Sale (POS)</div>
+              <div class="hub-card-hint">Fast checkout & catalog</div>
+            </div>
+            <span class="hub-card-tag" style="background:var(--status-success); color:#fff;">Live POS</span>
+          </button>
+
+          <button class="hub-card" data-hub-action="attendance">
+            <div class="hub-card-icon" style="background:rgba(79, 70, 229, 0.15); color:#6366f1;">
+              <i data-lucide="users"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Team & Attendance</div>
+              <div class="hub-card-hint">${pendingAttCount > 0 ? `${pendingAttCount} arrival requests pending` : 'Attendance desk & roster'}</div>
+            </div>
+            ${pendingAttCount > 0 ? `
+              <span class="hub-card-tag">${pendingAttCount} req</span>
+            ` : ''}
+          </button>
+
+          <button class="hub-card" data-hub-action="expenses">
+            <div class="hub-card-icon" style="background:rgba(225, 29, 72, 0.15); color:#e11d48;">
+              <i data-lucide="receipt"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Log Stall Expense</div>
+              <div class="hub-card-hint">Rent, supplies & inventory</div>
+            </div>
+          </button>
+
+          <button class="hub-card" data-hub-action="badge">
+            <div class="hub-card-icon" style="background:rgba(217, 119, 6, 0.15); color:#d97706;">
+              <i data-lucide="qr-code"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Stall Pass & QR</div>
+              <div class="hub-card-hint">Gate clearance & credential</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <!-- Financial Overview Cards -->
       <div class="stats-grid">
         <div class="stat-card accent-amber">
@@ -589,6 +643,19 @@ function renderCoordinatorTab(tab, stall, fin, state) {
 }
 
 function attachCoordinatorEventListeners(container, state, stall) {
+  // Operations Hub Quick Action Tiles
+  container.querySelectorAll('[data-hub-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.getAttribute('data-hub-action');
+      if (action === 'badge') {
+        showQRModal(state.currentUser);
+      } else {
+        state.setTab(action);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+
   // POS Item Tap
   container.querySelectorAll('.btn-catalog-tap').forEach(btn => {
     btn.addEventListener('click', () => {

@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Vertex Admin — Building Pravara 2026</title>
   <meta name="description" content="Admin Operations Portal for Vertex — Building Pravara 2026">
   <meta name="robots" content="noindex, nofollow">
@@ -19,17 +19,21 @@
 </head>
 <body>
 
-  <!-- Admin Header -->
-  <header class="admin-header">
-    <div class="admin-header-left">
-      <div class="brand-logo admin-logo">V</div>
-      <div>
-        <div class="admin-brand-title">VERTEX <span class="admin-badge-label">ADMIN</span></div>
-        <div class="admin-brand-sub">Building Pravara 2026 · Operations Dashboard</div>
-      </div>
+  <!-- iOS-Style Transparent Navigation Bar for Admin Portal -->
+  <header class="app-header ios-navbar" id="app-header">
+    <div class="header-left">
+      <a href="index.html" class="brand-logo-only" id="brand-logo-link" title="Vertex — Building Pravara 2026">
+        <div class="brand-logo">V</div>
+        <span class="status-dot online header-live-dot" id="ws-status-dot" title="Live Sync Active"></span>
+      </a>
     </div>
-    <div class="admin-header-right" id="admin-header-right">
-      <!-- injected by JS -->
+
+    <div class="header-center" id="admin-header-center">
+      <!-- Injected by JS -->
+    </div>
+
+    <div class="header-right" id="admin-header-right">
+      <!-- Injected by JS -->
     </div>
   </header>
 

@@ -42,8 +42,10 @@
       "stall_name_desired": "Foodie basket",
       "stall_category_desired": "food",
       "stall_alloted_number": "S-01",
-      "badge_code": "BP-CRD-SFKR",
-      "created_at": "2026-09-26T15:09:47.278Z"
+      "badge_code": "COORD-0f80a555-SFKRP2",
+      "created_at": "2026-09-26T15:09:47.278Z",
+      "qr_image_url": "data:image/png;base64,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",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:SfKRp2lfKecA2okIncVEqx62pM03:COORD-0f80a555-SFKRP2:coordinator:stl-0f80a555"
     },
     {
       "id": "zls5UD1meNZqQjeZMcThQaUJzxY2",
@@ -99,6 +101,24 @@
       "stall_alloted_number": "A-13",
       "badge_code": "BP-CRD-YAFN",
       "created_at": "2026-09-27T17:29:50.989Z"
+    },
+    {
+      "id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "name": "Test Coordinator",
+      "email": "testcoord_1790534915857@vertex.com",
+      "role": "admin",
+      "stall_id": "stl-7e3ee88f",
+      "phone": "9876543210",
+      "designation": "System Administrator",
+      "username": "test_coord_1790534915857",
+      "college_name": "Pravara Rural Engineering College, Loni",
+      "stall_name_desired": "Test Snack Hub",
+      "stall_category_desired": "food",
+      "stall_alloted_number": "S-99",
+      "badge_code": "COORD-7e3ee88f-FQEROK",
+      "created_at": "2026-09-27T18:48:39.339Z",
+      "qr_image_url": "data:image/png;base64,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",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:FQEroKRZHiMaY7e8V4nAwp12gqJ3:COORD-7e3ee88f-FQEROK:coordinator:stl-7e3ee88f"
     }
   ],
   "stalls": [
@@ -127,6 +147,19 @@
       "allotted_number": "A-13",
       "invite_code": "JE6JXE8Bs6Ne",
       "created_at": "2026-09-27T17:29:50.988Z"
+    },
+    {
+      "id": "stl-7e3ee88f",
+      "name": "Test Snack Hub",
+      "category": "food",
+      "event_id": "ev-bp-2026",
+      "coordinator_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "status": "active",
+      "banner_color": "#4F46E5",
+      "location": "Booth S-99",
+      "allotted_number": "S-99",
+      "invite_code": "sarGR2xS2sF4",
+      "created_at": "2026-09-27T18:48:39.338Z"
     }
   ],
   "sales_submissions": [],
@@ -153,6 +186,17 @@
       "confirmed_by_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
       "timestamp": "2026-09-27T17:31:17.838Z",
       "verified_method": "COORDINATOR_SELF_QR"
+    },
+    {
+      "id": "att-9df35aa7",
+      "member_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "stall_id": "stl-7e3ee88f",
+      "role": "coordinator",
+      "date": "2026-09-27",
+      "status": "confirmed",
+      "confirmed_by_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "timestamp": "2026-09-27T19:03:55.332Z",
+      "verified_method": "COORDINATOR_SELF_QR"
     }
   ],
   "join_requests": [],
@@ -168,7 +212,8 @@
       "read_by": [
         "zls5UD1meNZqQjeZMcThQaUJzxY2",
         "SfKRp2lfKecA2okIncVEqx62pM03",
-        "jFfaxBMQTAhQ5N3OeHRDQWLhzp42"
+        "jFfaxBMQTAhQ5N3OeHRDQWLhzp42",
+        "FQEroKRZHiMaY7e8V4nAwp12gqJ3"
       ],
       "created_at": "2026-09-26T15:15:42.532Z"
     },
@@ -183,7 +228,8 @@
       "read_by": [
         "zls5UD1meNZqQjeZMcThQaUJzxY2",
         "SfKRp2lfKecA2okIncVEqx62pM03",
-        "jFfaxBMQTAhQ5N3OeHRDQWLhzp42"
+        "jFfaxBMQTAhQ5N3OeHRDQWLhzp42",
+        "FQEroKRZHiMaY7e8V4nAwp12gqJ3"
       ],
       "created_at": "2026-09-26T15:15:32.140Z"
     }
@@ -198,9 +244,97 @@
       "category": "Standard"
     }
   ],
-  "stall_expenses": [],
+  "stall_expenses": [
+    {
+      "id": "exp-e8429475",
+      "stall_id": "stl-65fe68da",
+      "category": "Raw Materials",
+      "name": "Battin ki bundd",
+      "amount": 1200,
+      "logged_by": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "timestamp": "2026-09-27T18:23:41.413Z"
+    },
+    {
+      "id": "exp-7106abd4",
+      "stall_id": "stl-0f80a555",
+      "category": "Inventory Purchase",
+      "name": "extra",
+      "amount": 4500,
+      "logged_by": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "timestamp": "2026-09-27T18:25:00.391Z"
+    },
+    {
+      "id": "exp-99d6b1ae",
+      "stall_id": "stl-7e3ee88f",
+      "category": "Inventory Purchase",
+      "name": "sdf",
+      "amount": 23333,
+      "logged_by": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "timestamp": "2026-09-27T19:04:08.552Z"
+    }
+  ],
   "stall_join_requests": [],
   "audit_logs": [
+    {
+      "id": "aud-9f5ea52e",
+      "actor_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "actor_name": "Test Coordinator",
+      "action": "EXPENSE_LOGGED",
+      "target_type": "STALL_EXPENSE",
+      "target_id": "exp-99d6b1ae",
+      "details": "Logged â‚¹23333 under \"Inventory Purchase\" for \"Test Snack Hub\": sdf",
+      "timestamp": "2026-09-27T19:04:08.552Z"
+    },
+    {
+      "id": "aud-bd14fcbc",
+      "actor_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "actor_name": "Test Coordinator",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-9df35aa7",
+      "details": "Stall Coordinator attendance verified via QR badge for Test Coordinator (BP-CRD-FQER) at \"Test Snack Hub\".",
+      "timestamp": "2026-09-27T19:03:55.340Z"
+    },
+    {
+      "id": "aud-01e4daff",
+      "actor_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "actor_name": "Test Coordinator",
+      "action": "USER_REGISTERED",
+      "target_type": "USER",
+      "target_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "details": "New user registered: testcoord_1790534915857@vertex.com (coordinator) from Pravara Rural Engineering College, Loni, stall #S-99",
+      "timestamp": "2026-09-27T18:48:39.339Z"
+    },
+    {
+      "id": "aud-d3698417",
+      "actor_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+      "actor_name": "Test Coordinator",
+      "action": "STALL_CREATED",
+      "target_type": "STALL",
+      "target_id": "stl-7e3ee88f",
+      "details": "Stall \"Test Snack Hub\" created by coordinator Test Coordinator (Invite Code: sarGR2xS2sF4).",
+      "timestamp": "2026-09-27T18:48:39.338Z"
+    },
+    {
+      "id": "aud-ffaa2cee",
+      "actor_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "actor_name": "Stall coor",
+      "action": "EXPENSE_LOGGED",
+      "target_type": "STALL_EXPENSE",
+      "target_id": "exp-7106abd4",
+      "details": "Logged â‚¹4500 under \"Inventory Purchase\" for \"Foodie basket\": extra",
+      "timestamp": "2026-09-27T18:25:00.391Z"
+    },
+    {
+      "id": "aud-3d1b0ac9",
+      "actor_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",
+      "actor_name": "Darshan sanap",
+      "action": "EXPENSE_LOGGED",
+      "target_type": "STALL_EXPENSE",
+      "target_id": "exp-e8429475",
+      "details": "Logged â‚¹1200 under \"Raw Materials\" for \"Blue film binge watching\": Battin ki bundd",
+      "timestamp": "2026-09-27T18:23:41.413Z"
+    },
     {
       "id": "aud-3008c347",
       "actor_user_id": "YAfnaHpYyYSTh7c2aze5fvtmuCg1",

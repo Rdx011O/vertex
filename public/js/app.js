@@ -20,6 +20,9 @@ window.renderIcons = () => {
   }
 };
 
+// Global Notifications & Audit Log Drawer Helper
+window.showNotificationsDrawer = showNotificationsDrawer;
+
 // Global Toast Notification Helper
 window.showToast = function (message, type = 'info') {
   const container = document.getElementById('toast-container');
@@ -46,7 +49,8 @@ window.showToast = function (message, type = 'info') {
 class VertexApp {
   constructor() {
     this.mainContainer = document.getElementById('app-main');
-    this.headerUserContainer = document.getElementById('header-user-info');
+    this.headerCenterContainer = document.getElementById('header-center-info');
+    this.headerRightContainer = document.getElementById('header-right-actions');
     this.firebaseAuth = null;
 
     this.init();
@@ -61,10 +65,15 @@ class VertexApp {
     // WebSocket real-time updates
     api.subscribe((event) => this.handleRealtimeEvent(event));
 
-    // Theme toggle
-    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
-      state.toggleTheme();
-      this.updateThemeIcon();
+    // Brand logo home shortcut
+    document.getElementById('brand-logo-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!state.currentUser) return;
+      const defaultTab = state.currentUser.role === 'admin' ? 'command-center'
+        : state.currentUser.role === 'coordinator' ? 'analytics'
+        : 'member-dashboard';
+      state.setTab(defaultTab);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     // Offline simulator
@@ -226,16 +235,199 @@ class VertexApp {
   render() {
     this.renderHeader();
     this.renderMainContent();
+    this.renderAppNavigation();
     this.updateThemeIcon();
     window.renderIcons?.();
   }
 
+  renderAppNavigation() {
+    const sidebar = document.getElementById('app-nav-sidebar');
+    const menuContainer = document.getElementById('sidebar-nav-menu');
+    if (!sidebar || !menuContainer) return;
+
+    const user = state.currentUser;
+    if (!state.isAuthenticated || !user || !user.role) {
+      sidebar.style.display = 'none';
+      menuContainer.innerHTML = '';
+      return;
+    }
+
+    sidebar.style.display = '';
+    const role = user.role;
+    const activeTab = state.activeTab;
+    let buttonsHTML = '';
+
+    if (role === 'coordinator') {
+      const stall = state.activeStall || {};
+      const pendingAttCount = stall.attendance ? stall.attendance.filter(a => a.status === 'pending_coordinator').length : 0;
+      const offlineCount = api.offlineQueue.length;
+
+      buttonsHTML = `
+        <button class="sidebar-nav-btn ${activeTab === 'analytics' || !activeTab ? 'active' : ''}" data-nav-tab="analytics" title="Dashboard">
+          <span class="nav-icon-wrap"><i data-lucide="bar-chart-3"></i></span>
+          <span class="nav-text">Dashboard</span>
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'pos' ? 'active' : ''}" data-nav-tab="pos" title="POS Fast Counter">
+          <span class="nav-icon-wrap"><i data-lucide="shopping-cart"></i></span>
+          <span class="nav-text">POS Fast</span>
+          ${offlineCount > 0 ? `<span class="sidebar-nav-badge">${offlineCount}</span>` : ''}
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'attendance' ? 'active' : ''}" data-nav-tab="attendance" title="Team Desk & Check-ins">
+          <span class="nav-icon-wrap"><i data-lucide="users"></i></span>
+          <span class="nav-text">Team Desk</span>
+          ${pendingAttCount > 0 ? `<span class="sidebar-nav-badge">${pendingAttCount}</span>` : ''}
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'expenses' ? 'active' : ''}" data-nav-tab="expenses" title="Stall Expenses">
+          <span class="nav-icon-wrap"><i data-lucide="receipt"></i></span>
+          <span class="nav-text">Expenses</span>
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'leaderboard' ? 'active' : ''}" data-nav-tab="leaderboard" title="Event Rankings">
+          <span class="nav-icon-wrap"><i data-lucide="trophy"></i></span>
+          <span class="nav-text">Rankings</span>
+        </button>
+      `;
+    } else if (role === 'member') {
+      const stall = state.activeStall || {};
+      const myAtt = stall.attendance ? stall.attendance.find(a => a.member_user_id === user.id) : null;
+      const isCheckedIn = myAtt && myAtt.status === 'confirmed';
+
+      buttonsHTML = `
+        <button class="sidebar-nav-btn ${activeTab === 'member-dashboard' || !activeTab ? 'active' : ''}" data-nav-tab="member-dashboard" title="Stall Overview">
+          <span class="nav-icon-wrap"><i data-lucide="store"></i></span>
+          <span class="nav-text">Overview</span>
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'member-badge' ? 'active' : ''}" data-nav-tab="member-badge" title="My Event Pass QR">
+          <span class="nav-icon-wrap"><i data-lucide="qr-code"></i></span>
+          <span class="nav-text">My Pass</span>
+          ${isCheckedIn ? '<span class="sidebar-nav-badge" style="background:var(--status-success);">✓</span>' : ''}
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'member-leaderboard' ? 'active' : ''}" data-nav-tab="member-leaderboard" title="Event Standings">
+          <span class="nav-icon-wrap"><i data-lucide="trophy"></i></span>
+          <span class="nav-text">Standings</span>
+        </button>
+        <button class="sidebar-nav-btn notif-drawer-trigger" data-open-hub="audit" title="Audit Log & Alerts">
+          <span class="nav-icon-wrap"><i data-lucide="history"></i></span>
+          <span class="nav-text">My Log</span>
+        </button>
+      `;
+    } else if (role === 'admin') {
+      const pendingSalesCount = (state.pendingSales || []).length;
+      const pendingUsersCount = (state.allUsers || []).filter(u => u.role && u.role.startsWith('pending')).length;
+
+      buttonsHTML = `
+        <button class="sidebar-nav-btn ${activeTab === 'command-center' || !activeTab ? 'active' : ''}" data-nav-tab="command-center" title="Operations Command Center">
+          <span class="nav-icon-wrap"><i data-lucide="layout-dashboard"></i></span>
+          <span class="nav-text">Command</span>
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'verification-queue' ? 'active' : ''}" data-nav-tab="verification-queue" title="Sales Verification">
+          <span class="nav-icon-wrap"><i data-lucide="check-check"></i></span>
+          <span class="nav-text">Verify</span>
+          ${pendingSalesCount > 0 ? `<span class="sidebar-nav-badge">${pendingSalesCount}</span>` : ''}
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'user-management' ? 'active' : ''}" data-nav-tab="user-management" title="User Management">
+          <span class="nav-icon-wrap"><i data-lucide="users"></i></span>
+          <span class="nav-text">Users</span>
+          ${pendingUsersCount > 0 ? `<span class="sidebar-nav-badge">${pendingUsersCount}</span>` : ''}
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'stall-operations' ? 'active' : ''}" data-nav-tab="stall-operations" title="Stall Directory">
+          <span class="nav-icon-wrap"><i data-lucide="store"></i></span>
+          <span class="nav-text">Stalls</span>
+        </button>
+        <button class="sidebar-nav-btn ${activeTab === 'leaderboard' ? 'active' : ''}" data-nav-tab="leaderboard" title="Live Rankings">
+          <span class="nav-icon-wrap"><i data-lucide="trophy"></i></span>
+          <span class="nav-text">Rankings</span>
+        </button>
+      `;
+    } else {
+      sidebar.style.display = 'none';
+      return;
+    }
+
+    menuContainer.innerHTML = buttonsHTML;
+
+    // Attach navigation clicks
+    menuContainer.querySelectorAll('[data-nav-tab]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = btn.getAttribute('data-nav-tab');
+        state.setTab(tab);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    // Attach Activity / Audit drawer clicks
+    menuContainer.querySelectorAll('[data-open-hub]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = btn.getAttribute('data-open-hub') || 'audit';
+        showNotificationsDrawer(state, tab);
+      });
+    });
+
+    // Bottom footer drawer shortcut button
+    const footerNotifBtn = document.getElementById('sidebar-notif-btn');
+    if (footerNotifBtn && !footerNotifBtn._bound) {
+      footerNotifBtn._bound = true;
+      footerNotifBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showNotificationsDrawer(state, 'audit');
+      });
+    }
+
+    // Expand & Collapse Toggle Setup (with localStorage persistence)
+    const isCollapsed = localStorage.getItem('vertex_sidebar_collapsed') === 'true';
+    if (isCollapsed) {
+      sidebar.classList.add('collapsed');
+      const icon = document.getElementById('sidebar-toggle-icon');
+      if (icon) icon.setAttribute('data-lucide', 'panel-left-open');
+      const text = sidebar.querySelector('.sidebar-toggle-text');
+      if (text) text.textContent = 'Expand';
+    } else {
+      sidebar.classList.remove('collapsed');
+      const icon = document.getElementById('sidebar-toggle-icon');
+      if (icon) icon.setAttribute('data-lucide', 'panel-left-close');
+      const text = sidebar.querySelector('.sidebar-toggle-text');
+      if (text) text.textContent = 'Collapse';
+    }
+
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    if (toggleBtn && !toggleBtn._bound) {
+      toggleBtn._bound = true;
+      toggleBtn.addEventListener('click', () => {
+        const nowCollapsed = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('vertex_sidebar_collapsed', nowCollapsed ? 'true' : 'false');
+        const icon = document.getElementById('sidebar-toggle-icon');
+        const text = sidebar.querySelector('.sidebar-toggle-text');
+        if (nowCollapsed) {
+          if (icon) icon.setAttribute('data-lucide', 'panel-left-open');
+          if (text) text.textContent = 'Expand';
+        } else {
+          if (icon) icon.setAttribute('data-lucide', 'panel-left-close');
+          if (text) text.textContent = 'Collapse';
+        }
+        window.renderIcons?.();
+      });
+    }
+  }
+
   renderHeader() {
-    if (!this.headerUserContainer) return;
+    const centerEl = this.headerCenterContainer || document.getElementById('header-center-info');
+    const rightEl = this.headerRightContainer || document.getElementById('header-right-actions');
+
+    if (!centerEl || !rightEl) return;
     const user = state.currentUser;
 
     if (!state.isAuthenticated || !user) {
-      this.headerUserContainer.innerHTML = '';
+      centerEl.innerHTML = '';
+      rightEl.innerHTML = `
+        <button class="header-btn header-btn-theme" id="theme-toggle-btn" title="Toggle Dark / Light Theme">
+          <i data-lucide="${state.theme === 'dark' ? 'sun' : 'moon'}" id="theme-icon"></i>
+        </button>
+      `;
+      document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
+        state.toggleTheme();
+        this.updateThemeIcon();
+      });
       return;
     }
 
@@ -246,39 +438,38 @@ class VertexApp {
     const roleTitle = user.role === 'admin' ? 'Admin'
       : user.role === 'coordinator' ? 'Coordinator'
       : 'Member';
-    const firstName = (user.name || '').split(' ')[0] || user.name || 'User';
+    const usernameDisplay = user.username ? `@${user.username}` : (user.name ? `@${user.name.split(' ')[0].toLowerCase()}` : '@user');
 
-    this.headerUserContainer.innerHTML = `
-      <div class="user-pill-badge" title="${user.name} (${roleTitle})">
+    // 2. Center of navigation: Role and Username
+    centerEl.innerHTML = `
+      <div class="header-user-pill" title="${user.name || ''} (${roleTitle})">
         <span class="role-badge-header ${user.role}">
           <span class="role-icon">${roleIconTag}</span>
           <span class="role-name">${roleTitle}</span>
         </span>
-        <span class="user-display-name" title="${user.name}">
-          <span class="name-full">${user.name}</span>
-          <span class="name-short">${firstName}</span>
-        </span>
-      </div>
-
-      <div class="header-actions">
-        <button class="header-btn" id="btn-show-my-qr" title="Open Dynamic E-Badge & Gate QR">
-          <span class="btn-icon"><i data-lucide="qr-code"></i></span>
-          <span class="btn-label">Badge</span>
-        </button>
-        <button class="header-btn" id="notif-btn-header" title="Operational Alerts & Broadcasts">
-          <span class="btn-icon"><i data-lucide="bell"></i></span>
-          <span class="btn-label">Alerts</span>
-          ${notifCount > 0 ? `<span class="badge-count">${notifCount}</span>` : ''}
-        </button>
-        <button class="header-btn btn-signout" id="signout-header-btn" title="Sign Out">
-          <span class="btn-icon"><i data-lucide="log-out"></i></span>
-          <span class="btn-label">Exit</span>
-        </button>
+        <span class="header-username">${usernameDisplay}</span>
       </div>
     `;
 
-    document.getElementById('btn-show-my-qr')?.addEventListener('click', () => showQRModal(user));
+    // 3 & 4. Right: Notification button beside Theme toggle button (plus Exit)
+    rightEl.innerHTML = `
+      <button class="header-btn header-btn-notif" id="notif-btn-header" title="Activity & Notifications (Alerts & Audit Log)">
+        <span class="btn-icon"><i data-lucide="bell"></i></span>
+        ${notifCount > 0 ? `<span class="badge-count">${notifCount}</span>` : ''}
+      </button>
+      <button class="header-btn header-btn-theme" id="theme-toggle-btn" title="Toggle Dark / Light Theme">
+        <i data-lucide="${state.theme === 'dark' ? 'sun' : 'moon'}" id="theme-icon"></i>
+      </button>
+      <button class="header-btn header-btn-exit" id="signout-header-btn" title="Sign Out">
+        <span class="btn-icon"><i data-lucide="log-out"></i></span>
+      </button>
+    `;
+
     document.getElementById('notif-btn-header')?.addEventListener('click', () => showNotificationsDrawer(state));
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
+      state.toggleTheme();
+      this.updateThemeIcon();
+    });
     document.getElementById('signout-header-btn')?.addEventListener('click', () => this.signOut());
   }
 
@@ -291,11 +482,12 @@ class VertexApp {
       return;
     }
 
-    // Not logged in → Login page (hides header chrome too)
+    // Not logged in → Login page (hides header & sidebar chrome too)
     if (!state.isAuthenticated) {
-      // Hide top bar decorations during login
+      // Hide top bar & sidebar during login
       document.querySelector('.role-switcher-bar')?.style.setProperty('display', 'none', 'important');
       document.querySelector('.app-header')?.style.setProperty('display', 'none', 'important');
+      document.getElementById('app-nav-sidebar')?.style.setProperty('display', 'none', 'important');
       renderLoginView(this.mainContainer, this.firebaseAuth, () => {});
       return;
     }
@@ -303,6 +495,7 @@ class VertexApp {
     // Logged in — show app chrome
     document.querySelector('.role-switcher-bar')?.style.removeProperty('display');
     document.querySelector('.app-header')?.style.removeProperty('display');
+    document.getElementById('app-nav-sidebar')?.style.removeProperty('display');
     // Hide the old role-switcher content (no longer needed)
     const roleBar = document.getElementById('role-switcher-container');
     if (roleBar) roleBar.innerHTML = '';

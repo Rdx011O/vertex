@@ -61,19 +61,59 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
     const isBreakEven = fin.is_break_even;
 
     return `
-      <!-- Financial Literacy Banner -->
-      <div style="background:var(--role-member-light); border:1px solid var(--role-member-border); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between;">
-        <div>
-          <div style="font-weight:700; color:var(--role-member-text);">
-            <i data-lucide="store"></i> ${stall.name || 'Your Stall'} Business Overview
-          </div>
-          <div style="font-size:13px; color:var(--text-secondary);">
-            As a team member, you have full transparent visibility into your stall's verified sales, expenses, and break-even math.
-          </div>
+      <!-- Member Operations & Digital Pass Command Hub (Shopify / Square Style) -->
+      <div class="quick-action-hub">
+        <div class="hub-header">
+          <div class="hub-title"><i data-lucide="zap"></i> Operations Hub</div>
+          <span class="hub-badge">${stall.name || 'Your Stall'} · Quick Actions</span>
         </div>
-        <button class="btn btn-member" id="btn-view-my-badge-shortcut">
-          <i data-lucide="qr-code"></i> View My Badge
-        </button>
+        <div class="hub-grid">
+          <button class="hub-card primary" data-member-hub-action="badge">
+            <div class="hub-card-icon" style="background:rgba(225, 29, 72, 0.15); color:#e11d48;">
+              <i data-lucide="qr-code"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">My 3D Gate Pass</div>
+              <div class="hub-card-hint">Open interactive digital pass</div>
+            </div>
+            <span class="hub-card-tag" style="background:var(--role-member); color:#fff;">Live Pass</span>
+          </button>
+
+          <button class="hub-card" data-member-hub-action="checkin">
+            <div class="hub-card-icon" style="background:rgba(16, 185, 129, 0.15); color:#10b981;">
+              <i data-lucide="map-pin"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Arrival Check-in</div>
+              <div class="hub-card-hint">${myAttendance && myAttendance.status === 'confirmed' ? '✓ Verified Present at Stall' : (myAttendance && myAttendance.status === 'pending_coordinator' ? '⏳ Request Sent to Coordinator' : 'Check in at stall desk')}</div>
+            </div>
+            ${myAttendance && myAttendance.status === 'confirmed' ? `
+              <span class="hub-card-tag" style="background:var(--status-success); color:#fff;">Present</span>
+            ` : (myAttendance && myAttendance.status === 'pending_coordinator' ? `
+              <span class="hub-card-tag" style="background:var(--status-warning); color:#fff;">Pending</span>
+            ` : '')}
+          </button>
+
+          <button class="hub-card" data-member-hub-action="leaderboard">
+            <div class="hub-card-icon" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b;">
+              <i data-lucide="trophy"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Event Leaderboard</div>
+              <div class="hub-card-hint">See festival stall rankings</div>
+            </div>
+          </button>
+
+          <button class="hub-card" data-member-hub-action="audit">
+            <div class="hub-card-icon" style="background:rgba(79, 70, 229, 0.15); color:#6366f1;">
+              <i data-lucide="history"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">My Activity Log</div>
+              <div class="hub-card-hint">Arrival & verification history</div>
+            </div>
+          </button>
+        </div>
       </div>
 
       <!-- Financial Metrics Grid -->
@@ -348,6 +388,25 @@ function renderMemberTab(tab, stall, fin, user, myAttendance, state) {
 }
 
 function attachMemberEventListeners(container, state, user) {
+  // Member Operations Hub Quick Actions
+  container.querySelectorAll('[data-member-hub-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.getAttribute('data-member-hub-action');
+      if (action === 'badge') {
+        showQRModal(user);
+      } else if (action === 'checkin') {
+        state.setTab('member-badge');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (action === 'leaderboard') {
+        state.setTab('member-leaderboard');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (action === 'audit') {
+        state.setTab('member-audit');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+
   // Check-in trigger button
   const checkinBtn = container.querySelector('#btn-tap-checkin');
   if (checkinBtn) {

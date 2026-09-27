@@ -295,11 +295,13 @@
 
 .btn-finish-day:hover:not(:disabled) {
   background: var(--role-coordinator-hover);
+}
+
 /* ── Mobile Specific POS Optimizations ── */
 @media (max-width: 1024px) {
   .pos-cart-panel {
     position: sticky;
-    bottom: 16px;
+    bottom: 72px;
     z-index: 80;
     box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.22);
     border: 1px solid var(--border-medium);

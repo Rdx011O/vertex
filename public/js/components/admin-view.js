@@ -83,7 +83,64 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
   const filteredStalls = filterStalls(stalls, stallSearchQuery);
 
   if (tab === 'command-center') {
+    const pendingUsersCount = (state.allUsers || []).filter(u => u.role && u.role.startsWith('pending')).length;
+
     return `
+      <!-- Admin Operations Command Hub (Shopify / Stripe Style) -->
+      <div class="quick-action-hub">
+        <div class="hub-header">
+          <div class="hub-title"><i data-lucide="zap"></i> Operations Command Hub</div>
+          <span class="hub-badge">Building Pravara 2026 · Admin Control</span>
+        </div>
+        <div class="hub-grid">
+          <button class="hub-card primary" data-admin-hub="verification-queue">
+            <div class="hub-card-icon" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b;">
+              <i data-lucide="check-check"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Sales Verification</div>
+              <div class="hub-card-hint">${pendingSales.length > 0 ? `${pendingSales.length} logs awaiting approval` : 'Queue is all clear'}</div>
+            </div>
+            ${pendingSales.length > 0 ? `
+              <span class="hub-card-tag" style="background:var(--status-danger); color:#fff;">${pendingSales.length} pending</span>
+            ` : '<span class="hub-card-tag" style="background:var(--status-success); color:#fff;">Clear</span>'}
+          </button>
+
+          <button class="hub-card" data-admin-hub="user-management">
+            <div class="hub-card-icon" style="background:rgba(79, 70, 229, 0.15); color:#6366f1;">
+              <i data-lucide="users"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">User Approvals</div>
+              <div class="hub-card-hint">${pendingUsersCount > 0 ? `${pendingUsersCount} requests pending` : 'Manage coordinators & members'}</div>
+            </div>
+            ${pendingUsersCount > 0 ? `
+              <span class="hub-card-tag" style="background:var(--status-warning); color:#fff;">${pendingUsersCount} req</span>
+            ` : ''}
+          </button>
+
+          <button class="hub-card" data-admin-hub="stall-operations">
+            <div class="hub-card-icon" style="background:rgba(225, 29, 72, 0.15); color:#e11d48;">
+              <i data-lucide="store"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Stall Directory</div>
+              <div class="hub-card-hint">${stalls.length} event stalls registered</div>
+            </div>
+          </button>
+
+          <button class="hub-card" data-admin-hub="broadcast-center">
+            <div class="hub-card-icon" style="background:rgba(2, 132, 199, 0.15); color:#0284c7;">
+              <i data-lucide="megaphone"></i>
+            </div>
+            <div class="hub-card-text">
+              <div class="hub-card-label">Broadcast Alert</div>
+              <div class="hub-card-hint">Send urgent alert to stalls</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <!-- KPI Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card accent-indigo">
@@ -701,6 +758,17 @@ function renderAdminTab(tab, summary, stalls, pendingSales, state) {
 }
 
 function attachAdminEventListeners(container, state) {
+  // Admin Operations Command Hub quick actions
+  container.querySelectorAll('[data-admin-hub]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-admin-hub');
+      if (tab) {
+        state.setTab(tab);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+
   // Search bar listener (Command center & Stall operations)
   const ccSearch = container.querySelector('#stall-search-input-cc');
   if (ccSearch) {

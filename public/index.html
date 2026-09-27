@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Vertex — Building Pravara 2026 | Event Operations</title>
   <meta name="description" content="Unified event portal for Admin, Stall Coordinators and Members — Building Pravara 2026, Pravara Rural Engineering College, Loni.">
 
@@ -20,43 +20,24 @@
 </head>
 <body>
 
-  <!-- Unified Modern App Header -->
-  <header class="app-header">
+  <!-- iOS-Style Transparent Navigation Bar -->
+  <header class="app-header ios-navbar" id="app-header">
+    <!-- 5. Left: ONLY the symbol of Vertex -->
     <div class="header-left">
-      <a href="#" class="brand-badge">
+      <a href="#" class="brand-logo-only" id="brand-logo-link" title="Vertex — Building Pravara 2026">
         <div class="brand-logo">V</div>
-        <div class="brand-info">
-          <div class="brand-title">VERTEX <span class="badge-tag-bp">BP'26</span></div>
-          <div class="event-tag">Building Pravara 2026 • PREC Loni</div>
-        </div>
+        <span class="status-dot online header-live-dot" id="ws-status-dot" title="Live Sync Active"></span>
       </a>
-
-      <!-- Real-time Synchronization Status Pill -->
-      <div class="header-sync-pill" title="Real-time WebSocket & Event Synchronization Status">
-        <span class="status-dot online" id="ws-status-dot"></span>
-        <span id="ws-status-text">Live Sync</span>
-      </div>
     </div>
 
-    <!-- Hidden compatibility container -->
-    <div id="role-switcher-container" style="display:none;"></div>
+    <!-- 2. Center: Role and Username -->
+    <div class="header-center" id="header-center-info">
+      <!-- Injected via renderHeader() in app.js -->
+    </div>
 
-    <div class="header-right">
-      <!-- Diagnostics: Simulate Dead Spot (Offline Mode) -->
-      <label class="sim-offline-toggle" title="Simulate unreliable Wi-Fi / dead spot to test offline POS queue">
-        <input type="checkbox" id="sim-offline-toggle" />
-        <span><i data-lucide="wifi-off"></i> Dead Spot</span>
-      </label>
-
-      <!-- Theme Toggle -->
-      <button class="header-btn header-btn-theme" id="theme-toggle-btn" title="Toggle Dark / Light Theme">
-        <i data-lucide="moon" id="theme-icon"></i>
-      </button>
-
-      <!-- User Profile & Navigation Actions -->
-      <div id="header-user-info" class="header-user-actions">
-        <!-- Injected via app.js renderHeader() -->
-      </div>
+    <!-- 3 & 4. Right: Notification toggle beside Theme toggle (plus Exit) -->
+    <div class="header-right" id="header-right-actions">
+      <!-- Injected via renderHeader() in app.js -->
     </div>
   </header>
 
@@ -68,12 +49,33 @@
     </div>
   </div>
 
-  <!-- Main Dynamic Application Content -->
-  <main class="main-content" id="app-main">
-    <div style="text-align: center; padding: 60px 20px;">
-      <h2>Initializing Vertex Real-time Operations Ledger...</h2>
-    </div>
-  </main>
+  <!-- Main Application Layout Shell with Left Sidebar (Desktop/Tablet) and Bottom Bar (Mobile) -->
+  <div class="app-layout-shell" id="app-layout-shell">
+    <aside class="app-nav-sidebar" id="app-nav-sidebar" aria-label="Main Navigation">
+      <div class="sidebar-header-action" id="sidebar-header-action">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Expand / Collapse Sidebar">
+          <i data-lucide="panel-left-close" id="sidebar-toggle-icon"></i>
+          <span class="sidebar-toggle-text">Collapse</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav-menu" id="sidebar-nav-menu"></nav>
+
+      <div class="sidebar-footer-action" id="sidebar-footer-action">
+        <button class="sidebar-nav-btn notif-drawer-trigger" id="sidebar-notif-btn" title="Activity & Notifications (Alerts & Audit Log)">
+          <span class="nav-icon-wrap"><i data-lucide="history"></i></span>
+          <span class="nav-text">Activity & Audit</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Application Content -->
+    <main class="main-content" id="app-main">
+      <div style="text-align: center; padding: 60px 20px;">
+        <h2>Initializing Vertex Real-time Operations Ledger...</h2>
+      </div>
+    </main>
+  </div>
 
   <!-- Modal / Badge QR Container -->
   <div id="qr-modal-container"></div>

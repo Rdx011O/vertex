@@ -120,12 +120,42 @@ async function doSignOut() {
 
 // ── Header ────────────────────────────────────────────────────────────────────
 function renderHeader(user) {
-  document.getElementById('admin-header-right').innerHTML = `
-    <span style="color:var(--text-secondary);font-size:13px;font-weight:500;">${user.name}</span>
-    <span class="role-badge-header admin">👑 Admin</span>
-    <button class="btn btn-outline" id="admin-signout-btn" style="padding:4px 12px;font-size:13px;">⏏ Sign Out</button>
-  `;
-  document.getElementById('admin-signout-btn')?.addEventListener('click', doSignOut);
+  const centerEl = document.getElementById('admin-header-center');
+  const rightEl = document.getElementById('admin-header-right');
+  const usernameDisplay = user.username ? `@${user.username}` : (user.name ? `@${user.name.split(' ')[0].toLowerCase()}` : '@admin');
+
+  if (centerEl) {
+    centerEl.innerHTML = `
+      <div class="header-user-pill" title="${user.name} (Admin)">
+        <span class="role-badge-header admin">
+          <span class="role-icon"><i data-lucide="shield-check"></i></span>
+          <span class="role-name">Admin</span>
+        </span>
+        <span class="header-username">${usernameDisplay}</span>
+      </div>
+    `;
+  }
+
+  if (rightEl) {
+    rightEl.innerHTML = `
+      <button class="header-btn header-btn-theme" id="admin-theme-toggle-btn" title="Toggle Theme">
+        <i data-lucide="moon" id="admin-theme-icon"></i>
+      </button>
+      <button class="header-btn header-btn-exit" id="admin-signout-btn" title="Sign Out">
+        <i data-lucide="log-out"></i>
+      </button>
+    `;
+    document.getElementById('admin-signout-btn')?.addEventListener('click', doSignOut);
+    document.getElementById('admin-theme-toggle-btn')?.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      const icon = document.getElementById('admin-theme-icon');
+      if (icon) icon.setAttribute('data-lucide', next === 'dark' ? 'sun' : 'moon');
+      window.lucide?.createIcons();
+    });
+  }
+  window.lucide?.createIcons();
 }
 
 // ── Login Page ────────────────────────────────────────────────────────────────
