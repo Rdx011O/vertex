@@ -99,8 +99,10 @@
       "stall_name_desired": "Blue film binge watching",
       "stall_category_desired": "game",
       "stall_alloted_number": "A-13",
-      "badge_code": "BP-CRD-YAFN",
-      "created_at": "2026-09-27T17:29:50.989Z"
+      "badge_code": "COORD-65fe68da-YAFNAH",
+      "created_at": "2026-09-27T17:29:50.989Z",
+      "qr_image_url": "data:image/png;base64,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",
+      "qr_payload": "VERTEX:ATTENDANCE:v1:YAfnaHpYyYSTh7c2aze5fvtmuCg1:COORD-65fe68da-YAFNAH:coordinator:stl-65fe68da"
     },
     {
       "id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
@@ -197,10 +199,34 @@
       "confirmed_by_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
       "timestamp": "2026-09-27T19:03:55.332Z",
       "verified_method": "COORDINATOR_SELF_QR"
+    },
+    {
+      "id": "att-05846493",
+      "member_user_id": "n2UX2LVCbGW84x4d4zW9IFB9TSn2",
+      "stall_id": "stl-0f80a555",
+      "role": "member",
+      "date": "2026-09-27",
+      "status": "confirmed",
+      "confirmed_by_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "timestamp": "2026-09-27T20:01:39.041Z",
+      "verified_method": "QR_SCAN"
     }
   ],
   "join_requests": [],
   "notifications": [
+    {
+      "id": "notif-2e265ad7",
+      "target_role": "member",
+      "target_scope_id": "n2UX2LVCbGW84x4d4zW9IFB9TSn2",
+      "title": "Badge Scanned & Confirmed âœ…",
+      "message": "Your badge was scanned by Stall coor. Attendance confirmed!",
+      "type": "attendance_confirmed",
+      "created_by": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "read_by": [
+        "FQEroKRZHiMaY7e8V4nAwp12gqJ3"
+      ],
+      "created_at": "2026-09-27T20:01:39.043Z"
+    },
     {
       "id": "notif-d4217929",
       "target_role": "member",
@@ -213,7 +239,8 @@
         "zls5UD1meNZqQjeZMcThQaUJzxY2",
         "SfKRp2lfKecA2okIncVEqx62pM03",
         "jFfaxBMQTAhQ5N3OeHRDQWLhzp42",
-        "FQEroKRZHiMaY7e8V4nAwp12gqJ3"
+        "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+        "YAfnaHpYyYSTh7c2aze5fvtmuCg1"
       ],
       "created_at": "2026-09-26T15:15:42.532Z"
     },
@@ -229,7 +256,8 @@
         "zls5UD1meNZqQjeZMcThQaUJzxY2",
         "SfKRp2lfKecA2okIncVEqx62pM03",
         "jFfaxBMQTAhQ5N3OeHRDQWLhzp42",
-        "FQEroKRZHiMaY7e8V4nAwp12gqJ3"
+        "FQEroKRZHiMaY7e8V4nAwp12gqJ3",
+        "YAfnaHpYyYSTh7c2aze5fvtmuCg1"
       ],
       "created_at": "2026-09-26T15:15:32.140Z"
     }
@@ -275,6 +303,16 @@
   ],
   "stall_join_requests": [],
   "audit_logs": [
+    {
+      "id": "aud-3e4a8d1b",
+      "actor_user_id": "SfKRp2lfKecA2okIncVEqx62pM03",
+      "actor_name": "Stall coor",
+      "action": "ATTENDANCE_CONFIRMED",
+      "target_type": "ATTENDANCE",
+      "target_id": "att-05846493",
+      "details": "Coordinator scanned badge QR and confirmed attendance for Member Darshan sanap (MBR-0f80a555-N2UX2L) at \"Foodie basket\".",
+      "timestamp": "2026-09-27T20:01:39.043Z"
+    },
     {
       "id": "aud-9f5ea52e",
       "actor_user_id": "FQEroKRZHiMaY7e8V4nAwp12gqJ3",

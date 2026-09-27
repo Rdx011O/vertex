@@ -791,6 +791,7 @@ function attachCoordinatorEventListeners(container, state, stall) {
     btn.addEventListener('click', async () => {
       const attId = btn.getAttribute('data-att-id');
       btn.disabled = true;
+      btn.textContent = 'Confirming...';
       try {
         await api.confirmAttendance(attId);
         window.showToast('Attendance confirmed!', 'success');
@@ -798,6 +799,7 @@ function attachCoordinatorEventListeners(container, state, stall) {
       } catch (err) {
         window.showToast(err.message, 'error');
         btn.disabled = false;
+        btn.textContent = '✓ Confirm Arrival';
       }
     });
   });

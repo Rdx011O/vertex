@@ -53,6 +53,8 @@ class VertexApp {
     this.headerRightContainer = document.getElementById('header-right-actions');
     this.firebaseAuth = null;
 
+    window.updateHeaderNotificationBadge = () => this.updateNotificationBadge();
+
     this.init();
   }
 
@@ -187,6 +189,102 @@ class VertexApp {
     }
   }
 
+  handleRealtimeEvent(event) {
+    if (!event || !event.type) return;
+
+    // 1. Connection lifecycle events
+    if (event.type === 'WS_STATUS') {
+      const isOffline = event.status === 'disconnected';
+      this.updateNetworkUI(isOffline);
+      return;
+    }
+
+    if (event.type === 'CONNECTED') {
+      this.updateNetworkUI(false);
+      return;
+    }
+
+    if (event.type === 'PONG') {
+      return;
+    }
+
+    // 2. New Announcement Broadcast
+    if (event.type === 'ANNOUNCEMENT_CREATED') {
+      const notif = event.payload?.notification;
+      if (notif) {
+        state.addNotification(notif);
+        window.showToast(`📢 ${notif.title}: ${notif.message}`, 'info');
+      }
+      state.scheduleRefresh(300);
+      return;
+    }
+
+    // 3. New Notification Created
+    if (event.type === 'NOTIFICATION_CREATED') {
+      const notif = event.payload?.notification;
+      if (notif) {
+        state.addNotification(notif);
+      }
+      state.scheduleRefresh(300);
+      return;
+    }
+
+    // 3b. Cross-device Notification Read Sync
+    if (event.type === 'NOTIFICATION_READ') {
+      const payload = event.payload || {};
+      if (payload.user_id && state.currentUser && payload.user_id === state.currentUser.id) {
+        state.markNotificationAsRead(payload.notification_id);
+      }
+      return;
+    }
+
+    // 4. Sales Lifecycle Events
+    if (event.type === 'SALE_SUBMITTED') {
+      const payload = event.payload || {};
+      if (state.currentUser?.role === 'admin') {
+        window.showToast(`🔔 New sales log submitted: ${payload.stall_name || 'Stall'}`, 'info');
+      }
+      state.scheduleRefresh(250);
+      return;
+    }
+
+    if (event.type === 'SALE_VERIFIED') {
+      const payload = event.payload || {};
+      if (state.currentUser?.stall_id && state.currentUser.stall_id === payload.stall_id) {
+        window.showToast(`✅ Sales verification complete! ₹${payload.verified_amount || ''} locked to ledger.`, 'success');
+      }
+      state.scheduleRefresh(200);
+      return;
+    }
+
+    if (event.type === 'SALE_REJECTED') {
+      const payload = event.payload || {};
+      if (state.currentUser?.stall_id && state.currentUser.stall_id === payload.stall_id) {
+        window.showToast(`⚠️ Sales log rejected: ${payload.reason || 'Check notes'}`, 'warning');
+      }
+      state.scheduleRefresh(250);
+      return;
+    }
+
+    // 5. Attendance Events
+    if (event.type === 'ATTENDANCE_CHECKIN') {
+      const payload = event.payload || {};
+      if (state.currentUser?.role === 'coordinator' && state.currentUser.stall_id === payload.stall_id) {
+        window.showToast(`📍 Member check-in request from ${payload.user_name || 'team member'}`, 'info');
+      }
+      state.scheduleRefresh(300);
+      return;
+    }
+
+    if (event.type === 'ATTENDANCE_CONFIRMED') {
+      state.scheduleRefresh(250);
+      return;
+    }
+
+    // 6. Generic Stall / User / Event update
+    state.scheduleRefresh(400);
+  }
+
   updateNetworkUI(isOffline) {
     const banner = document.getElementById('offline-notice-banner');
     if (banner) banner.style.display = isOffline ? 'flex' : 'none';
@@ -232,11 +330,33 @@ class VertexApp {
     }
   }
 
+  updateNotificationBadge() {
+    const notifBtn = document.getElementById('notif-btn-header');
+    if (!notifBtn) return;
+    const count = Number(state.unreadCount) || 0;
+    const existingBadge = notifBtn.querySelector('.badge-count');
+    if (count > 0) {
+      if (existingBadge) {
+        existingBadge.textContent = count;
+      } else {
+        const badge = document.createElement('span');
+        badge.className = 'badge-count';
+        badge.textContent = count;
+        notifBtn.appendChild(badge);
+      }
+    } else {
+      if (existingBadge) {
+        existingBadge.remove();
+      }
+    }
+  }
+
   render() {
     this.renderHeader();
     this.renderMainContent();
     this.renderAppNavigation();
     this.updateThemeIcon();
+    this.updateNotificationBadge();
     window.renderIcons?.();
   }
 

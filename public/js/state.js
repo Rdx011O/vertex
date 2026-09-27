@@ -91,6 +91,37 @@ class AppState {
     this.emitChange();
   }
 
+  markNotificationAsRead(notifId) {
+    if (!notifId) return;
+    const notif = (this.notifications || []).find(n => n.id === notifId);
+    if (notif) {
+      notif.is_read = true;
+    }
+    this.unreadCount = Math.max(0, (this.notifications || []).filter(n => !n.is_read).length);
+    window.updateHeaderNotificationBadge?.();
+    this.emitChange();
+  }
+
+  markAllNotificationsAsRead() {
+    (this.notifications || []).forEach(n => {
+      n.is_read = true;
+    });
+    this.unreadCount = 0;
+    window.updateHeaderNotificationBadge?.();
+    this.emitChange();
+  }
+
+  addNotification(notif) {
+    if (!notif || !notif.id) return;
+    const exists = (this.notifications || []).find(n => n.id === notif.id);
+    if (!exists) {
+      this.notifications.unshift(notif);
+      this.unreadCount = (this.notifications || []).filter(n => !n.is_read).length;
+      window.updateHeaderNotificationBadge?.();
+      this.emitChange();
+    }
+  }
+
   scheduleRefresh(delay = 400) {
     if (this._refreshTimer) clearTimeout(this._refreshTimer);
     // Add 50-250ms random jitter so multiple browser windows do not fire at the exact same millisecond
@@ -120,6 +151,7 @@ class AppState {
             if (Array.isArray(n)) {
               this.notifications = n;
               this.unreadCount = n.filter(x => !x.is_read).length;
+              window.updateHeaderNotificationBadge?.();
             }
           })
           .catch(e => console.warn('[State] getNotifications:', e.message))

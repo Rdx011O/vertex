@@ -18,7 +18,18 @@ export function showNotificationsDrawer(state, defaultTab = 'notifications') {
   const notifs = state.notifications || [];
   let auditLogs = state.auditLogs || [];
 
-  // Automatically mark all non-announcements as seen in the background
+  // Automatically mark all non-announcements as seen in the background & sync local state
+  let markedSeenAny = false;
+  (state.notifications || []).forEach(n => {
+    if (n.type !== 'announcement' && !n.is_read) {
+      n.is_read = true;
+      markedSeenAny = true;
+    }
+  });
+  if (markedSeenAny) {
+    state.unreadCount = (state.notifications || []).filter(n => !n.is_read).length;
+    state.emitChange();
+  }
   api.markNotificationsSeen().catch(err => console.warn('Could not auto-mark notifications as seen', err));
 
   // If audit logs aren't loaded yet, fetch them asynchronously
@@ -212,12 +223,14 @@ export function showNotificationsDrawer(state, defaultTab = 'notifications') {
     // Close button
     document.getElementById('close-activity-hub-btn')?.addEventListener('click', () => {
       modalContainer.innerHTML = '';
+      window.updateHeaderNotificationBadge?.();
     });
 
     // Backdrop click
     document.getElementById('activity-hub-backdrop')?.addEventListener('click', (e) => {
       if (e.target.id === 'activity-hub-backdrop') {
         modalContainer.innerHTML = '';
+        window.updateHeaderNotificationBadge?.();
       }
     });
 
@@ -236,15 +249,14 @@ export function showNotificationsDrawer(state, defaultTab = 'notifications') {
         const notifId = btn.getAttribute('data-notif-id');
         btn.disabled = true;
         btn.textContent = 'Saving...';
+        state.markNotificationAsRead(notifId);
+        window.updateHeaderNotificationBadge?.();
+        render();
         try {
           await api.markNotificationRead(notifId);
-          const notif = notifs.find(n => n.id === notifId);
-          if (notif) notif.is_read = true;
           window.showToast('Notification marked as read', 'success');
-          render();
         } catch (err) {
           window.showToast(err.message, 'error');
-          btn.disabled = false;
         }
       });
     });
@@ -253,14 +265,15 @@ export function showNotificationsDrawer(state, defaultTab = 'notifications') {
     modalContainer.querySelectorAll('.notif-item-card').forEach(card => {
       card.addEventListener('click', async () => {
         const notifId = card.getAttribute('data-notif-id');
-        const notif = notifs.find(n => n.id === notifId);
+        const notif = (state.notifications || []).find(n => n.id === notifId);
         if (notif && !notif.is_read) {
+          state.markNotificationAsRead(notifId);
+          window.updateHeaderNotificationBadge?.();
+          render();
           try {
             await api.markNotificationRead(notifId);
-            notif.is_read = true;
-            render();
           } catch (e) {
-            console.warn('Could not mark as read', e);
+            console.warn('Could not mark as read on server:', e);
           }
         }
       });
@@ -268,11 +281,12 @@ export function showNotificationsDrawer(state, defaultTab = 'notifications') {
 
     // Mark all read button
     document.getElementById('btn-mark-all-read')?.addEventListener('click', async () => {
+      state.markAllNotificationsAsRead();
+      window.updateHeaderNotificationBadge?.();
+      render();
       try {
         await api.markNotificationsSeen();
-        notifs.forEach(n => { n.is_read = true; });
         window.showToast('All notifications marked as read', 'success');
-        render();
       } catch (err) {
         window.showToast(err.message, 'error');
       }

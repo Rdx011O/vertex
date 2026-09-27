@@ -9,29 +9,31 @@ const router = express.Router();
 // Get notifications filtered for the current user's role and stall
 router.get('/', (req, res) => {
   const user = req.user;
+  if (!user) {
+    return res.json({ notifications: [] });
+  }
+
   let notifications = db.data.notifications || [];
 
-  if (user) {
-    notifications = notifications.filter(n => {
-      // 1. Event-wide broadcast
-      if (n.target_role === 'all') return true;
-      // 2. Direct role match without scope
-      if (n.target_role === user.role && !n.target_scope_id) return true;
-      // 3. Role + Stall Scope
-      if (n.target_role === user.role && n.target_scope_id === user.stall_id) return true;
-      // 4. Direct user ID match
-      if (n.target_scope_id === user.id) return true;
-      // Admin sees everything
-      if (user.role === 'admin') return true;
-      return false;
-    });
+  notifications = notifications.filter(n => {
+    // 1. Event-wide broadcast
+    if (n.target_role === 'all') return true;
+    // 2. Direct role match without scope
+    if (n.target_role === user.role && !n.target_scope_id) return true;
+    // 3. Role + Stall Scope
+    if (n.target_role === user.role && n.target_scope_id === user.stall_id) return true;
+    // 4. Direct user ID match
+    if (n.target_scope_id === user.id) return true;
+    // Admin sees everything
+    if (user.role === 'admin') return true;
+    return false;
+  });
 
-    // Map read status for the requesting user
-    notifications = notifications.map(n => ({
-      ...n,
-      is_read: Array.isArray(n.read_by) ? n.read_by.includes(user.id) : false
-    }));
-  }
+  // Map read status for the requesting user
+  notifications = notifications.map(n => ({
+    ...n,
+    is_read: Array.isArray(n.read_by) ? n.read_by.includes(user.id) : false
+  }));
 
   res.json({ notifications });
 });
@@ -50,6 +52,7 @@ router.post('/:id/read', (req, res) => {
   if (!notif.read_by.includes(user.id)) {
     notif.read_by.push(user.id);
     db.save();
+    realtime.broadcast('NOTIFICATION_READ', { user_id: user.id, notification_id: notif.id });
   }
 
   res.json({ success: true, notification_id: notif.id, is_read: true });

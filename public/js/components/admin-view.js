@@ -995,12 +995,16 @@ function attachAdminEventListeners(container, state) {
     btn.addEventListener('click', async () => {
       const uid = btn.getAttribute('data-uid');
       if (!confirm('Remove this user profile? This cannot be undone.')) return;
+      btn.disabled = true;
+      btn.textContent = 'Removing...';
       try {
         await api.removeUser(uid);
         window.showToast('User profile removed.', 'info');
         await state.refreshAll();
       } catch (err) {
         window.showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '✕ Remove';
       }
     });
   });
