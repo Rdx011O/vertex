@@ -74,17 +74,21 @@ router.post('/register-profile', async (req, res) => {
 
       realtime.broadcast('STALL_CREATED', { stall: newStall });
     } else if (desired_role === 'member') {
+      role = 'member';
       const rawInviteCode = (req.body.invite_code || req.body.stall_code || '').trim();
-      if (rawInviteCode) {
-        const targetStall = (db.data.stalls || []).find(s => s.invite_code === rawInviteCode);
-        if (targetStall) {
-          role = 'member';
-          assignedStallId = targetStall.id;
-        } else {
-          role = 'pending_member';
-        }
-      } else {
-        role = 'pending_member';
+      const directStallId = (req.body.stall_id || '').trim();
+      
+      let targetStall = null;
+      if (directStallId) {
+        targetStall = (db.data.stalls || []).find(s => s.id === directStallId);
+      }
+      if (!targetStall && rawInviteCode) {
+        targetStall = (db.data.stalls || []).find(
+          s => s.invite_code && s.invite_code.trim().toLowerCase() === rawInviteCode.toLowerCase()
+        );
+      }
+      if (targetStall) {
+        assignedStallId = targetStall.id;
       }
     }
 
@@ -150,6 +154,51 @@ router.post('/register-profile', async (req, res) => {
 });
 
 /**
+ * GET/POST /api/auth/verify-stall-code
+ * Validates a 12-char coordinator stall invite code and returns stall details
+ */
+router.all('/verify-stall-code', async (req, res) => {
+  try {
+    await db.ready();
+    const code = ((req.query.code || req.body.code || req.body.invite_code || '')).trim();
+    if (!code) {
+      return res.status(400).json({ valid: false, error: 'Please enter a stall invite code.' });
+    }
+
+    const stalls = Array.isArray(db.data?.stalls) ? db.data.stalls : [];
+    const users = Array.isArray(db.data?.users) ? db.data.users : [];
+
+    const stall = stalls.find(
+      s => s.invite_code && s.invite_code.trim().toLowerCase() === code.toLowerCase()
+    );
+
+    if (!stall) {
+      return res.status(404).json({
+        valid: false,
+        error: 'No stall found matching this invite code. Please check the 12-character code with your Stall Coordinator.'
+      });
+    }
+
+    const coordinator = users.find(u => u.id === stall.coordinator_user_id);
+
+    return res.json({
+      valid: true,
+      stall: {
+        id: stall.id,
+        name: stall.name,
+        category: stall.category || 'General',
+        allotted_number: stall.allotted_number || null,
+        location: stall.location || 'Festival Courtyard',
+        coordinator_name: coordinator ? coordinator.name : 'Stall Coordinator'
+      }
+    });
+  } catch (err) {
+    console.error('[Verify Stall Code Error]:', err);
+    return res.status(500).json({ valid: false, error: 'Failed to verify stall code.' });
+  }
+});
+
+/**
  * GET /api/auth/me
  * Returns the currently authenticated user's profile + stall info.
  */
@@ -195,17 +244,17 @@ router.get('/me', async (req, res) => {
       await db.save();
     }
 
-    // Auto-provision fallback user profile if missing from database
+    // Auto-provision fallback user profile if missing from database (defaulting safely to member)
     if (!user) {
       const fallbackName = req.firebaseUser.name || (email ? email.split('@')[0] : 'Participant');
       user = db.createUser({
         id: uid,
         name: fallbackName,
         email: email || '',
-        role: 'coordinator', // Default to coordinator with instant stall so they always have immediate dashboard access
-        designation: 'Stall Coordinator',
+        role: 'member',
+        designation: 'Team Member',
         college_name: 'Pravara Rural Engineering College, Loni',
-        badge_code: `BP-CRD-${uid.slice(0, 4).toUpperCase()}`
+        badge_code: `BP-MBR-${uid.slice(0, 4).toUpperCase()}`
       });
       await db.save();
     }

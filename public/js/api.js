@@ -265,6 +265,10 @@ class ApiService {
     });
   }
 
+  async verifyStallCode(code) {
+    return await this.request(`/api/auth/verify-stall-code?code=${encodeURIComponent(code)}`);
+  }
+
   async getMe() { return (await this.request('/api/auth/me')).user; }
 
   async getStalls() { return (await this.request('/api/stalls')).stalls; }

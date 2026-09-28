@@ -213,18 +213,27 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
             </div>
           </div>
 
-          <!-- Member Invite Code Field (Dynamic) -->
+          <!-- Member Invite Code Field & Live Verification Widget (Dynamic) -->
           <div id="member-stall-code-field" class="dynamic-role-box" style="display:none;">
             <div class="signup-section-header">
-              <span><i data-lucide="key"></i> Stall Join Code</span>
+              <span><i data-lucide="key"></i> Stall Member Verification</span>
             </div>
             <div class="form-group">
               <label class="form-label" for="signup-member-code">
-                Stall Invite Code <span class="form-hint-inline">(12 characters, from your Coordinator)</span>
+                Stall Invite Code <span class="required">*</span>
+                <span class="form-hint-inline">(12-character passcode from your Coordinator)</span>
               </label>
-              <input type="text" id="signup-member-code" class="form-input invite-code-input" placeholder="e.g. Vk9$mX2#pL8Q" maxlength="16" />
-              <span class="form-hint">Leave blank if you will join or be approved later</span>
+              <div class="code-verify-input-group">
+                <input type="text" id="signup-member-code" class="form-input invite-code-input" placeholder="e.g. Vk9$mX2#pL8Q" maxlength="20" autocomplete="off" />
+                <button type="button" class="btn btn-primary" id="btn-verify-member-code" style="white-space:nowrap; padding:0 18px; font-weight:700;">
+                  <span id="btn-verify-code-text">Verify Code</span>
+                </button>
+              </div>
+              <span class="form-hint">Enter your stall's invite code and tap Verify to preview and confirm your stall.</span>
             </div>
+
+            <!-- Dynamic Verification Result / Confirmation Box -->
+            <div id="stall-verification-box" style="display:none;"></div>
           </div>
 
           <!-- Admin Info Box (Dynamic) -->
@@ -425,6 +434,167 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
     }
   });
 
+  // ── Member Stall Code Live Verification ───────────────────────────
+  let confirmedMemberStall = null;
+  let confirmedMemberCode = '';
+
+  const memberCodeInput = document.getElementById('signup-member-code');
+  const verifyCodeBtn = document.getElementById('btn-verify-member-code');
+  const verifyBox = document.getElementById('stall-verification-box');
+
+  async function performStallVerification() {
+    const rawCode = memberCodeInput?.value.trim();
+    if (!rawCode) {
+      if (verifyBox) {
+        verifyBox.style.display = 'block';
+        verifyBox.innerHTML = `
+          <div class="stall-verify-card verified-error-box">
+            <div class="error-msg-row">
+              <i data-lucide="alert-circle"></i>
+              <span>Please enter a 12-character stall invite code.</span>
+            </div>
+          </div>
+        `;
+        window.renderIcons?.();
+      }
+      return null;
+    }
+
+    if (verifyCodeBtn) {
+      verifyCodeBtn.disabled = true;
+      const textSpan = document.getElementById('btn-verify-code-text');
+      if (textSpan) textSpan.textContent = 'Verifying…';
+    }
+
+    try {
+      const res = await api.verifyStallCode(rawCode);
+      if (verifyBox && res.valid && res.stall) {
+        const stall = res.stall;
+        verifyBox.style.display = 'block';
+        verifyBox.innerHTML = `
+          <div class="stall-verify-card verified-prompt-box">
+            <div class="verify-top-row">
+              <span class="verify-status-badge success">
+                <i data-lucide="check-circle-2"></i> Stall Found
+              </span>
+              <span class="verify-category-tag">${stall.category || 'Festival Stall'}</span>
+            </div>
+            
+            <div class="verify-stall-name-hero">${stall.name}</div>
+            
+            <div class="verify-meta-row">
+              ${stall.allotted_number ? `<span class="meta-item"><i data-lucide="map-pin"></i> Booth #${stall.allotted_number}</span>` : ''}
+              ${stall.location ? `<span class="meta-item"><i data-lucide="compass"></i> ${stall.location}</span>` : ''}
+              ${stall.coordinator_name ? `<span class="meta-item"><i data-lucide="user"></i> Lead: <strong>${stall.coordinator_name}</strong></span>` : ''}
+            </div>
+
+            <div class="verify-question-box">
+              <div class="question-title">Is that your stall?</div>
+              <div class="question-actions">
+                <button type="button" class="btn btn-success btn-sm" id="btn-confirm-stall-yes">
+                  <i data-lucide="check"></i> Yes, This is My Stall
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-change-stall-code">
+                  <i data-lucide="refresh-cw"></i> Change Code
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        window.renderIcons?.();
+
+        // Bind Yes & Change actions
+        document.getElementById('btn-confirm-stall-yes')?.addEventListener('click', () => {
+          confirmedMemberStall = stall;
+          confirmedMemberCode = rawCode;
+          if (memberCodeInput) memberCodeInput.disabled = true;
+          if (verifyCodeBtn) verifyCodeBtn.style.display = 'none';
+
+          verifyBox.innerHTML = `
+            <div class="stall-verify-card verified-confirmed-box">
+              <div class="confirmed-header">
+                <div class="confirmed-check-icon"><i data-lucide="shield-check"></i></div>
+                <div class="confirmed-info">
+                  <div class="confirmed-title">Stall Verified & Connected</div>
+                  <div class="confirmed-stall-name">${stall.name}</div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-change-stall-code-confirmed" style="font-size:12px; padding:4px 10px;">
+                  Change
+                </button>
+              </div>
+              <div class="confirmed-footer-hint">
+                <i data-lucide="sparkles"></i> You will directly enter this stall as a verified member upon sign-up.
+              </div>
+            </div>
+          `;
+          window.renderIcons?.();
+
+          document.getElementById('btn-change-stall-code-confirmed')?.addEventListener('click', () => {
+            resetVerification();
+          });
+        });
+
+        document.getElementById('btn-change-stall-code')?.addEventListener('click', () => {
+          resetVerification();
+        });
+
+        return stall;
+      }
+    } catch (err) {
+      if (verifyBox) {
+        verifyBox.style.display = 'block';
+        verifyBox.innerHTML = `
+          <div class="stall-verify-card verified-error-box">
+            <div class="error-msg-row">
+              <i data-lucide="alert-triangle"></i>
+              <span>${err.message || 'Invalid stall invite code. Please check with your Coordinator.'}</span>
+            </div>
+          </div>
+        `;
+        window.renderIcons?.();
+      }
+      return null;
+    } finally {
+      if (verifyCodeBtn) {
+        verifyCodeBtn.disabled = false;
+        const textSpan = document.getElementById('btn-verify-code-text');
+        if (textSpan) textSpan.textContent = 'Verify Code';
+      }
+    }
+  }
+
+  function resetVerification() {
+    confirmedMemberStall = null;
+    confirmedMemberCode = '';
+    if (memberCodeInput) {
+      memberCodeInput.disabled = false;
+      memberCodeInput.value = '';
+      memberCodeInput.focus();
+    }
+    if (verifyCodeBtn) {
+      verifyCodeBtn.style.display = '';
+      verifyCodeBtn.disabled = false;
+      const textSpan = document.getElementById('btn-verify-code-text');
+      if (textSpan) textSpan.textContent = 'Verify Code';
+    }
+    if (verifyBox) {
+      verifyBox.style.display = 'none';
+      verifyBox.innerHTML = '';
+    }
+  }
+
+  verifyCodeBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    performStallVerification();
+  });
+
+  memberCodeInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performStallVerification();
+    }
+  });
+
   // ── Sign Up ────────────────────────────────────────────────────────
   document.getElementById('signup-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -461,6 +631,24 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
       if (!stallCategory) { showError(errorEl, 'Please select your stall category.'); return; }
       if (!stallNumber) { showError(errorEl, 'Please enter your stall booth number.'); return; }
     }
+
+    if (desiredRole === 'member') {
+      if (!confirmedMemberStall) {
+        const rawCode = memberCodeInput?.value.trim();
+        if (rawCode) {
+          const verified = await performStallVerification();
+          if (!verified) {
+            showError(errorEl, 'Please verify your Stall Invite Code before proceeding.');
+            return;
+          }
+          confirmedMemberStall = verified;
+          confirmedMemberCode = rawCode;
+        } else {
+          showError(errorEl, 'Please enter and verify your 12-character Stall Invite Code to join your stall.');
+          return;
+        }
+      }
+    }
     
     if (password.length < 6) { showError(errorEl, 'Password must be at least 6 characters.'); return; }
 
@@ -485,8 +673,9 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
         stall_name_desired: stallName || null,
         stall_category_desired: stallCategory || null,
         stall_alloted_number: stallNumber || null,
-        invite_code: memberCode || null,
-        stall_code: memberCode || null
+        stall_id: confirmedMemberStall ? confirmedMemberStall.id : null,
+        invite_code: confirmedMemberCode || memberCode || null,
+        stall_code: confirmedMemberCode || memberCode || null
       });
 
       // 5. Update state and render appropriate dashboard directly
