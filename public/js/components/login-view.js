@@ -412,10 +412,13 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
     document.getElementById('signin-btn-text').textContent = 'Signing in…';
 
     try {
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
-      // onAuthStateChanged in app.js will handle the rest
+      const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      // Immediately set token provider & bootstrap user profile
+      api.setTokenProvider(() => userCredential.user.getIdToken(false));
+      await state.onFirebaseAuth(userCredential.user);
+      if (window.vertexApp) window.vertexApp.render();
     } catch (err) {
-      errorEl.textContent = friendlyFirebaseError(err.code);
+      errorEl.textContent = friendlyFirebaseError(err.code) || err.message;
       errorEl.style.display = 'block';
       btn.disabled = false;
       document.getElementById('signin-btn-text').textContent = 'Sign In to Vertex →';
@@ -472,29 +475,22 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
       // 2. Set display name in Firebase Auth
       await updateProfile(userCredential.user, { displayName: name });
 
-      // 3. Force-refresh token (new account needs true to get a valid token)
+      // 3. Set token provider
       api.setTokenProvider(() => userCredential.user.getIdToken(true));
 
       // 4. Register profile in our DB
-      let res;
-      try {
-        res = await api.registerProfile(name, phone, desiredRole, {
-          username,
-          college_name: college,
-          stall_name_desired: stallName || null,
-          stall_category_desired: stallCategory || null,
-          stall_alloted_number: stallNumber || null,
-          invite_code: memberCode || null,
-          stall_code: memberCode || null
-        });
-      } catch (apiErr) {
-        console.error('[Signup] registerProfile failed:', apiErr);
-        throw apiErr;
-      }
+      const res = await api.registerProfile(name, phone, desiredRole, {
+        username,
+        college_name: college,
+        stall_name_desired: stallName || null,
+        stall_category_desired: stallCategory || null,
+        stall_alloted_number: stallNumber || null,
+        invite_code: memberCode || null,
+        stall_code: memberCode || null
+      });
 
-      // 5. Update state and re-render (keep isRegistering=true until render is done)
+      // 5. Update state and render appropriate dashboard directly
       state.currentUser = res.user;
-      // Set permanent token provider from the auth user object
       api.setTokenProvider(() => userCredential.user.getIdToken(false));
       try { await state.refreshAll(); } catch (_) {}
       state.isRegistering = false;
@@ -503,94 +499,67 @@ export function renderLoginView(container, firebaseAuth, onSuccess) {
       state.isRegistering = false;
       const msg = err.code ? (friendlyFirebaseError(err.code) || err.message) : err.message;
       showError(errorEl, msg || 'Sign up failed. Please try again.');
-      console.error('[Signup] Error:', err);
       btn.disabled = false;
       document.getElementById('signup-btn-text').textContent = 'Create Account & Enter →';
     }
   });
 }
 
-/** "Role setup / Stall Join" screen shown to pending users */
+/** "Join Stall" screen shown only to Stall Members who need to join their booth */
 export function renderPendingApprovalView(container, user, onSignOut) {
+  const stalls = state.stalls || [];
+
   container.innerHTML = `
     <div class="login-page">
       <div class="auth-bg-blob blob-1"></div>
       <div class="auth-bg-blob blob-2"></div>
 
-      <div class="login-card pending-card" style="max-width:540px;">
-        <div class="pending-icon-glow">⚡</div>
-        <h2 class="pending-title">Welcome, ${user?.displayName || user?.name || 'Participant'}!</h2>
+      <div class="login-card pending-card" style="max-width:520px;">
+        <div class="pending-icon-glow">🎪</div>
+        <h2 class="pending-title">Join Your Festival Stall</h2>
         <p class="pending-subtitle">
-          Choose your access pathway into <strong>Building Pravara '26</strong>:
+          Welcome, <strong>${user?.displayName || user?.name || 'Team Member'}</strong>! Enter your 12-character Stall Code to open your live member dashboard.
         </p>
 
-        <!-- Role Action Selection Tabs -->
-        <div class="login-tabs-container" style="margin-bottom:20px;">
-          <div class="login-tabs">
-            <button type="button" class="login-tab active" id="tab-opt-coord" data-panel="panel-coord">👔 Coordinator</button>
-            <button type="button" class="login-tab" id="tab-opt-member" data-panel="panel-member">🔑 Stall Code</button>
-            <button type="button" class="login-tab" id="tab-opt-admin" data-panel="panel-admin">👑 Admin</button>
+        <!-- Form: Enter 12-Character Stall Code -->
+        <form id="pending-join-form" class="pending-form" style="margin-top:16px;">
+          <div class="form-group">
+            <label class="form-label" for="join-invite-code">
+              Stall Invite Code <span class="required">*</span>
+            </label>
+            <input type="text" id="join-invite-code" class="form-input invite-code-input" placeholder="e.g. Vk9$mX2#pL8Q" required maxlength="16" autofocus />
+            <span class="form-hint" style="text-align:center; display:block;">Provided by your Stall Coordinator</span>
           </div>
-        </div>
 
-        <!-- Panel 1: Setup Stall as Coordinator -->
-        <div id="panel-coord" class="pending-panel" style="display:block;">
-          <form id="coord-setup-form" class="pending-form">
-            <div class="form-group">
-              <label class="form-label" for="coord-stall-name">Stall Name <span class="required">*</span></label>
-              <input type="text" id="coord-stall-name" class="form-input" placeholder="e.g. RoboWars Zone / Food Fiesta" required />
-            </div>
-            <div class="grid-2col">
-              <div class="form-group">
-                <label class="form-label" for="coord-stall-cat">Category <span class="required">*</span></label>
-                <select id="coord-stall-cat" class="form-input" required>
-                  <option value="Food & Beverage">🍕 Food & Beverage</option>
-                  <option value="Tech & Gaming">🎮 Tech & Gaming</option>
-                  <option value="Robotics">🤖 Robotics & DIY</option>
-                  <option value="Merchandise">👕 Merchandise & Stalls</option>
-                  <option value="Rural Tech">🌾 Rural Tech & Projects</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="coord-booth-num">Booth #</label>
-                <input type="text" id="coord-booth-num" class="form-input" placeholder="e.g. B-04 / S-12" />
-              </div>
-            </div>
-            <button type="submit" class="btn btn-coordinator btn-full auth-submit-btn" id="btn-setup-coord">
-              👔 Launch Stall Coordinator Dashboard →
-            </button>
-          </form>
-        </div>
+          <div id="role-action-error" class="auth-error" style="display:none; margin-bottom:12px;"></div>
 
-        <!-- Panel 2: Enter as Admin -->
-        <div id="panel-admin" class="pending-panel" style="display:none;">
-          <div style="text-align:center; padding:12px 0;">
-            <p style="color:var(--text-secondary); margin-bottom:16px; font-size:13.5px; line-height:1.5;">
-              Authorized event organizers & faculty administrators can launch the full <strong>Building Pravara '26 Command Center</strong> directly.
-            </p>
-            <button type="button" class="btn btn-admin btn-full auth-submit-btn" id="btn-claim-admin">
-              👑 Enter as Event Admin →
-            </button>
+          <button type="submit" class="btn btn-primary btn-full auth-submit-btn" id="btn-submit-join-code">
+            🚀 Join Stall & Open Dashboard →
+          </button>
+        </form>
+
+        ${stalls.length > 0 ? `
+          <div style="margin-top:24px; border-top:1px solid var(--border-subtle); padding-top:16px;">
+            <div style="font-size:12px; font-weight:700; color:var(--text-secondary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em;">
+              Registered Event Stalls (${stalls.length})
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; max-height:180px; overflow-y:auto; padding-right:4px;">
+              ${stalls.map(s => `
+                <div style="background:var(--bg-surface-subtle); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-size:13px; font-weight:700; color:var(--text-primary);">${s.name}</div>
+                    <div style="font-size:11px; color:var(--text-tertiary);">${s.category} • ${s.location || 'Courtyard'}</div>
+                  </div>
+                  <button type="button" class="btn btn-outline btn-sm btn-quick-join-stall" data-stall-id="${s.id}" data-stall-name="${s.name}" style="font-size:11px; font-weight:700; padding:4px 10px;">
+                    Request Join
+                  </button>
+                </div>
+              `).join('')}
+            </div>
           </div>
-        </div>
+        ` : ''}
 
-        <!-- Panel 3: Paste Member Stall Invite Code -->
-        <div id="panel-member" class="pending-panel" style="display:none;">
-          <form id="pending-join-form" class="pending-form">
-            <div class="form-group">
-              <label class="form-label" for="join-invite-code">Paste 12-Character Stall Invite Code</label>
-              <input type="text" id="join-invite-code" class="form-input invite-code-input" placeholder="e.g. Vk9$mX2#pL8Q" required maxlength="16" />
-              <span class="form-hint" style="text-align:center; display:block;">Provided by your Stall Coordinator</span>
-            </div>
-            <button type="submit" class="btn btn-primary btn-full auth-submit-btn" id="btn-submit-join-code">
-              Join Stall as Member →
-            </button>
-          </form>
-        </div>
-
-        <div id="role-action-error" class="auth-error" style="display:none; margin-top:14px;"></div>
-
-        <div class="pending-footer">
+        <div class="pending-footer" style="margin-top:20px;">
           <div>📧 Logged in as: <strong>${user?.email || 'N/A'}</strong></div>
           <button class="btn btn-outline btn-sm" id="pending-signout-btn">⏏ Sign Out</button>
         </div>
@@ -598,68 +567,10 @@ export function renderPendingApprovalView(container, user, onSignOut) {
     </div>
   `;
 
-  // Panel switcher listeners
-  container.querySelectorAll('.login-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      container.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
-      container.querySelectorAll('.pending-panel').forEach(p => p.style.display = 'none');
-      tab.classList.add('active');
-      const panelId = tab.dataset.panel;
-      const targetPanel = document.getElementById(panelId);
-      if (targetPanel) targetPanel.style.display = 'block';
-    });
-  });
-
+  window.renderIcons?.();
   const errEl = document.getElementById('role-action-error');
 
-  // 1. Claim Admin
-  document.getElementById('btn-claim-admin')?.addEventListener('click', async () => {
-    const btn = document.getElementById('btn-claim-admin');
-    btn.disabled = true;
-    btn.textContent = 'Entering Admin…';
-    try {
-      const res = await api.claimRole({ role: 'admin' });
-      state.currentUser = res.user;
-      window.showToast?.('👑 Admin Command Center accessed!', 'success');
-      await state.refreshAll();
-      if (window.vertexApp) window.vertexApp.render();
-    } catch (err) {
-      showError(errEl, err.message || 'Failed to claim admin access.');
-      btn.disabled = false;
-      btn.textContent = '👑 Enter as Event Admin →';
-    }
-  });
-
-  // 2. Setup Coordinator Stall
-  document.getElementById('coord-setup-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const stall_name = document.getElementById('coord-stall-name')?.value.trim();
-    const stall_category = document.getElementById('coord-stall-cat')?.value;
-    const booth_number = document.getElementById('coord-booth-num')?.value.trim();
-    const btn = document.getElementById('btn-setup-coord');
-
-    if (!stall_name) {
-      showError(errEl, 'Please enter a stall name.');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Creating Stall…';
-
-    try {
-      const res = await api.claimRole({ role: 'coordinator', stall_name, stall_category, booth_number });
-      state.currentUser = res.user;
-      window.showToast?.(`✅ Stall "${stall_name}" created! Welcome Coordinator.`, 'success');
-      await state.refreshAll();
-      if (window.vertexApp) window.vertexApp.render();
-    } catch (err) {
-      showError(errEl, err.message || 'Failed to create stall.');
-      btn.disabled = false;
-      btn.textContent = '👔 Launch Stall Coordinator Dashboard →';
-    }
-  });
-
-  // 3. Submit Member Stall Code
+  // Submit Member Stall Code
   document.getElementById('pending-join-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const code = document.getElementById('join-invite-code')?.value.trim();
@@ -675,14 +586,36 @@ export function renderPendingApprovalView(container, user, onSignOut) {
 
     try {
       const res = await api.submitStallJoinRequest(code);
-      window.showToast?.(res.message || 'Joined stall successfully!', 'success');
+      if (res.user) {
+        state.currentUser = res.user;
+      }
+      window.showToast?.(res.message || `🎉 Successfully joined stall!`, 'success');
       await state.refreshAll();
       if (window.vertexApp) window.vertexApp.render();
     } catch (err) {
       showError(errEl, err.message || 'Invalid stall invite code. Please check with your coordinator.');
       btn.disabled = false;
-      btn.textContent = 'Join Stall as Member →';
+      btn.textContent = '🚀 Join Stall & Open Dashboard →';
     }
+  });
+
+  // Quick join request button
+  container.querySelectorAll('.btn-quick-join-stall').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const stallId = btn.getAttribute('data-stall-id');
+      const stallName = btn.getAttribute('data-stall-name');
+      btn.disabled = true;
+      btn.textContent = 'Requesting…';
+      try {
+        await api.requestJoinStall(stallId);
+        window.showToast?.(`Join request sent to Coordinator of "${stallName}"!`, 'info');
+        await state.refreshAll();
+      } catch (err) {
+        window.showToast?.(err.message || 'Could not send join request.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Request Join';
+      }
+    });
   });
 
   document.getElementById('pending-signout-btn')?.addEventListener('click', onSignOut);

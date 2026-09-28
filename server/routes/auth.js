@@ -186,7 +186,8 @@ router.get('/me', async (req, res) => {
         name: req.firebaseUser.name || 'System Administrator',
         email,
         role: 'admin',
-        designation: 'System Administrator'
+        designation: 'System Administrator',
+        badge_code: `BP-ADM-${uid.slice(0, 4).toUpperCase()}`
       });
       await db.save();
     } else if (user && isBootstrapAdmin && user.role !== 'admin') {
@@ -194,8 +195,19 @@ router.get('/me', async (req, res) => {
       await db.save();
     }
 
+    // Auto-provision fallback user profile if missing from database
     if (!user) {
-      return res.status(404).json({ error: 'Profile not found. Please register.' });
+      const fallbackName = req.firebaseUser.name || (email ? email.split('@')[0] : 'Participant');
+      user = db.createUser({
+        id: uid,
+        name: fallbackName,
+        email: email || '',
+        role: 'coordinator', // Default to coordinator with instant stall so they always have immediate dashboard access
+        designation: 'Stall Coordinator',
+        college_name: 'Pravara Rural Engineering College, Loni',
+        badge_code: `BP-CRD-${uid.slice(0, 4).toUpperCase()}`
+      });
+      await db.save();
     }
 
     // Ensure coordinator is linked to their stall or has a stall created
@@ -222,7 +234,7 @@ router.get('/me', async (req, res) => {
           if (!Array.isArray(db.data.stalls)) db.data.stalls = [];
           db.data.stalls.push(stall);
         }
-        user = db.updateUser(user.id, { stall_id: stall.id });
+        user = db.updateUser(user.id, { stall_id: stall.id, role: 'coordinator', designation: 'Stall Coordinator' });
         await db.save();
       }
     }
