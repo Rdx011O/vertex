@@ -1014,8 +1014,16 @@ function showLogExpenseModal(stall, state) {
     </div>
   `;
 
-  document.getElementById('close-exp-modal').addEventListener('click', () => {
+  const closeExpModal = () => {
     modalContainer.innerHTML = '';
+    window.removeEventListener('keydown', handleExpEsc);
+  };
+  const handleExpEsc = (e) => { if (e.key === 'Escape') closeExpModal(); };
+  window.addEventListener('keydown', handleExpEsc);
+
+  document.getElementById('close-exp-modal')?.addEventListener('click', closeExpModal);
+  document.getElementById('log-exp-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'log-exp-backdrop') closeExpModal();
   });
 
   document.getElementById('exp-form').addEventListener('submit', async (e) => {
@@ -1027,7 +1035,7 @@ function showLogExpenseModal(stall, state) {
     try {
       await api.logExpense(stall.id, { category, name, amount });
       window.showToast('Expense recorded & break-even recalculated!', 'success');
-      modalContainer.innerHTML = '';
+      closeExpModal();
       await state.refreshAll();
     } catch (err) {
       window.showToast(err.message, 'error');
@@ -1074,15 +1082,23 @@ function showScanQRModal(stall, state) {
     </div>
   `;
 
-  document.getElementById('close-scan-modal').addEventListener('click', () => {
+  const closeScanModal = () => {
     modalContainer.innerHTML = '';
+    window.removeEventListener('keydown', handleScanEsc);
+  };
+  const handleScanEsc = (e) => { if (e.key === 'Escape') closeScanModal(); };
+  window.addEventListener('keydown', handleScanEsc);
+
+  document.getElementById('close-scan-modal')?.addEventListener('click', closeScanModal);
+  document.getElementById('scan-qr-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'scan-qr-backdrop') closeScanModal();
   });
 
   const handleScan = async (badgeCode) => {
     try {
       const res = await api.scanConfirmAttendance(badgeCode);
       window.showToast(res.message || 'Badge verified & attendance recorded!', 'success');
-      modalContainer.innerHTML = '';
+      closeScanModal();
       await state.refreshAll();
     } catch (err) {
       window.showToast(err.message, 'error');
@@ -1140,8 +1156,16 @@ function showAddCatalogItemModal(stall, state) {
     </div>
   `;
 
-  document.getElementById('close-catalog-modal').addEventListener('click', () => {
+  const closeCatModal = () => {
     modalContainer.innerHTML = '';
+    window.removeEventListener('keydown', handleCatEsc);
+  };
+  const handleCatEsc = (e) => { if (e.key === 'Escape') closeCatModal(); };
+  window.addEventListener('keydown', handleCatEsc);
+
+  document.getElementById('close-catalog-modal')?.addEventListener('click', closeCatModal);
+  document.getElementById('add-item-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'add-item-backdrop') closeCatModal();
   });
 
   document.getElementById('catalog-item-form').addEventListener('submit', async (e) => {
@@ -1166,7 +1190,7 @@ function showAddCatalogItemModal(stall, state) {
     try {
       await api.addCatalogItem(stall.id, { name, price, category });
       window.showToast?.(`✅ "${name}" (₹${price}) added to catalog!`, 'success');
-      modalContainer.innerHTML = '';
+      closeCatModal();
       await state.refreshAll();
     } catch (err) {
       errEl.textContent = err.message || 'Failed to add item.';
@@ -1227,8 +1251,16 @@ function showAddStallMemberModal(stall, state) {
     </div>
   `;
 
-  document.getElementById('close-member-modal').addEventListener('click', () => {
+  const closeMemModal = () => {
     modalContainer.innerHTML = '';
+    window.removeEventListener('keydown', handleMemEsc);
+  };
+  const handleMemEsc = (e) => { if (e.key === 'Escape') closeMemModal(); };
+  window.addEventListener('keydown', handleMemEsc);
+
+  document.getElementById('close-member-modal')?.addEventListener('click', closeMemModal);
+  document.getElementById('add-member-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'add-member-backdrop') closeMemModal();
   });
 
   document.getElementById('stall-member-form').addEventListener('submit', async (e) => {
@@ -1254,7 +1286,7 @@ function showAddStallMemberModal(stall, state) {
     try {
       await api.addStallMember(stall.id, { name, phone, designation, badge_code });
       window.showToast?.(`✅ "${name}" added to your stall team!`, 'success');
-      modalContainer.innerHTML = '';
+      closeMemModal();
       await state.refreshAll();
     } catch (err) {
       errEl.textContent = err.message || 'Failed to add member.';

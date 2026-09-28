@@ -118,7 +118,8 @@ class ApiService {
     }
 
     // Offline queue for POS sales
-    if (this.isSimulatedOffline && !isGet) {
+    const isNetworkDead = this.isSimulatedOffline || (typeof navigator !== 'undefined' && !navigator.onLine);
+    if (isNetworkDead && !isGet) {
       if (endpoint === '/api/sales/submit') {
         const payload = JSON.parse(options.body || '{}');
         const queueItem = {
@@ -141,10 +142,10 @@ class ApiService {
           },
           items: payload.items || [],
           offline_queued: true,
-          message: 'Saved locally. Will auto-submit when back online.'
+          message: 'Saved locally in secure offline queue. Will auto-submit when back online.'
         };
       }
-      throw new Error('Network is offline (Simulated dead spot)');
+      throw new Error('Network is offline');
     }
 
     // Check memory micro-cache for idempotent GET requests (3s TTL)
@@ -167,7 +168,37 @@ class ApiService {
         ...(options.headers || {})
       };
 
-      const response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
+      let response;
+      try {
+        response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
+      } catch (netErr) {
+        if (endpoint === '/api/sales/submit') {
+          const payload = JSON.parse(options.body || '{}');
+          const queueItem = {
+            id: 'q-' + Date.now(),
+            endpoint,
+            payload,
+            timestamp: new Date().toISOString()
+          };
+          this.offlineQueue.push(queueItem);
+          this.saveOfflineQueue();
+          this.notifyListeners({ type: 'OFFLINE_QUEUE_UPDATED', queue: this.offlineQueue });
+          return {
+            submission: {
+              id: 'offline-' + Date.now(),
+              stall_id: payload.stall_id,
+              total_amount: Number(payload.online_total || 0) + Number(payload.offline_total || 0),
+              status: 'queued_offline',
+              idempotency_key: payload.idempotency_key,
+              submitted_at: queueItem.timestamp
+            },
+            items: payload.items || [],
+            offline_queued: true,
+            message: 'Connection dropped. Transaction saved to offline queue.'
+          };
+        }
+        throw netErr;
+      }
       const text = await response.text();
       let data;
       try {

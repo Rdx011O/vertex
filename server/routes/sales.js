@@ -9,12 +9,17 @@ const router = express.Router();
 
 // Get list of pending submissions for Admin verification queue
 router.get('/pending', (req, res) => {
-  const pendingSubmissions = db.data.sales_submissions
+  const submissions = Array.isArray(db.data?.sales_submissions) ? db.data.sales_submissions : [];
+  const stalls = Array.isArray(db.data?.stalls) ? db.data.stalls : [];
+  const users = Array.isArray(db.data?.users) ? db.data.users : [];
+  const lineItems = Array.isArray(db.data?.sale_line_items) ? db.data.sale_line_items : [];
+
+  const pendingSubmissions = submissions
     .filter(s => s.status === 'pending')
     .map(sub => {
-      const stall = db.data.stalls.find(s => s.id === sub.stall_id);
-      const submitter = db.data.users.find(u => u.id === sub.submitted_by_user_id);
-      const items = db.data.sale_line_items.filter(i => i.submission_id === sub.id);
+      const stall = stalls.find(s => s.id === sub.stall_id);
+      const submitter = users.find(u => u.id === sub.submitted_by_user_id);
+      const items = lineItems.filter(i => i.submission_id === sub.id);
       return {
         ...sub,
         stall_name: stall ? stall.name : 'Unknown Stall',
@@ -30,8 +35,12 @@ router.get('/pending', (req, res) => {
 // Get full history of submissions (filterable by stall or status)
 router.get('/history', (req, res) => {
   const { stallId, status } = req.query;
+  const submissions = Array.isArray(db.data?.sales_submissions) ? db.data.sales_submissions : [];
+  const stalls = Array.isArray(db.data?.stalls) ? db.data.stalls : [];
+  const users = Array.isArray(db.data?.users) ? db.data.users : [];
+  const lineItems = Array.isArray(db.data?.sale_line_items) ? db.data.sale_line_items : [];
   
-  let list = db.data.sales_submissions;
+  let list = submissions;
   if (stallId) {
     list = list.filter(s => s.stall_id === stallId);
   }
@@ -40,10 +49,10 @@ router.get('/history', (req, res) => {
   }
 
   const submissionsWithDetails = list.map(sub => {
-    const stall = db.data.stalls.find(s => s.id === sub.stall_id);
-    const submitter = db.data.users.find(u => u.id === sub.submitted_by_user_id);
-    const verifier = sub.verified_by_user_id ? db.data.users.find(u => u.id === sub.verified_by_user_id) : null;
-    const items = db.data.sale_line_items.filter(i => i.submission_id === sub.id);
+    const stall = stalls.find(s => s.id === sub.stall_id);
+    const submitter = users.find(u => u.id === sub.submitted_by_user_id);
+    const verifier = sub.verified_by_user_id ? users.find(u => u.id === sub.verified_by_user_id) : null;
+    const items = lineItems.filter(i => i.submission_id === sub.id);
     return {
       ...sub,
       stall_name: stall ? stall.name : 'Unknown Stall',
@@ -76,6 +85,11 @@ router.post('/submit', requireAuth, (req, res) => {
   if (req.user.role !== 'admin' && (req.user.role !== 'coordinator' || req.user.stall_id !== stall_id)) {
     return res.status(403).json({ error: 'Permission denied: Only the stall coordinator can submit sales.' });
   }
+
+  if (!Array.isArray(db.data.sales_submissions)) db.data.sales_submissions = [];
+  if (!Array.isArray(db.data.sale_line_items)) db.data.sale_line_items = [];
+  if (!Array.isArray(db.data.notifications)) db.data.notifications = [];
+  if (!Array.isArray(db.data.stalls)) db.data.stalls = [];
 
   // Check Idempotency Key to avoid duplicate transactions during offline reconnect
   if (idempotency_key) {

@@ -84,9 +84,23 @@ class VertexApp {
       simOfflineCheckbox.addEventListener('change', (e) => {
         const isOffline = e.target.checked;
         api.setSimulatedOffline(isOffline);
-        this.updateNetworkUI(isOffline);
+        this.updateNetworkBanner();
       });
     }
+
+    // Real browser online/offline detection
+    window.addEventListener('online', () => {
+      this.updateNetworkBanner();
+      api.syncOfflineQueue();
+      window.showToast?.('📶 Network reconnected. Syncing queues...', 'success');
+    });
+    window.addEventListener('offline', () => {
+      this.updateNetworkBanner();
+      window.showToast?.('📡 You are offline. POS will save transactions locally.', 'warning');
+    });
+
+    // Check initial network state
+    this.updateNetworkBanner();
 
     // Show loading while Firebase initializes
     this.showLoader('Connecting to Vertex…');
@@ -131,76 +145,30 @@ class VertexApp {
   }
 
   handleRealtimeEvent(event) {
+    if (!event || !event.type) return;
+
     const dot = document.getElementById('ws-status-dot');
     const text = document.getElementById('ws-status-text');
 
+    // 1. Connection lifecycle events (update status indicator without showing intrusive offline banner)
     if (event.type === 'WS_STATUS') {
       if (dot && text) {
         if (event.status === 'connected') {
-          dot.className = 'status-dot online'; text.textContent = 'Live Sync';
+          dot.className = 'status-dot online';
+          text.textContent = 'Live Sync';
         } else {
-          dot.className = 'status-dot offline'; text.textContent = 'Reconnecting';
+          dot.className = 'status-dot offline';
+          text.textContent = api.isSimulatedOffline ? 'Dead Spot (Simulated)' : 'Cloud Synced';
         }
       }
-    } else if (event.type === 'SALE_VERIFIED') {
-      const isTargetStall = state.currentUser?.stall_id === event.payload?.stall_id;
-      const isAdmin = state.currentUser?.role === 'admin';
-      if (isTargetStall || isAdmin) {
-        window.showToast(`🎉 ${event.payload?.stall_name || 'Stall'} sales verified!`, 'success');
-        state.scheduleRefresh(300);
-      }
-    } else if (event.type === 'ATTENDANCE_CONFIRMED') {
-      const isTargetStall = state.currentUser?.stall_id === event.payload?.stall_id;
-      const isTargetUser = state.currentUser?.id === event.payload?.member_id;
-      const isAdmin = state.currentUser?.role === 'admin';
-      if (isTargetStall || isTargetUser || isAdmin) {
-        window.showToast(`✅ Attendance confirmed for ${event.payload?.member_name}.`, 'success');
-        state.scheduleRefresh(300);
-      }
-    } else if (event.type === 'ATTENDANCE_REQUESTED') {
-      if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
-        window.showToast(`🔔 Arrival: ${event.payload?.member?.name} is at your stall!`, 'warning');
-        state.scheduleRefresh(300);
-      }
-    } else if (event.type === 'SALE_SUBMITTED') {
-      if (state.currentUser?.role === 'admin') {
-        window.showToast(`📥 ${event.payload?.stall_name} submitted sales for verification.`, 'info');
-        state.scheduleRefresh(300);
-      }
-    } else if (event.type === 'MEMBER_JOIN_REQUESTED') {
-      if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
-        window.showToast(`🔔 New join request: ${event.payload?.request?.user_name} wants to join your stall!`, 'warning');
-        state.scheduleRefresh(300);
-      }
-    } else if (event.type === 'MEMBER_JOIN_APPROVED') {
-      if (state.currentUser?.id === event.payload?.user_id) {
-        window.showToast(`🎉 Your join request for "${event.payload?.stall_name}" was approved!`, 'success');
-        state.scheduleRefresh(100);
-      } else if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
-        state.scheduleRefresh(300);
-      }
-    } else if (event.type === 'MEMBER_JOIN_REJECTED') {
-      if (state.currentUser?.id === event.payload?.user_id) {
-        window.showToast('Your stall join request was declined.', 'error');
-        state.scheduleRefresh(100);
-      }
-    } else if (['ANNOUNCEMENT_CREATED', 'EXPENSE_ADDED', 'STALL_UPDATED', 'STALL_CREATED', 'DATABASE_RESET'].includes(event.type)) {
-      state.scheduleRefresh(400);
-    }
-  }
-
-  handleRealtimeEvent(event) {
-    if (!event || !event.type) return;
-
-    // 1. Connection lifecycle events
-    if (event.type === 'WS_STATUS') {
-      const isOffline = event.status === 'disconnected';
-      this.updateNetworkUI(isOffline);
       return;
     }
 
     if (event.type === 'CONNECTED') {
-      this.updateNetworkUI(false);
+      if (dot && text) {
+        dot.className = 'status-dot online';
+        text.textContent = 'Live Sync';
+      }
       return;
     }
 
@@ -250,10 +218,12 @@ class VertexApp {
 
     if (event.type === 'SALE_VERIFIED') {
       const payload = event.payload || {};
-      if (state.currentUser?.stall_id && state.currentUser.stall_id === payload.stall_id) {
-        window.showToast(`✅ Sales verification complete! ₹${payload.verified_amount || ''} locked to ledger.`, 'success');
+      const isTargetStall = state.currentUser?.stall_id === payload.stall_id;
+      const isAdmin = state.currentUser?.role === 'admin';
+      if (isTargetStall || isAdmin) {
+        window.showToast(`🎉 ${payload.stall_name || 'Stall'} sales verified! Gross sales updated.`, 'success');
+        state.scheduleRefresh(200);
       }
-      state.scheduleRefresh(200);
       return;
     }
 
@@ -267,32 +237,69 @@ class VertexApp {
     }
 
     // 5. Attendance Events
-    if (event.type === 'ATTENDANCE_CHECKIN') {
+    if (event.type === 'ATTENDANCE_CHECKIN' || event.type === 'ATTENDANCE_REQUESTED') {
       const payload = event.payload || {};
       if (state.currentUser?.role === 'coordinator' && state.currentUser.stall_id === payload.stall_id) {
-        window.showToast(`📍 Member check-in request from ${payload.user_name || 'team member'}`, 'info');
+        window.showToast(`📍 Member check-in request from ${payload.user_name || payload.member?.name || 'team member'}`, 'info');
       }
       state.scheduleRefresh(300);
       return;
     }
 
     if (event.type === 'ATTENDANCE_CONFIRMED') {
+      const payload = event.payload || {};
+      const isTargetStall = state.currentUser?.stall_id === payload.stall_id;
+      const isTargetUser = state.currentUser?.id === payload.member_id;
+      const isAdmin = state.currentUser?.role === 'admin';
+      if (isTargetStall || isTargetUser || isAdmin) {
+        window.showToast(`✅ Attendance confirmed for ${payload.member_name || 'member'}.`, 'success');
+      }
       state.scheduleRefresh(250);
       return;
     }
 
-    // 6. Generic Stall / User / Event update
+    // 6. Member Join Events
+    if (event.type === 'MEMBER_JOIN_REQUESTED') {
+      if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
+        window.showToast(`🔔 New join request: ${event.payload?.request?.user_name} wants to join your stall!`, 'warning');
+        state.scheduleRefresh(300);
+      }
+      return;
+    }
+
+    if (event.type === 'MEMBER_JOIN_APPROVED') {
+      if (state.currentUser?.id === event.payload?.user_id) {
+        window.showToast(`🎉 Your join request for "${event.payload?.stall_name}" was approved!`, 'success');
+        state.scheduleRefresh(100);
+      } else if (state.currentUser?.role === 'coordinator' && state.currentUser?.stall_id === event.payload?.stall_id) {
+        state.scheduleRefresh(300);
+      }
+      return;
+    }
+
+    if (event.type === 'MEMBER_JOIN_REJECTED') {
+      if (state.currentUser?.id === event.payload?.user_id) {
+        window.showToast('Your stall join request was declined.', 'error');
+        state.scheduleRefresh(100);
+      }
+      return;
+    }
+
+    // 7. Generic Stall / User / Event update
     state.scheduleRefresh(400);
   }
 
-  updateNetworkUI(isOffline) {
+  updateNetworkBanner() {
+    const isActuallyOffline = !navigator.onLine || api.isSimulatedOffline;
     const banner = document.getElementById('offline-notice-banner');
-    if (banner) banner.style.display = isOffline ? 'flex' : 'none';
+    if (banner) {
+      banner.style.display = isActuallyOffline ? 'flex' : 'none';
+    }
     const dot = document.getElementById('ws-status-dot');
     const text = document.getElementById('ws-status-text');
-    if (dot && text) {
-      dot.className = isOffline ? 'status-dot offline' : 'status-dot online';
-      text.textContent = isOffline ? 'Dead Spot (Simulated)' : 'Live Sync';
+    if (dot && text && isActuallyOffline) {
+      dot.className = 'status-dot offline';
+      text.textContent = api.isSimulatedOffline ? 'Dead Spot (Simulated)' : 'Offline Mode';
     }
   }
 

@@ -471,17 +471,25 @@ export async function showQRModal(user) {
 
   modalContainer.innerHTML = `
     <div class="modal-backdrop active" id="qr-modal-backdrop">
-      <div class="modal-card" style="max-width: 820px; padding: 0; background: transparent; border: none; box-shadow: none;">
+      <!-- Fixed Global Floating Close Button (Always visible on all viewports) -->
+      <button class="modal-floating-close-btn" id="floating-close-qr-btn" title="Close Stall Pass (Esc)">
+        <i data-lucide="x"></i>
+        <span>Close Pass</span>
+      </button>
+
+      <div class="modal-card" style="max-width: 820px; padding: 0; background: transparent; border: none; box-shadow: none; position: relative;">
         
         <!-- Action Control Bar -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 6px;">
-          <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 6px; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="badge" style="background:#4f46e5; color:white; font-size:11px; padding:4px 10px; font-weight:800;">
               <i data-lucide="shield-check"></i> OFFICIAL PASS
             </span>
             <span style="font-size:12px; color:white; opacity:0.9;">Move cursor to 3D tilt • Tap QR to zoom • Flip for NFC back</span>
           </div>
-          <button class="modal-close-btn" id="close-qr-btn" style="color:white; background:rgba(255,255,255,0.2); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button>
+          <button class="btn" id="close-qr-btn" style="background:rgba(255,255,255,0.25); color:white; border:1px solid rgba(255,255,255,0.4); border-radius:var(--radius-full); padding:6px 14px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <i data-lucide="x"></i> Close
+          </button>
         </div>
 
         <!-- Rendered 3D Badge -->
@@ -510,6 +518,9 @@ export async function showQRModal(user) {
           <button class="btn btn-outline" id="btn-copy-badge-id" style="background:rgba(255,255,255,0.2); color:white; font-size:13px; font-weight:700; padding:8px 16px; border-radius:10px; border-color:rgba(255,255,255,0.4);">
             <i data-lucide="copy"></i> Copy Pass ID
           </button>
+          <button class="btn btn-outline" id="btn-close-pass-bottom" style="background:rgba(239, 68, 68, 0.25); color:#ffffff; font-size:13px; font-weight:700; padding:8px 18px; border-radius:10px; border:1px solid rgba(239, 68, 68, 0.5);">
+            <i data-lucide="x"></i> Close Stall Pass
+          </button>
         </div>
 
       </div>
@@ -517,10 +528,22 @@ export async function showQRModal(user) {
   `;
   window.renderIcons?.();
 
-  // Attach Close handlers
-  document.getElementById('close-qr-btn')?.addEventListener('click', () => modalContainer.innerHTML = '');
+  // Close handlers (Multi-layer: in-card, floating, bottom-bar, backdrop click, Escape key)
+  const closeModal = () => {
+    modalContainer.innerHTML = '';
+    window.removeEventListener('keydown', handleEscape);
+  };
+
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') closeModal();
+  };
+
+  window.addEventListener('keydown', handleEscape);
+  document.getElementById('close-qr-btn')?.addEventListener('click', closeModal);
+  document.getElementById('floating-close-qr-btn')?.addEventListener('click', closeModal);
+  document.getElementById('btn-close-pass-bottom')?.addEventListener('click', closeModal);
   document.getElementById('qr-modal-backdrop')?.addEventListener('click', (e) => {
-    if (e.target.id === 'qr-modal-backdrop') modalContainer.innerHTML = '';
+    if (e.target.id === 'qr-modal-backdrop') closeModal();
   });
 
   // Attach interactivity
@@ -538,7 +561,13 @@ export function showQRScannerModal({ onScanSuccess, title = 'Scan Participant Ba
 
   modalContainer.innerHTML = `
     <div class="modal-backdrop active" id="scanner-modal-backdrop">
-      <div class="modal-card" style="max-width: 480px; padding: 22px;">
+      <!-- Fixed Global Floating Close Button -->
+      <button class="modal-floating-close-btn" id="floating-close-scanner-btn" title="Close Scanner (Esc)">
+        <i data-lucide="x"></i>
+        <span>Close</span>
+      </button>
+
+      <div class="modal-card" style="max-width: 480px; padding: 22px; position: relative;">
         <div class="modal-header" style="margin-bottom:12px;">
           <h3 style="font-size:18px;"><i data-lucide="scan"></i> ${title}</h3>
           <button class="modal-close-btn" id="close-scanner-btn"><i data-lucide="x"></i></button>
@@ -573,6 +602,7 @@ export function showQRScannerModal({ onScanSuccess, title = 'Scan Participant Ba
   window.renderIcons?.();
 
   const stopScanner = async () => {
+    window.removeEventListener('keydown', handleScannerEscape);
     if (html5QrCodeScanner) {
       try {
         await html5QrCodeScanner.stop();
@@ -583,7 +613,13 @@ export function showQRScannerModal({ onScanSuccess, title = 'Scan Participant Ba
     modalContainer.innerHTML = '';
   };
 
+  const handleScannerEscape = (e) => {
+    if (e.key === 'Escape') stopScanner();
+  };
+  window.addEventListener('keydown', handleScannerEscape);
+
   document.getElementById('close-scanner-btn')?.addEventListener('click', stopScanner);
+  document.getElementById('floating-close-scanner-btn')?.addEventListener('click', stopScanner);
   document.getElementById('scanner-modal-backdrop')?.addEventListener('click', (e) => {
     if (e.target.id === 'scanner-modal-backdrop') stopScanner();
   });

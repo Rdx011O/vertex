@@ -69,6 +69,7 @@ function getEmptyDatabase() {
     stalls: [],
     // Sales & POS
     sales_submissions: [],
+    sale_line_items: [],
     pos_catalog: [],
     // Attendance
     attendance_records: [],
@@ -241,7 +242,7 @@ class Database {
   _ensureCollections() {
     const empty = getEmptyDatabase();
     for (const key of Object.keys(empty)) {
-      if (!this.data[key]) {
+      if (!this.data[key] || (Array.isArray(empty[key]) && !Array.isArray(this.data[key]))) {
         this.data[key] = empty[key];
       }
     }
